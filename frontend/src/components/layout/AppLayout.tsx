@@ -167,6 +167,62 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           <Box sx={{ flex: 1 }} />
 
+          {/* ── Upcoming features (MVP+2, disabled) ────────────── */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.75, mr: 1 }}>
+            <Tooltip
+              title="Coming in MVP+2 — AI-powered product & technology diligence"
+              arrow
+              placement="bottom"
+            >
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled
+                  sx={{
+                    fontSize: '0.72rem',
+                    color: 'text.disabled',
+                    borderColor: 'divider',
+                    cursor: 'not-allowed',
+                    '&.Mui-disabled': {
+                      color: 'text.disabled',
+                      borderColor: 'divider',
+                      opacity: 0.55,
+                    },
+                  }}
+                >
+                  Product Diligence
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip
+              title="Coming in MVP+2 — discover trending startups and funding rounds"
+              arrow
+              placement="bottom"
+            >
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled
+                  sx={{
+                    fontSize: '0.72rem',
+                    color: 'text.disabled',
+                    borderColor: 'divider',
+                    cursor: 'not-allowed',
+                    '&.Mui-disabled': {
+                      color: 'text.disabled',
+                      borderColor: 'divider',
+                      opacity: 0.55,
+                    },
+                  }}
+                >
+                  Trending Companies
+                </Button>
+              </span>
+            </Tooltip>
+          </Box>
+
           {/* API Health indicator */}
           <Tooltip
             title={

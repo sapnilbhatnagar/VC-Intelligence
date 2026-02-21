@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -5,13 +6,106 @@ import {
   Skeleton,
   Fade,
   alpha,
+  Collapse,
+  Button,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { ResultsResponse, StatusResponse } from '../../types';
 import KeyMetricsPanel from './panels/KeyMetricsPanel';
 import InvestmentHighlightsPanel from './panels/InvestmentHighlightsPanel';
 import FinancialProjectionsPanel from './panels/FinancialProjectionsPanel';
 import RiskAssessmentPanel from './panels/RiskAssessmentPanel';
 import ComparableDealsPanel from './panels/ComparableDealsPanel';
+
+// ============================================================
+// Markdown cleanup — strips common LLM markdown artifacts from
+// plain-text summaries so they render cleanly in MUI Typography.
+// ============================================================
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/#{1,6}\s+/gm, '')                        // ## headings
+    .replace(/\*\*([^*]+)\*\*/g, '$1')                  // **bold**
+    .replace(/\*([^*\n]+)\*/g, '$1')                    // *italic*
+    .replace(/_{1,2}([^_\n]+)_{1,2}/g, '$1')            // __underline__
+    .replace(/`([^`]+)`/g, '$1')                        // `code`
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')            // [link](url)
+    .replace(/^[-*•]\s+/gm, '')                         // leading bullet chars
+    .replace(/^---+$/gm, '')                            // horizontal rules
+    .replace(/\n{3,}/g, '\n\n')                         // collapse blank lines
+    .trim();
+}
+
+// ============================================================
+// Market Intelligence Summary — collapsible panel
+// ============================================================
+const PREVIEW_LENGTH = 500;
+
+function MarketSummary({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const clean = cleanMarkdown(text);
+  const isLong = clean.length > PREVIEW_LENGTH;
+  const preview = isLong ? clean.slice(0, PREVIEW_LENGTH) + '…' : clean;
+
+  return (
+    <Box
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
+      }}
+      role="region"
+      aria-label="Market intelligence summary"
+    >
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+        Market Intelligence Summary
+      </Typography>
+
+      {/* Preview — always visible */}
+      {!expanded && (
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', lineHeight: 1.65, display: 'block', fontSize: '0.75rem' }}
+        >
+          {preview}
+        </Typography>
+      )}
+
+      {/* Full content — revealed on expand */}
+      <Collapse in={expanded} unmountOnExit>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', lineHeight: 1.65, display: 'block', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}
+        >
+          {clean}
+        </Typography>
+      </Collapse>
+
+      {/* Show more / Show less toggle */}
+      {isLong && (
+        <Button
+          size="small"
+          onClick={() => setExpanded((v) => !v)}
+          endIcon={expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+          sx={{
+            mt: 1,
+            p: 0,
+            minWidth: 0,
+            fontSize: '0.72rem',
+            textTransform: 'none',
+            color: 'primary.main',
+            '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+          }}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Show less' : 'Read more…'}
+        </Button>
+      )}
+    </Box>
+  );
+}
 
 // ============================================================
 // Types
@@ -189,33 +283,8 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
         {hasMarket && (
           <Grid item xs={12}>
             <Fade in timeout={500}>
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  Market Intelligence Summary
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    lineHeight: 1.6,
-                    display: 'block',
-                    fontSize: '0.75rem',
-                    whiteSpace: 'pre-wrap',
-                    maxHeight: 200,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {resultsData!.market_analysis!.slice(0, 800)}
-                  {(resultsData!.market_analysis!.length ?? 0) > 800 ? '...' : ''}
-                </Typography>
+              <Box>
+                <MarketSummary text={resultsData!.market_analysis!} />
               </Box>
             </Fade>
           </Grid>

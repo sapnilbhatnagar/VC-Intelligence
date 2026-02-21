@@ -8,6 +8,7 @@ import {
   Divider,
 } from '@mui/material';
 import type { StatusResponse, ResultsResponse, RecommendationType } from '../../types';
+import { useCreditsConversion } from '../../hooks/useCreditsConversion';
 
 // ============================================================
 // Recommendation chip color map
@@ -143,10 +144,7 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
   const recommendation = resultsData?.recommendation ?? null;
   const recoConfig = recommendation ? RECO_COLOR[recommendation] : null;
 
-  const estimatedCost =
-    resultsData?.total_tokens != null
-      ? ((resultsData.total_tokens / 1000) * 0.002).toFixed(2)
-      : null;
+  const creditsUsed = useCreditsConversion(resultsData?.total_tokens);
 
   const riskScore = resultsData?.risk_score ?? null;
   const riskColor =
@@ -241,8 +239,8 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
         </Typography>
       </MetricCard>
 
-      {/* Estimated Cost */}
-      <MetricCard label="Estimated Cost">
+      {/* Credits Used */}
+      <MetricCard label="AI Credits Used">
         <Typography
           variant="h4"
           sx={{
@@ -251,9 +249,9 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
             color: resultsData ? 'success.main' : 'text.disabled',
             fontSize: '1.25rem',
           }}
-          aria-label={estimatedCost ? `Estimated cost: $${estimatedCost}` : 'Cost not yet available'}
+          aria-label={creditsUsed ? `Credits used: ${creditsUsed}` : 'Credits not yet available'}
         >
-          {estimatedCost ? `$${estimatedCost}` : '—'}
+          {creditsUsed ?? '—'}
         </Typography>
       </MetricCard>
 
