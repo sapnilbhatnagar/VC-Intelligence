@@ -364,19 +364,6 @@ function PlatformCard() {
           ))}
         </Box>
 
-        <Box
-          sx={{
-            mt: 1.5,
-            pt: 1.5,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: 'monospace' }}>
-            Full analysis costs 5 credits · Quick screen costs 1 credit
-          </Typography>
-        </Box>
       </CardContent>
     </Card>
   );

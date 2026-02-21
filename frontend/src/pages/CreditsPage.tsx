@@ -10,9 +10,16 @@ import {
   CircularProgress,
   Divider,
   alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import BoltIcon from '@mui/icons-material/Bolt';
 import CheckIcon from '@mui/icons-material/Check';
+import LockIcon from '@mui/icons-material/Lock';
 import { addCredits } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 
@@ -58,11 +65,11 @@ const PACKAGES: CreditPackage[] = [
 // ============================================================
 interface PackageCardProps {
   pkg: CreditPackage;
-  onPurchase: (credits: number) => void;
+  onPurchaseClick: (credits: number, pkgId: string) => void;
   purchasing: string | null; // id of the package currently being purchased
 }
 
-function PackageCard({ pkg, onPurchase, purchasing }: PackageCardProps) {
+function PackageCard({ pkg, onPurchaseClick, purchasing }: PackageCardProps) {
   const isLoading = purchasing === pkg.id;
 
   return (
@@ -146,7 +153,7 @@ function PackageCard({ pkg, onPurchase, purchasing }: PackageCardProps) {
         <Button
           variant={pkg.popular ? 'contained' : 'outlined'}
           fullWidth
-          onClick={() => onPurchase(pkg.credits)}
+          onClick={() => onPurchaseClick(pkg.credits, pkg.id)}
           disabled={!!purchasing}
           startIcon={
             isLoading ? (
@@ -174,6 +181,8 @@ const USAGE_ROWS = [
 // ============================================================
 // Page
 // ============================================================
+const ADMIN_GATE_PASSWORD = 'Password';
+
 export default function CreditsPage() {
   const user = useAuthStore((s) => s.user);
   const updateCredits = useAuthStore((s) => s.updateCredits);
@@ -181,6 +190,39 @@ export default function CreditsPage() {
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Admin gate dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingCredits, setPendingCredits] = useState<number | null>(null);
+  const [pendingPkgId, setPendingPkgId] = useState<string | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminPasswordError, setAdminPasswordError] = useState(false);
+
+  // Opens the admin gate dialog instead of purchasing directly
+  const handlePurchaseClick = (credits: number, pkgId: string) => {
+    setPendingCredits(credits);
+    setPendingPkgId(pkgId);
+    setAdminPassword('');
+    setAdminPasswordError(false);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setAdminPassword('');
+    setAdminPasswordError(false);
+  };
+
+  const handleAdminConfirm = async () => {
+    if (adminPassword !== ADMIN_GATE_PASSWORD) {
+      setAdminPasswordError(true);
+      return;
+    }
+    setDialogOpen(false);
+    if (pendingCredits !== null && pendingPkgId !== null) {
+      await handlePurchase(pendingCredits, pendingPkgId);
+    }
+  };
 
   const handlePurchase = async (credits: number, pkgId: string) => {
     setPurchasing(pkgId);
@@ -263,10 +305,54 @@ export default function CreditsPage() {
             key={pkg.id}
             pkg={pkg}
             purchasing={purchasing}
-            onPurchase={(credits) => handlePurchase(credits, pkg.id)}
+            onPurchaseClick={handlePurchaseClick}
           />
         ))}
       </Box>
+
+      {/* ── Admin gate dialog ─────────────────────────────────── */}
+      <Dialog open={dialogOpen} onClose={handleDialogClose} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LockIcon fontSize="small" sx={{ color: 'warning.main' }} />
+          Admin Authorisation Required
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            Enter the admin password to add{' '}
+            <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              {pendingCredits} credits
+            </Box>{' '}
+            to this account.
+          </Typography>
+          <TextField
+            label="Admin password"
+            type="password"
+            value={adminPassword}
+            onChange={(e) => { setAdminPassword(e.target.value); setAdminPasswordError(false); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAdminConfirm(); }}
+            error={adminPasswordError}
+            helperText={adminPasswordError ? 'Incorrect password' : undefined}
+            fullWidth
+            autoFocus
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+            inputProps={{ 'aria-label': 'Admin password' }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={handleDialogClose} color="inherit" size="small">
+            Cancel
+          </Button>
+          <Button onClick={handleAdminConfirm} variant="contained" size="small">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Usage guide ───────────────────────────────────────── */}
       <Card>

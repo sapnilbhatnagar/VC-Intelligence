@@ -56,7 +56,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { sidebarOpen, setSidebarOpen, toggleSidebar, apiHealthy, setApiHealthy, currentJobId } =
+  const { sidebarOpen, setSidebarOpen, toggleSidebar, apiHealthy, setApiHealthy, currentJobId, clearCurrentJob } =
     useJobStore();
 
   // Auth state
@@ -79,10 +79,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }, [setApiHealthy]);
 
   const handleNavClick = (path: string) => {
-    // "New Analysis" (path '/') → go to the active job if one exists,
-    // otherwise go to the dashboard form.
-    const destination = path === '/' && currentJobId ? `/job/${currentJobId}` : path;
-    navigate(destination);
+    if (path === '/') {
+      // "New Analysis" always starts fresh — clear any persisted job context
+      clearCurrentJob();
+      navigate('/');
+    } else {
+      navigate(path);
+    }
     if (isMobile) setSidebarOpen(false);
   };
 

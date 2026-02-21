@@ -33,8 +33,15 @@ export default function App() {
         element={
           <AppLayout>
             <Routes>
-              {/* Public route */}
-              <Route path="/" element={<Dashboard />} />
+              {/* Dashboard — requires auth */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Protected: requires auth */}
               <Route

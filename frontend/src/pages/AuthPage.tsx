@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -63,17 +63,29 @@ export default function AuthPage() {
   // Admin mode — pre-fills identifier with "Admin"
   const [adminMode, setAdminMode] = useState(false);
 
+  // Prevents onBlur from setting touched=true while the tab is being switched,
+  // avoiding a brief flash of validation errors on tab click.
+  const switchingTabRef = useRef(false);
+
   // Validation
   const identifierError = touched && !isRegister && identifier.trim().length === 0;
   const emailError = touched && isRegister && !/\S+@\S+\.\S+/.test(regEmail);
   const passwordError = touched && password.length < 6;
 
+  // Safe blur handler — ignored during tab switches
+  const handleBlur = useCallback(() => {
+    if (!switchingTabRef.current) setTouched(true);
+  }, []);
+
   // Reset form state when switching tabs
   const handleTabChange = (_: React.SyntheticEvent, v: 0 | 1) => {
+    switchingTabRef.current = true;
     setTab(v);
     setError(null);
     setTouched(false);
     setAdminMode(false);
+    // Clear the flag after React has flushed all pending state updates
+    requestAnimationFrame(() => { switchingTabRef.current = false; });
   };
 
   const activateAdminMode = () => {
@@ -108,9 +120,11 @@ export default function AuthPage() {
     setError(null);
 
     try {
+      // bcrypt enforces a 72-byte limit; normalize here for cross-platform consistency
+      const pwd = password.slice(0, 72);
       const res = isRegister
-        ? await register(regEmail, password, regUsername.trim() || undefined, regName.trim() || undefined)
-        : await loginApi(identifier.trim(), password);
+        ? await register(regEmail, pwd, regUsername.trim() || undefined, regName.trim() || undefined)
+        : await loginApi(identifier.trim(), pwd);
 
       const user: AuthUser = {
         id: res.user_id,
@@ -327,7 +341,7 @@ export default function AuthPage() {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  onBlur={() => setTouched(true)}
+                  onBlur={handleBlur}
                   error={identifierError}
                   helperText={identifierError ? 'Please enter your email or username' : undefined}
                   required
@@ -375,7 +389,7 @@ export default function AuthPage() {
                     type="email"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    onBlur={() => setTouched(true)}
+                    onBlur={handleBlur}
                     error={emailError}
                     helperText={emailError ? 'Enter a valid email address' : undefined}
                     required
@@ -416,7 +430,7 @@ export default function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => setTouched(true)}
+                onBlur={handleBlur}
                 error={passwordError}
                 helperText={
                   passwordError
@@ -527,24 +541,6 @@ export default function AuthPage() {
 
           {/* Footer links */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-            {/* Anonymous mode */}
-            <Typography
-              component={RouterLink}
-              to="/"
-              variant="body2"
-              sx={{
-                color: 'text.secondary',
-                textDecoration: 'none',
-                '&:hover': { color: 'primary.main' },
-                transition: 'color 0.15s ease',
-              }}
-            >
-              Continue without account →
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem' }}>
-              Anonymous mode — no credit tracking or history
-            </Typography>
-
             {/* Admin access toggle */}
             {!adminMode && !isRegister && (
               <Box sx={{ mt: 0.5 }}>
