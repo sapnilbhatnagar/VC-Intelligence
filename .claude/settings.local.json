@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(python -c:*)",
+      "Bash(pip install:*)",
+      "Bash(pip show:*)",
+      "Bash(pip3 show:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(wmic logicaldisk:*)"
+    ]
+  }
+}

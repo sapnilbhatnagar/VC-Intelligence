@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tomoro AI — VC Due Diligence Report</title>
+<style>
+  :root {
+    --navy: #1a365d;
+    --gold:  #d4af37;
+    --light: #f8fafc;
+    --text:  #1e293b;
+    --muted: #64748b;
+    --border:#e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--light);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* ── Header ── */
+  .report-header {
+    background: var(--navy);
+    color: white;
+    padding: 48px 64px 36px;
+    border-bottom: 5px solid var(--gold);
+  }
+  .firm-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    font-family: 'Arial', sans-serif;
+  }
+  .report-header h1 {
+    font-size: 34px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .report-meta {
+    font-size: 13px;
+    color: #94a3b8;
+    font-family: 'Arial', sans-serif;
+    margin-bottom: 20px;
+  }
+  .rec-badge {
+    display: inline-block;
+    padding: 7px 22px;
+    border-radius: 4px;
+    font-family: 'Arial', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: white;
+    background: #16a34a;
+  }
+
+  /* ── Body layout ── */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* ── Typography ── */
+  h2 {
+    font-size: 22px;
+    color: var(--navy);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 8px;
+    margin: 40px 0 16px;
+    font-family: 'Arial', sans-serif;
+  }
+  h3 {
+    font-size: 17px;
+    color: var(--navy);
+    margin: 28px 0 10px;
+    font-family: 'Arial', sans-serif;
+  }
+  h4 {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Arial', sans-serif;
+  }
+  p { margin-bottom: 14px; }
+  ul, ol { margin: 0 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--navy); }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+    font-family: 'Arial', sans-serif;
+  }
+  th {
+    background: var(--navy);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:nth-child(even) td { background: #f1f5f9; }
+
+  /* ── Callout box ── */
+  .callout {
+    background: white;
+    border-left: 4px solid var(--gold);
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  /* ── Footer ── */
+  .report-footer {
+    text-align: center;
+    padding: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    font-family: 'Arial', sans-serif;
+    margin-top: 60px;
+  }
+
+  /* ── Print ── */
+  @media print {
+    .report-header { background: var(--navy) !important; -webkit-print-color-adjust: exact; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<div class="report-header">
+  <div class="firm-label">AI VC Due Diligence — Confidential</div>
+  <h1>Tomoro AI</h1>
+  <div class="report-meta">Investment Analysis Report &nbsp;|&nbsp; February 20, 2026</div>
+  <span class="rec-badge">BUY</span>
+</div>
+
+<div class="container">
+  <h1>INVESTMENT COMMITTEE MEMORANDUM</h1>
+<p><strong>CONFIDENTIAL — FOR IC USE ONLY</strong></p>
+<p><strong>Date:</strong> December 2025<br />
+<strong>Prepared by:</strong> Investment Team<br />
+<strong>Fund:</strong> [Fund Name]<br />
+<strong>Document Status:</strong> IC Decision Memo — Go/No-Go</p>
+<hr />
+<h2>Executive Summary</h2>
+<ul>
+<li><strong>Company:</strong> Tomoro AI — Edinburgh &amp; London-headquartered AI consulting and engineering firm that designs, builds, and deploys custom agentic AI systems for large enterprises, operating in strategic alliance with OpenAI, NVIDIA, and Microsoft</li>
+<li><strong>Recommendation:</strong> <strong>BUY</strong> <em>(conditional — subject to resolution of five diligence gates detailed herein; memo converts to PASS if gates are not met within 45 days)</em></li>
+<li><strong>Proposed Check:</strong> $7.5M</li>
+<li><strong>Target Entry Valuation:</strong> $30–35M pre-money</li>
+</ul>
+<h3>Key Investment Highlights</h3>
+<ul>
+<li><strong>Founder with verified exit in the exact same category:</strong> Ed Broussard co-founded and sold Mudano — an AI data consultancy — to Accenture in 2020. This is not a first-time founder making promises about enterprise AI; it is a repeat founder executing a second, larger version of a proven playbook ✅</li>
+<li><strong>Tier-1 client traction before any institutional capital:</strong> Fidelity International, Supercell, and Virgin Atlantic as named design-wins — extraordinary for a 25-month-old firm in a relationship-driven category ✅</li>
+<li><strong>Optimal market timing:</strong> Enterprise AI adoption is inflecting from pilot-to-production at scale; 51% of enterprises plan to deploy AI agents in 2025 rising to an estimated 82% by 2027 📊; Tomoro is positioned in the delivery gap no one has closed at speed</li>
+<li><strong>Clean cap table:</strong> No prior equity dilution means the incoming investor receives unencumbered ownership with no legacy preference stack to navigate ✅ <em>(subject to diligence gate #5 — see below)</em></li>
+</ul>
+<h3>Primary Concerns</h3>
+<ul>
+<li><strong>Unexplained financing gap — potentially disqualifying:</strong> At 100+ employees and five international offices, estimated annual operating costs exceed £14–18M ($17.5–22.5M). Estimated ARR is $3.2M (📊). This gap — roughly £11–15M — has no publicly disclosed funding source. This is the single most important unanswered question in the deal and no capital should be deployed until it is resolved with audited accounts</li>
+<li><strong>Services business modelled with software multiples:</strong> The growth narrative positions Tomoro as a high-multiple AI platform company; the current revenue model is project-based consulting. At realistic M&amp;A multiples for services firms (1–3× revenue), base-case Year 5 exit value is $75–225M — not the $760M–$1.1B that 10–15× ARR multiples imply. Returns are investible at a services valuation; they are not investible if the entry price reflects a software premium</li>
+<li><strong>No proprietary IP:</strong> Every system Tomoro builds runs on OpenAI, NVIDIA, or Microsoft infrastructure. There are no disclosed patents, open-source projects, or reusable frameworks. OpenAI is actively expanding its Forward-Deployed Engineering programme (2 → 52+ engineers by end-2025, floor currently $10M per engagement); that floor will compress. The platform transition is a funding thesis, not a demonstrated fact</li>
+</ul>
+<hr />
+<h2>Company Overview</h2>
+<h3>What They Do</h3>
+<p>Tomoro AI designs, builds, and deploys production-grade AI systems for large enterprises. The company does not sell software licences or generic consulting advice; it delivers end-to-end AI engineering engagements — from board-level AI strategy (typically two-week engagements producing ROI models and roadmaps) through to custom multi-agent systems running in production (typically delivered in under 12 weeks). Engagement types span AI business strategy, custom AI agent development, enterprise AI infrastructure buildout, and post-deployment adoption and operations.</p>
+<p>The company's stated differentiator is speed-to-production: where Accenture or Deloitte might require six to twelve months and a multi-phase transformation programme, Tomoro targets a working production system within one quarter. This speed advantage is enabled by deep integrations with frontier model providers (OpenAI alliance, NVIDIA partnership, Microsoft Azure deployment infrastructure) and a lean, technically senior delivery team.</p>
+<p>Tomoro operates across financial services, healthcare, gaming, aviation, media, energy, telecommunications, and construction, with publicly named clients including Fidelity International, Supercell (Clash of Clans, Brawl Stars), and Virgin Atlantic. The company is headquartered across Edinburgh and London, with offices in Singapore (APAC HQ, launched September 2025) and Sydney and Melbourne (launched October 2025).</p>
+<h3>Founding Team</h3>
+<p><strong>Ed Broussard (Co-founder, Managing Director)</strong> is the anchoring signal in this investment. His prior company, Mudano, was an AI data consultancy that he co-founded and grew to approximately 200 employees before selling it to Accenture in 2020. That exit — building a specialist AI consulting firm and selling it to a Big Four acquirer — is precisely the playbook Tomoro is re-executing at larger scale. Broussard leads UK operations and is the primary external face of the company, including representing Tomoro at the UK Cabinet Secretary's visit to the Singapore office in September 2025 ✅. The Mudano precedent is the single strongest data point in this memo, and it is often under-weighted in the data.</p>
+<p><strong>Albert Phelps (Co-founder)</strong> relocated to Singapore to lead APAC expansion ✅ (UK Companies House, DOB July 1993). His specific prior professional background is not publicly available ❓, which is a gap requiring verification.</p>
+<p><strong>Ash Garner (Co-founder)</strong> is based in England and leads strategic initiatives and client showcasing ✅. His public profile indicates commercial and financial management expertise (CIMA CGMA credential, 2023; Oxford Saïd ESG/Sustainable Finance programme, 2024) rather than a technical AI engineering background ❓. For a company whose core proposition is technical AI delivery, the absence of a named CTO with verifiable deep technical credentials in the public record is notable.</p>
+<p><strong>Extended leadership</strong> includes five additional directors appointed January 2024 (Chloe Kelleher, Rishabh Sagar, Christopher Spencer, Samuel Netherwood) ✅, and Dan Edgar, former Accenture AI Industry Lead, hired to head Australian operations ✅. The Accenture AI hire is a positive signal on talent attraction but also concentrates the Australian operation on one individual.</p>
+<p><strong>Assessment:</strong> The team is founder-led with genuine pedigree at the top (Broussard specifically) but has meaningful opacity in the co-founder profiles and lacks a publicly identifiable Chief Technology Officer. Before investing, full background verification of all three co-founders is mandatory, and the board should consider whether a CTO hire is a pre-condition or immediate post-funding priority.</p>
+<h3>Product &amp; Technology</h3>
+<p>Tomoro's offering comprises four service lines: AI Business Strategy (board-level vision and ROI modelling), Custom AI Solutions (agentic systems built to specification), Enterprise AI Infrastructure (model management, observability, AIOps, knowledge pipelines), and Adoption &amp; Rollout (training, governance, change management).</p>
+<p>Real-world deployments referenced in press materials include AI basketball commentary, drug discovery automation, investment research systems, logistics management, and a multi-agent Citizen Service Navigator for government services eligibility. The technical approach emphasises multi-agent systems, retrieval-augmented generation (RAG) pipelines, and database-first architectures (Postgres + pgai). The company claims a standard delivery timeline of under 12 weeks to production ✅.</p>
+<p>The technology stack is entirely dependent on third-party foundations: OpenAI language models (via the strategic alliance), NVIDIA compute infrastructure, and Microsoft Azure deployment. There are zero disclosed proprietary models, patents, or open-source frameworks attributable to Tomoro ❓. The "OpenAI alliance" is, at present, a reseller and preferred implementation relationship — not a technical partnership that creates jointly owned or defensible IP. This is a material weakness that this investment must be designed to address.</p>
+<hr />
+<h2>Market Opportunity</h2>
+<h3>Market Size</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TAM</strong> — AI Consulting Services (2025)</td>
+<td>$11.1B</td>
+<td>✅ Future Market Insights</td>
+</tr>
+<tr>
+<td><strong>TAM</strong> — AI Consulting Services (2035)</td>
+<td>$91.0B</td>
+<td>📊 Future Market Insights (26.2% CAGR)</td>
+</tr>
+<tr>
+<td><strong>TAM</strong> — AI Agents Market (2025)</td>
+<td>$8.0B</td>
+<td>✅ BCC Research</td>
+</tr>
+<tr>
+<td><strong>TAM</strong> — AI Agents Market (2030)</td>
+<td>$48.3B</td>
+<td>📊 BCC Research (43.3% CAGR)</td>
+</tr>
+<tr>
+<td><strong>Enterprise AI Spending (2025)</strong></td>
+<td>$37.0B</td>
+<td>✅ Menlo Ventures (3.2× increase from 2024)</td>
+</tr>
+<tr>
+<td><strong>SAM</strong> — Enterprise AI Consulting (global)</td>
+<td>$50–70B</td>
+<td>📊 IC model estimate (Fortune 1000 + mid-market)</td>
+</tr>
+<tr>
+<td><strong>SAM</strong> — European + APAC AI Services</td>
+<td>$20–30B</td>
+<td>📊 Regional subset estimate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important caveat for IC:</strong> Professional services businesses do not scale like software businesses. A 100-person firm generating $175K revenue per employee has a structural revenue ceiling of approximately $17.5M without headcount growth. The TAM figures above describe the total market available — not the amount Tomoro can capture under its current delivery model. Any investment thesis premised on TAM penetration must be paired with a credible account of how the business model evolves to decouple revenue from headcount. The AI agents market ($8B growing at 43% CAGR) is the most relevant segment — and represents the product-like direction Tomoro should be developing toward.</p>
+<h3>Competitive Landscape</h3>
+<p><strong>Tier 1 — Global Consultancies (Well-Resourced, Slower)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>Scale</th>
+<th>AI Positioning</th>
+<th>Tomoro's Angle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Accenture</strong></td>
+<td>$65B revenue; $3B+ GenAI bookings FY24; 80K+ AI experts ✅</td>
+<td>Market leader; acquiring AI boutiques (NeuraFlash, Aug 2025)</td>
+<td>Speed: Accenture takes 6–12 months; Tomoro targets 12 weeks</td>
+</tr>
+<tr>
+<td><strong>Deloitte</strong></td>
+<td>$67B revenue; 40K+ AI/data team ✅</td>
+<td>AI advisory, intelligent automation, responsible AI</td>
+<td>Agility: Deloitte's process overhead creates delivery lag</td>
+</tr>
+<tr>
+<td><strong>McKinsey / QuantumBlack</strong></td>
+<td>$18.8B; 40% future revenue projected AI ✅</td>
+<td>Strategic AI transformation</td>
+<td>Execution bias: Tomoro builds vs. McKinsey advises</td>
+</tr>
+<tr>
+<td><strong>IBM / Watsonx</strong></td>
+<td>$61B; proprietary AI platform ✅</td>
+<td>Enterprise platform + integration services</td>
+<td>Independence: Tomoro is model-agnostic vs. IBM locked to Watson</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tier 2 — AI Boutiques (Closer Competitors)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>Funding</th>
+<th>Focus</th>
+<th>Differentiation vs. Tomoro</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RTS Labs</strong></td>
+<td>❓ Not disclosed</td>
+<td>Full-stack enterprise AI</td>
+<td>US-based; similar delivery model</td>
+</tr>
+<tr>
+<td><strong>LeewayHertz</strong></td>
+<td>❓ Not disclosed</td>
+<td>Custom AI + MLOps</td>
+<td>India/US; lower price point</td>
+</tr>
+<tr>
+<td><strong>Fractal Analytics</strong></td>
+<td>❓ Not disclosed</td>
+<td>AI/analytics consulting</td>
+<td>APAC presence; data analytics focus</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Indirect Threat — Foundation Model Providers</strong></p>
+<p>OpenAI's Forward-Deployed Engineering (FDE) programme is the most important competitive development to monitor. Current floor: $10M+ per engagement, 52+ FDEs by end-2025. Anthropic's partnership with Cognizant (350,000 GSI-trained delivery staff) represents a different vector — enabling frontier model delivery at GSI scale. Neither directly threatens Tomoro's $0.5–5M engagement sweet spot today, but the FDE minimum deal floor will compress as competitive pressure builds. This is a 24–36 month structural threat, not an immediate one.</p>
+<h3>Why Now</h3>
+<p>The enterprise AI market is at a specific and time-limited inflection point. Enterprises have spent 2022–2024 running AI pilots. In 2025, boards are demanding production deployments — and discovering that internal teams cannot execute the transition from prototype to enterprise-grade system. This is Tomoro's market. The window in which skilled third-party implementers command premium pricing for this transition exists for approximately 24–36 months before (a) large consultancies finish building internal AI delivery capacity, (b) low-code platforms commoditise mid-complexity implementations, and (c) foundation model providers expand direct delivery. Tomoro is executing in this window now, with real clients. That temporal advantage is the investment thesis.</p>
+<p>Additional timing support: AI agents specifically are at 51% planned enterprise adoption rising to 82% within three years 📊. The EU AI Act's high-risk system compliance requirements (fully applicable August 2026) are creating a parallel consulting revenue stream in governance and conformity that European-native firms are positioned to capture.</p>
+<hr />
+<h2>Business Model &amp; Traction</h2>
+<h3>Funding History</h3>
+<table>
+<thead>
+<tr>
+<th>Round</th>
+<th>Amount</th>
+<th>Investors</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equity funding</td>
+<td>❓ None disclosed</td>
+<td>❓ Unknown</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Scottish Regional Development</td>
+<td>£4M ✅</td>
+<td>Scottish Government / regional bodies</td>
+<td>May 2024</td>
+</tr>
+<tr>
+<td>Scottish Workforce Commitment</td>
+<td>£10M ✅</td>
+<td>Scottish Government</td>
+<td>December 2025</td>
+</tr>
+<tr>
+<td><strong>Total equity raised</strong></td>
+<td><strong>£0 disclosed</strong></td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>⚠️ <strong>Critical diligence gap:</strong> The complete absence of disclosed equity funding for a company with 100+ employees, five international offices, and estimated annual operating costs of £14–18M is anomalous. The Scottish commitments are regional development grants tied to job creation targets — disbursed over multiple years, conditional on headcount maintenance, and not available as operating capital. Three scenarios exist: (1) revenue is substantially higher than estimated, making the business cash-generative; (2) undisclosed angel, family office, or strategic capital has been invested; (3) the company is operating at a significant loss with an unexplained funding source. Scenario 3 is the most concerning. <strong>No capital should be deployed until audited accounts for the last 24 months of operations are reviewed and the financing gap is explained.</strong></p>
+<h3>Current Metrics</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Employees</td>
+<td>100+</td>
+<td>✅ Confirmed (multiple Dec 2025 sources)</td>
+</tr>
+<tr>
+<td>Headcount growth (12 months)</td>
+<td>~4×</td>
+<td>✅ Confirmed</td>
+</tr>
+<tr>
+<td>YoY revenue growth</td>
+<td>"10× / 1,000% MRR growth"</td>
+<td>📊 Self-reported, unaudited</td>
+</tr>
+<tr>
+<td>Estimated ARR</td>
+<td>$3.2M</td>
+<td>📊 Modelled (headcount-derived; see below)</td>
+</tr>
+<tr>
+<td>Named clients</td>
+<td>Fidelity International, Supercell, Virgin Atlantic</td>
+<td>✅ Confirmed</td>
+</tr>
+<tr>
+<td>Client count (total)</td>
+<td>❓ Not disclosed</td>
+<td>❓ Unknown</td>
+</tr>
+<tr>
+<td>Gross margin</td>
+<td>❓ Not disclosed</td>
+<td>❓ Unknown</td>
+</tr>
+<tr>
+<td>Cash position</td>
+<td>❓ Not disclosed</td>
+<td>❓ Unknown</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ARR estimation methodology 📊:</strong> At 100 employees with a blended revenue-per-head of $30–40K (consistent with an early-stage consulting firm where a significant portion of staff are in pre-revenue geographies), implied ARR is $3.0–4.0M. Cross-check via growth claims: if the "10× YoY growth" statement is accurate and the firm started 2025 at approximately $300–400K MRR, December 2025 MRR would be approximately $300–400K, implying ARR of $3.6–4.8M. These ranges are consistent; we use $3.2M as a conservative anchor. <strong>However, if actual revenue-per-head is closer to $150K (mature consulting levels), ARR would be $15M — which would radically improve the financing gap picture. This is the single most important number to obtain in diligence.</strong></p>
+<h3>Go-to-Market</h3>
+<p>Tomoro's customer acquisition appears driven by founder relationships, the Mudano-era enterprise network (particularly relevant for Fidelity and financial services broadly), and inbound pull from the OpenAI and NVIDIA alliance positioning. There is no evidence of a formal outbound sales function, marketing spend, or channel partnerships beyond strategic technology alliances. This is appropriate for the current stage but creates fragility — revenue is likely highly dependent on Broussard's personal relationships.</p>
+<p>Geographic expansion (Singapore, Sydney, Melbourne) is being deployed as a market entry strategy, not merely an operational decision — each office is a bet that local enterprise clients will engage Tomoro in preference to local arms of global consultancies. The Singapore National University (NUS) Centre for Future-Ready Graduates partnership 📊 provides a talent pipeline signal but does not constitute customer acquisition infrastructure.</p>
+<p>Unit economics are unknown ❓. Average deal size, contract duration, gross margin per engagement, customer acquisition cost, and repeat engagement rate are all undisclosed and must be obtained in diligence.</p>
+<hr />
+<h2>Financial Analysis</h2>
+<h3>Revenue Projections (Summary)</h3>
+<p><em>Base year 2025 estimated ARR: $3.2M 📊. All figures USD millions.</em></p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Year 3 (2027)</th>
+<th>Year 5 (2029)</th>
+<th>Key Assumption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bear</strong></td>
+<td>$6.7M</td>
+<td>$10.9M</td>
+<td>OpenAI FDE compression; client concentration hits; APAC drags costs</td>
+</tr>
+<tr>
+<td><strong>Base</strong></td>
+<td>$17.6M</td>
+<td>$50.7M</td>
+<td>APAC executes, Series A accelerates hiring, deal diversification progresses</td>
+</tr>
+<tr>
+<td><strong>Bull</strong></td>
+<td>$31.4M</td>
+<td>$131.1M</td>
+<td>Platform transition emerges, strategic partnership deepens, APAC outperforms</td>
+</tr>
+</tbody>
+</table>
+<p>📊 <em>All projections are modelled estimates. Revenue is project-based consulting revenue, not SaaS ARR. Year-over-year growth rates applied: Bear [1.5, 1.4, 1.3, 1.25, 1.2]; Base [2.5, 2.2, 1.8, 1.6, 1.5]; Bull [3.5, 2.8, 2.2, 1.9, 1.7]. Front-loading reflects current hypergrowth trajectory moderating as scale increases.</em></p>
+<h3>Unit Economics</h3>
+<p>All unit economics are unknown and must be obtained in diligence ❓. The following are IC-level estimates for modelling purposes only 📊:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Estimate</th>
+<th>Basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Average deal size</td>
+<td>$150–400K</td>
+<td>📊 Inferred from delivery model; £135K/head cost base</td>
+</tr>
+<tr>
+<td>Average engagement length</td>
+<td>12–16 weeks</td>
+<td>📊 Stated &lt;12 week standard; scope creep assumed</td>
+</tr>
+<tr>
+<td>Gross margin (services)</td>
+<td>25–40%</td>
+<td>📊 Typical for UK AI consulting boutiques; Edinburgh cost base</td>
+</tr>
+<tr>
+<td>Repeat engagement rate</td>
+<td>❓ Unknown</td>
+<td>❓ Critical: determines if "ARR" framing has any validity</td>
+</tr>
+<tr>
+<td>Revenue per employee</td>
+<td>$30–40K (current) / $175K (target)</td>
+<td>📊 Current implied vs. mature consulting benchmark</td>
+</tr>
+<tr>
+<td>CAC</td>
+<td>❓ Unknown</td>
+<td>❓ Founder-relationship-driven acquisition obscures true CAC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The gross margin estimate is the most critical missing variable.</strong> A consulting firm with 40%+ gross margin and good utilisation can grow profitably on cash from operations. A firm with 20% gross margin is structurally loss-making at current headcount. Without this number, return modelling is materially imprecise.</p>
+<h3>Capital Requirements</h3>
+<p>📊 <em>Estimated:</em> At current estimated burn of £11–15M annually against estimated revenue of £2.5M, the company requires approximately £8–12M of external capital per year to maintain current trajectory — unless actual revenue is substantially higher than modelled. The proposed $7.5M check represents approximately 6–9 months of estimated burn at current trajectory, which argues strongly for a structured/tranched deployment to ensure milestone-gating rather than a single disbursement.</p>
+<hr />
+<h2>Comparable Transactions</h2>
+<p><strong>Comparable 1: Accenture → Mudano (2020) — Most Relevant</strong></p>
+<p>Broussard's prior company was acquired by Accenture in 2020. While deal terms are undisclosed, market estimates suggest a £30–60M acquisition price for an approximately 200-person AI data consulting firm. This implies a 0.3–0.6× revenue multiple — consistent with a professional services acquisition, not a software acquisition. <strong>This comp is simultaneously the most credible exit path and the most honest statement of exit multiple risk.</strong> Broussard has done this before, and the acquirer playbook is clear. The exit multiple question is whether Tomoro at $50–75M revenue commands a higher multiple than Mudano did, either due to greater scale, platform elements, or a more competitive M&amp;A process.</p>
+<p><strong>Comparable 2: Accenture → NeuraFlash (August 2025) — Current Market Signal</strong></p>
+<p>Accenture acquired NeuraFlash, a 510-person Salesforce-certified agentic AI consulting specialist, in August 2025. Deal terms undisclosed ✅, but a 500-person specialist AI consulting firm in 2025 would command $100–300M 📊 — implying approximately 8–12× revenue if NeuraFlash had $10–30M in ARR. This is the best current M&amp;A benchmark for what Tomoro could become, and it is encouraging: the acquirer appetite for specialist AI consulting boutiques is demonstrably active, Accenture specifically is buying this category, and the implied multiples are above pure-services levels if the firm has sufficient IP and client quality. <strong>The NeuraFlash comp is the bull case exit scenario made concrete.</strong></p>
+<p><strong>Comparable 3: Capgemini → WNS ($3.3B, October 2025) — Sobering Scale Reference</strong></p>
+<p>Capgemini acquired WNS, a $1.3B revenue BPM/AI services company, at approximately 2.5× revenue ✅. At pure services scale, even a $75M revenue Tomoro would command a $150–225M acquisition price at this multiple. This is the bear case exit scenario and a check on the modelled upside. The lesson: services scale matters, but services businesses trade at services multiples unless they have software characteristics.</p>
+<p><strong>Valuation implications:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Comp</th>
+<th>Exit Multiple</th>
+<th>Applied to Tomoro Base (Year 5, $50.7M ARR)</th>
+<th>Implied Exit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mudano/Accenture-style</td>
+<td>0.5× revenue</td>
+<td>$25M</td>
+<td>Too low; firm would not reach this at scale</td>
+</tr>
+<tr>
+<td>WNS/Capgemini-style</td>
+<td>2.5× revenue</td>
+<td>$127M</td>
+<td>Conservative strategic exit</td>
+</tr>
+<tr>
+<td>NeuraFlash/Accenture-style</td>
+<td>10× revenue</td>
+<td>$507M</td>
+<td>Requires IP/platform characteristics</td>
+</tr>
+<tr>
+<td>Software-comparable</td>
+<td>15-25× ARR</td>
+<td>$760M–$1.3B</td>
+<td>Requires successful SaaS/platform transition</td>
+</tr>
+</tbody>
+</table>
+<p><strong>IC conclusion on comps:</strong> The realistic exit range at base case is $125–500M depending on IP development success. The midpoint of $250–300M is an investible outcome at a $30–35M entry valuation. The outlier scenarios (either the WNS floor or the software-multiple ceiling) are both less likely than this middle range.</p>
+<hr />
+<h2>Risk Analysis</h2>
+<p><strong>Overall Risk Score: 8.2/10</strong><br />
+<em>(1 = minimal, 10 = maximum. High score reflects opacity of financials, services model, and structural competition. Score would decline to approximately 6.5/10 if financial transparency gates are cleared and gross margins confirmed above 35%.)</em></p>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Severity</th>
+<th>Likelihood</th>
+<th>Key Concern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Unexplained cash burn / opaque financing</strong></td>
+<td>🔴 Critical</td>
+<td>70%</td>
+<td>£11-15M annual burn gap with no disclosed funding source; potentially disqualifying if unresolvable</td>
+</tr>
+<tr>
+<td><strong>Foundation model providers entering direct consulting</strong></td>
+<td>🔴 Critical</td>
+<td>75%</td>
+<td>OpenAI FDE at $10M+ today; floor will compress; structural displacement within 24-36 months</td>
+</tr>
+<tr>
+<td><strong>Services multiple vs. modelled exit valuation</strong></td>
+<td>🔴 Critical</td>
+<td>85%</td>
+<td>M&amp;A exits at 1-3× revenue; 10-25× multiples require platform transition not yet in evidence</td>
+</tr>
+<tr>
+<td><strong>No proprietary IP or defensible technology moat</strong></td>
+<td>🔴 High</td>
+<td>85%</td>
+<td>Entire tech stack is third-party; any competitor team can replicate; moat is entirely relational</td>
+</tr>
+<tr>
+<td><strong>Multi-geography overextension at 100 employees</strong></td>
+<td>🔴 High</td>
+<td>60%</td>
+<td>5 offices, 4 countries, 24 months — operational complexity for a firm this size is extreme</td>
+</tr>
+<tr>
+<td><strong>Revenue concentration in 3 named clients</strong></td>
+<td>🟠 High</td>
+<td>80%</td>
+<td>Fidelity/Supercell/Virgin Atlantic likely 40-50%+ of revenue; single client exit is material</td>
+</tr>
+<tr>
+<td><strong>Founder background gaps (Phelps, Garner)</strong></td>
+<td>🟠 High</td>
+<td>55%</td>
+<td>Two of three co-founders have limited public profiles; role clarity and technical depth unclear</td>
+</tr>
+<tr>
+<td><strong>EU AI Act compliance in high-risk verticals</strong></td>
+<td>🟠 High</td>
+<td>70%</td>
+<td>Financial services (Fidelity) and healthcare deployments are EU AI Act high-risk systems; no compliance framework disclosed</td>
+</tr>
+<tr>
+<td><strong>Revenue quality — project-based vs. recurring</strong></td>
+<td>🟠 Medium</td>
+<td>90%</td>
+<td>"ARR" framing is misleading; revenue is project-based with no evidence of retainer/managed service contracts</td>
+</tr>
+<tr>
+<td><strong>Key person concentration</strong></td>
+<td>🟠 Medium</td>
+<td>45%</td>
+<td>Broussard departure would impair most major client relationships and partnership positioning</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Investment Thesis</h2>
+<h3>Bull Case</h3>
+<ol>
+<li>
+<p><strong>The Mudano playbook, executed at larger scale.</strong> Broussard built and sold the same type of company once. He has the relationships, the credibility, and the institutional knowledge of exactly how this ends. The acquisition by Accenture was not a one-off; the NeuraFlash acquisition in August 2025 confirms the Big Four are actively buying AI consulting boutiques right now. The exit mechanism is proven and currently active.</p>
+</li>
+<li>
+<p><strong>Tier-1 client validation before a single pound of institutional capital.</strong> Fidelity International is one of the world's largest asset managers and one of the most demanding enterprise technology buyers in the world. The fact that Tomoro has a production deployment for Fidelity — built in under 12 weeks, before any VC due diligence — is extraordinary. These are not letter-of-intent clients. These are working systems.</p>
+</li>
+<li>
+<p><strong>OpenAI alliance creates a 24-month defensible window.</strong> Tomoro's early preferential access to OpenAI infrastructure and relationships positions it ahead of competitors in the $0.5–5M enterprise AI implementation market for the duration of the FDE floor's current $10M minimum. This window is finite but real.</p>
+</li>
+<li>
+<p><strong>Platform transition upside is a free option embedded in the services investment.</strong> If Tomoro develops proprietary multi-agent orchestration frameworks, AIOps tooling, or vertical domain models — any of which becomes a productised, reusable asset — the multiple re-rates from services (1–3×) to tech-enabled services (5–12×) or software (15–25×). Buying in at a services valuation with an embedded option on that transition is structurally attractive.</p>
+</li>
+</ol>
+<h3>Bear Case</h3>
+<ol>
+<li>
+<p><strong>The financing gap may reveal a business that is structurally unprofitable at scale.</strong> If audited accounts show that the company is burning £12M+ per year against £2.5M revenue, the growth narrative is funded by undisclosed capital rather than positive unit economics. Every additional hire and office opening is making the problem larger, not smaller. This could be an attractive business that is scaling ahead of profitability — or it could be a business that has never found a sustainable unit economic model.</p>
+</li>
+<li>
+<p><strong>Commoditisation arrives faster than the platform transition.</strong> OpenAI's FDE programme, Anthropic's Cognizant partnership, and the rapid productisation of agentic AI tools (Vertex AI Agent Builder, Microsoft Copilot Studio, n8n) are all compressing the complexity floor that makes bespoke consulting valuable. What Tomoro charges £200K+ to build in 2025 will be configurable by an in-house IT team in 2027. If Tomoro's IP development doesn't outrun commoditisation, margins collapse before scale is achieved.</p>
+</li>
+<li>
+<p><strong>Client concentration causes a revenue step-change.</strong> Three clients at 40–50% of revenue means that one client decision not to renew creates a $600K–$1M revenue gap. Virgin Atlantic has persistent financial fragility. Supercell is a Tencent subsidiary operating under significant organisational constraints. Fidelity runs competitive vendor reviews regularly. Any one of these clients reducing or ending the relationship produces a narrative-breaking quarter.</p>
+</li>
+<li>
+<p><strong>The co-founder team does not include a credible CTO.</strong> Ash Garner's profile is commercial and financial, not technical. Albert Phelps's background is unverifiable from public sources. The technical delivery is apparently led by the director layer (Sagar, Spencer et al.) and hired talent like Dan Edgar — but these individuals are not co-founders with aligned incentives. For a business whose entire value proposition is technical execution quality, the absence of a technical founder is a structural weakness.</p>
+</li>
+</ol>
+<h3>Return Scenarios</h3>
+<p><em>Entry: $7.5M check at $32.5M pre-money / $40M post-money. Assumed 18.75% initial ownership, diluted to approximately 15% at exit by Series B and employee option pool.</em></p>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Entry Val.</th>
+<th>Exit Val. (Yr 5)</th>
+<th>Multiple Basis</th>
+<th>Investor Proceeds</th>
+<th>MOIC</th>
+<th>IRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bear</strong></td>
+<td>$40M</td>
+<td>$55M</td>
+<td>2.5× revenue on $22M</td>
+<td>~$8.3M</td>
+<td>1.1×</td>
+<td>~2%</td>
+</tr>
+<tr>
+<td><strong>Base</strong></td>
+<td>$40M</td>
+<td>$250M</td>
+<td>5× revenue on $50M</td>
+<td>~$37.5M</td>
+<td>5.0×</td>
+<td>~38%</td>
+</tr>
+<tr>
+<td><strong>Bull</strong></td>
+<td>$40M</td>
+<td>$750M</td>
+<td>10× revenue on $75M (platform characteristics)</td>
+<td>~$112.5M</td>
+<td>15.0×</td>
+<td>~72%</td>
+</tr>
+</tbody>
+</table>
+<p>📊 <em>All return scenarios are modelled estimates. Bear case assumes no platform transition; exit via distressed or opportunistic M&amp;A. Base case assumes NeuraFlash-style strategic acquisition at expanded services multiple. Bull case requires credible platform layer and competitive M&amp;A process.</em></p>
+<hr />
+<h2>Recommendation</h2>
+<p><strong>Decision: BUY</strong> <em>(Conditional — converts to PASS if any of five diligence gates are not cleared within 45 days)</em></p>
+<p>Tomoro AI presents a genuinely compelling opportunity underpinned by a specific, verifiable competitive advantage: a founder who has built and sold this type of company before, doing so again in a market that is structurally larger and better-timed than his first attempt. The Mudano → Accenture outcome is not a coincidence to be explained away — it is the investment thesis stated plainly. Broussard knows how this business gets built, what enterprise buyers value, and how the exit conversation happens. The NeuraFlash acquisition in August 2025 confirms that the exit mechanism remains active and that acquirer appetite for specialist AI boutiques is strong right now.</p>
+<p>The investment case, however, requires a fundamental reframing from the growth narrative as presented. Tomoro is not a software company being temporarily miscategorised. It is a professional services business with an embedded option on a platform transition. Pricing it as a software company — as the $45M+ pre-money valuation in the research materials implies — would mean paying for an outcome that has not been demonstrated. Pricing it as a services business at $30–35M pre-money creates a return profile that works across a range of scenarios, while preserving the platform-transition upside as optionality rather than underwriting.</p>
+<p>The critical unanswered question — how has a 100-person firm with five international offices operated for 24 months without disclosed equity funding? — must be answered before capital is deployed. It is answerable. If the answer is that revenues are materially higher than the $3.2M model suggests (which would imply exceptional unit economics), the investment becomes more attractive. If the answer is undisclosed capital or loss-funding, the cap table and cash position must be fully understood before proceeding. This is not a reason to pass; it is a reason to require audited accounts as a hard closing condition.</p>
+<hr />
+<p><strong>Suggested Terms:</strong><br />
+- <strong>Investment amount:</strong> $7.5M<br />
+- <strong>Target pre-money valuation:</strong> $30–35M (reflecting services-company comparable multiples, not SaaS multiples; 10–12× estimated ARR with a premium for proven founder and tier-1 client quality)<br />
+- <strong>Instrument:</strong> Preferred equity (not convertible note; a company of this maturity and claimed traction should price a round)<br />
+- <strong>Board seat:</strong> Yes — one full board seat for lead investor, given check size relative to valuation and the number of unresolved governance questions<br />
+- <strong>Liquidation preference:</strong> 1× non-participating with 2× participation cap (protects downside on a services-multiple acquisition; does not penalise founders in a strong upside scenario)<br />
+- <strong>Tranched deployment:</strong> Tranche 1 ($4M) at close; Tranche 2 ($3.5M) contingent on: (i) verified ARR exceeding $8M within 12 months of investment, and (ii) minimum 20% of revenue from repeatable or IP-leveraged delivery (not purely bespoke project consulting), as verified by management accounts reviewed by investor<br />
+- <strong>Anti-dilution:</strong> Broad-based weighted average<br />
+- <strong>Founder vesting:</strong> Full four-year re-vesting from investment date with 12-month cliff for all three co-founders (critical given that a sub-$200M acquisition would represent a meaningful personal liquidity event for founders while potentially delivering sub-2× MOIC to investors)<br />
+- <strong>IP ring-fence:</strong> Minimum 20% of Series A capital to be allocated to IP development (proprietary frameworks, domain models, AIOps tooling), with quarterly audit rights<br />
+- <strong>Investor consent rights:</strong> Required for any M&amp;A transaction, any additional equity or debt raise, any new office opening beyond current footprint, and any departure of co-founders or named key hires</p>
+<p><strong>Key milestones for follow-on consideration:</strong><br />
+- Singapore office reaches $3M+ local ARR within 18 months of investment (validates APAC expansion thesis)<br />
+- Revenue concentration reduced: no single client exceeds 20% of revenue within 24 months<br />
+- Named CTO hire with verifiable technical AI credentials within 90 days of funding<br />
+- At least one identifiable proprietary asset (reusable framework, published open-source tool, or documented IP in client contracts) within 12 months<br />
+- Gross margin at or above 35% confirmed via management accounts</p>
+<hr />
+<p><strong>Next Steps:</strong></p>
+<ol>
+<li>
+<p><strong>Financial transparency gate (pre-condition to term sheet):</strong> Request audited management accounts for the 24-month operating period to date. Specifically: cash position and burn rate, detailed revenue breakdown (by client, by engagement type, by geography), cap table and full history of any convertible instruments, grants, or undisclosed capital, and gross margin per service line. This gate must be cleared before a term sheet is issued. If founders decline to provide audited accounts, the answer is PASS.</p>
+</li>
+<li>
+<p><strong>Founder background verification:</strong> Commission independent reference checks on all three co-founders. Priority items: (a) verification of the Mudano exit terms and Broussard's specific role and equity outcome, (b) full professional history for Phelps and Garner with at least three professional references each, (c) any prior litigation, regulatory actions, or bankruptcy proceedings. This is a standard closing condition but given the opacity of the co-founder profiles in public data, it must be completed before IC approval, not after.</p>
+</li>
+<li>
+<p><strong>Client reference calls:</strong> Direct conversations with procurement or technology leadership at all three named clients — Fidelity International, Supercell, and Virgin Atlantic. Specific questions: current contract value and status, renewal intent, satisfaction with delivery quality, and whether the client would expand the relationship. These calls will either confirm or materially undermine the traction narrative and are the fastest way to validate the investment thesis independent of financial disclosure.</p>
+</li>
+<li>
+<p><strong>Competitive intelligence on OpenAI FDE expansion:</strong> Obtain current intelligence on OpenAI's FDE programme terms, minimum deal sizes, and expansion timeline. The question is how quickly the $10M floor compresses toward Tomoro's deal size range, and whether there is any signal that Tomoro's OpenAI "alliance" provides protection from direct competition. This can be addressed through investor network conversations with OpenAI-adjacent founders and advisors.</p>
+</li>
+<li>
+<p><strong>IP and contract review:</strong> Legal review of two to three standard Tomoro client contracts to assess: (a) IP ownership and reuse provisions (does Tomoro retain any reusable IP from client engagements?), (b) liability caps and indemnification terms, (c) EU AI Act compliance clauses for regulated-industry clients, and (d) evidence of any multi-year or retainer-based contractual commitments that would support a recurring revenue narrative.</p>
+</li>
+</ol>
+<hr />
+<p><em>This memo has been prepared for IC decision purposes only. Figures marked 📊 are modelled estimates and should not be represented as confirmed data to any third party. This memo is subject to the fund's standard confidentiality provisions.</em></p>
+</div>
+
+<div class="report-footer">
+  Generated by AI VC Due Diligence v2.0 &nbsp;|&nbsp; February 20, 2026<br>
+  This report is AI-generated and for informational purposes only. Not investment advice.
+</div>
+
+</body>
+</html>

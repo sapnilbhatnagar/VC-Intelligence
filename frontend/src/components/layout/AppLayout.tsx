@@ -1,0 +1,518 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  Divider,
+  Button,
+  Chip,
+  useMediaQuery,
+  useTheme,
+  alpha,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import HistoryIcon from '@mui/icons-material/History';
+import TuneIcon from '@mui/icons-material/Tune';
+import BoltIcon from '@mui/icons-material/Bolt';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import { checkHealth } from '../../api/client';
+import { useJobStore } from '../../store/jobStore';
+import { useAuthStore } from '../../store/authStore';
+import Sidebar from './Sidebar';
+
+// ============================================================
+// Constants
+// ============================================================
+const DRAWER_WIDTH = 240;
+
+const NAV_ITEMS = [
+  { label: 'New Analysis', icon: <AddCircleOutlineIcon fontSize="small" />, path: '/' },
+  { label: 'History', icon: <HistoryIcon fontSize="small" />, path: '/history' },
+];
+
+// ============================================================
+// Component
+// ============================================================
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const { sidebarOpen, setSidebarOpen, toggleSidebar, apiHealthy, setApiHealthy, currentJobId } =
+    useJobStore();
+
+  // Auth state
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const isLoggedIn = token !== null;
+  const isAdmin = user?.role === 'admin';
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // On mobile, collapse sidebar by default
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile, setSidebarOpen]);
+
+  // Initial health check on mount
+  useEffect(() => {
+    checkHealth().then(setApiHealthy);
+  }, [setApiHealthy]);
+
+  const handleNavClick = (path: string) => {
+    // "New Analysis" (path '/') → go to the active job if one exists,
+    // otherwise go to the dashboard form.
+    const destination = path === '/' && currentJobId ? `/job/${currentJobId}` : path;
+    navigate(destination);
+    if (isMobile) setSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate('/auth', { replace: true });
+  };
+
+  // Display name priority: name > username > email prefix
+  const emailPrefix = user?.name?.trim() || user?.username?.trim() || user?.email?.split('@')[0] || '';
+
+  return (
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* ── Top App Bar ─────────────────────────────────────── */}
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,
+          width: '100%',
+        }}
+      >
+        <Toolbar sx={{ gap: 1, minHeight: '56px !important' }}>
+          {/* Sidebar toggle */}
+          <IconButton
+            edge="start"
+            onClick={toggleSidebar}
+            aria-label="Toggle navigation sidebar"
+            size="small"
+            sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+          >
+            <MenuIcon fontSize="small" />
+          </IconButton>
+
+          {/* Logo / Brand */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+            onClick={() => navigate(currentJobId ? `/job/${currentJobId}` : '/')}
+          >
+            {/* Brand mark */}
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: '6px',
+                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+              aria-hidden="true"
+            >
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>
+                VC
+              </Typography>
+            </Box>
+
+            <Box>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 700, fontSize: '0.9375rem', lineHeight: 1, color: 'text.primary' }}
+              >
+                VC Intelligence
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', fontSize: '0.65rem', letterSpacing: '0.08em' }}
+              >
+                DUE DILIGENCE PLATFORM
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ flex: 1 }} />
+
+          {/* API Health indicator */}
+          <Tooltip
+            title={
+              apiHealthy === null
+                ? 'Checking API...'
+                : apiHealthy
+                ? 'API Online'
+                : 'API Offline'
+            }
+            arrow
+          >
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'default' }}
+              aria-label={`API status: ${apiHealthy === null ? 'checking' : apiHealthy ? 'online' : 'offline'}`}
+            >
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor:
+                    apiHealthy === null
+                      ? 'text.disabled'
+                      : apiHealthy
+                      ? 'success.main'
+                      : 'error.main',
+                  animation:
+                    apiHealthy === true ? 'pulse 2s infinite' : 'none',
+                  '@keyframes pulse': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0.4 },
+                  },
+                }}
+              />
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                {apiHealthy === null ? 'CHECKING' : apiHealthy ? 'ONLINE' : 'OFFLINE'}
+              </Typography>
+            </Box>
+          </Tooltip>
+
+          {/* ── Auth section ───────────────────────────────── */}
+          {isLoggedIn ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              {/* Credit balance chip */}
+              <Tooltip title="Buy more credits" arrow>
+                <Chip
+                  icon={<BoltIcon sx={{ fontSize: '0.875rem !important' }} />}
+                  label={`${user?.credits ?? 0} credits`}
+                  size="small"
+                  onClick={() => navigate('/credits')}
+                  sx={{
+                    height: 26,
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    color: 'primary.main',
+                    backgroundColor: (t) => alpha(t.palette.primary.main, 0.12),
+                    border: '1px solid',
+                    borderColor: (t) => alpha(t.palette.primary.main, 0.25),
+                    '& .MuiChip-icon': { color: 'primary.main' },
+                    '&:hover': {
+                      backgroundColor: (t) => alpha(t.palette.primary.main, 0.2),
+                    },
+                  }}
+                  aria-label={`Credit balance: ${user?.credits ?? 0} credits`}
+                />
+              </Tooltip>
+
+              {/* User email + optional admin badge */}
+              <Tooltip title="View profile" arrow>
+                <Box
+                  onClick={() => navigate('/profile')}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    cursor: 'pointer',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: (t) => alpha(t.palette.text.primary, 0.06),
+                    },
+                  }}
+                  role="button"
+                  aria-label="View profile"
+                >
+                  <PersonIcon fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.9rem' }} />
+                  <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.75rem' }}>
+                    {emailPrefix}
+                  </Typography>
+                  {isAdmin && (
+                    <Chip
+                      label="ADMIN"
+                      size="small"
+                      icon={<AdminPanelSettingsIcon sx={{ fontSize: '0.65rem !important' }} />}
+                      sx={{
+                        height: 18,
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        backgroundColor: (t) => alpha(t.palette.info.main ?? '#0288d1', 0.15),
+                        color: 'info.main',
+                        '& .MuiChip-icon': { color: 'info.main' },
+                        border: '1px solid',
+                        borderColor: (t) => alpha(t.palette.info.main ?? '#0288d1', 0.3),
+                      }}
+                    />
+                  )}
+                </Box>
+              </Tooltip>
+
+              {/* Logout */}
+              <Tooltip title="Sign out" arrow>
+                <IconButton
+                  size="small"
+                  onClick={handleLogout}
+                  aria-label="Sign out"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+                >
+                  <LogoutIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          ) : (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate('/auth')}
+              sx={{ fontSize: '0.8125rem', py: 0.5 }}
+            >
+              Sign In
+            </Button>
+          )}
+
+          {/* Settings / Accessibility toggle */}
+          <Tooltip title="Accessibility & Settings" arrow>
+            <IconButton
+              size="small"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Open accessibility settings"
+              sx={{
+                color: settingsOpen ? 'primary.main' : 'text.secondary',
+                '&:hover': { color: 'text.primary' },
+              }}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Toolbar>
+      </AppBar>
+
+      {/* ── Left Navigation Drawer ───────────────────────────── */}
+      <Drawer
+        variant={isMobile ? 'temporary' : 'persistent'}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sx={{
+          width: sidebarOpen ? DRAWER_WIDTH : 0,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: DRAWER_WIDTH,
+            boxSizing: 'border-box',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            pt: '56px', // offset for AppBar height
+          },
+        }}
+        aria-label="Navigation sidebar"
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', py: 1 }}>
+          {/* Nav items */}
+          <List dense disablePadding>
+            <ListItem disablePadding sx={{ px: 0 }}>
+              <Typography
+                variant="overline"
+                sx={{ px: 2, pt: 1.5, pb: 0.5, display: 'block', color: 'text.disabled' }}
+              >
+                Navigation
+              </Typography>
+            </ListItem>
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                item.path === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(item.path);
+              return (
+                <ListItem key={item.path} disablePadding>
+                  <ListItemButton
+                    selected={isActive}
+                    onClick={() => handleNavClick(item.path)}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <ListItemIcon
+                      sx={{ color: isActive ? 'primary.main' : 'text.secondary' }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: isActive ? 600 : 400,
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+
+            {/* Authenticated-only nav items */}
+            {isLoggedIn && (
+              <>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    selected={location.pathname === '/profile'}
+                    onClick={() => handleNavClick('/profile')}
+                    aria-current={location.pathname === '/profile' ? 'page' : undefined}
+                  >
+                    <ListItemIcon
+                      sx={{ color: location.pathname === '/profile' ? 'primary.main' : 'text.secondary' }}
+                    >
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="My Profile"
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: location.pathname === '/profile' ? 600 : 400,
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    selected={location.pathname === '/credits'}
+                    onClick={() => handleNavClick('/credits')}
+                    aria-current={location.pathname === '/credits' ? 'page' : undefined}
+                  >
+                    <ListItemIcon
+                      sx={{ color: location.pathname === '/credits' ? 'primary.main' : 'text.secondary' }}
+                    >
+                      <BoltIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Buy Credits"
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: location.pathname === '/credits' ? 600 : 400,
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </>
+            )}
+
+            {/* Admin-only nav item */}
+            {isAdmin && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={location.pathname === '/admin'}
+                  onClick={() => handleNavClick('/admin')}
+                  aria-current={location.pathname === '/admin' ? 'page' : undefined}
+                >
+                  <ListItemIcon
+                    sx={{ color: location.pathname === '/admin' ? 'primary.main' : 'text.secondary' }}
+                  >
+                    <AdminPanelSettingsIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Admin"
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: location.pathname === '/admin' ? 600 : 400,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
+          </List>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* Platform info footer */}
+          <Box sx={{ mt: 'auto', px: 2, pb: 2 }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block' }}>
+              8-Stage AI Pipeline
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.disabled',
+                display: 'block',
+                mt: 0.5,
+                fontSize: '0.65rem',
+              }}
+            >
+              Full analysis: 5 credits · Quick: 1 credit
+            </Typography>
+            <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.625 }}>
+              {[
+                'Quick Screen costs 1 credit',
+                'Stop anytime — progress is saved',
+                'Custom mode runs only selected stages',
+              ].map((tip) => (
+                <Box key={tip} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.625 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'primary.main', fontSize: '0.68rem', fontWeight: 700, flexShrink: 0, lineHeight: 1.5 }}
+                  >
+                    →
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem', lineHeight: 1.45 }}>
+                    {tip}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Drawer>
+
+      {/* ── Main Content Area ───────────────────────────────── */}
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          pt: '56px', // offset for AppBar
+          transition: 'margin-left 0.2s ease',
+        }}
+        role="main"
+        aria-label="Main content"
+      >
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            p: { xs: 2, sm: 3 },
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+
+      {/* ── Settings / Accessibility Drawer ─────────────────── */}
+      <Sidebar open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </Box>
+  );
+}

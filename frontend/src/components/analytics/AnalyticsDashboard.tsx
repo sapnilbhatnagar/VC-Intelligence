@@ -1,0 +1,226 @@
+import {
+  Box,
+  Typography,
+  Grid,
+  Skeleton,
+  Fade,
+  alpha,
+} from '@mui/material';
+import type { ResultsResponse, StatusResponse } from '../../types';
+import KeyMetricsPanel from './panels/KeyMetricsPanel';
+import InvestmentHighlightsPanel from './panels/InvestmentHighlightsPanel';
+import FinancialProjectionsPanel from './panels/FinancialProjectionsPanel';
+import RiskAssessmentPanel from './panels/RiskAssessmentPanel';
+import ComparableDealsPanel from './panels/ComparableDealsPanel';
+
+// ============================================================
+// Types
+// ============================================================
+export interface AnalyticsDashboardProps {
+  resultsData: ResultsResponse | null;
+  statusData: StatusResponse | null;
+}
+
+// ============================================================
+// Skeleton panel placeholder
+// ============================================================
+function PanelSkeleton({ label: _label, stageHint }: { label: string; stageHint?: string }) {
+  return (
+    <Box
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
+        height: '100%',
+        minHeight: 200,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Skeleton variant="circular" width={20} height={20} />
+        <Skeleton variant="text" width={120} height={20} />
+        {stageHint && (
+          <Box
+            sx={{
+              ml: 'auto',
+              px: 1,
+              py: 0.25,
+              borderRadius: 0.5,
+              backgroundColor: (t) => alpha(t.palette.warning.main, 0.1),
+              border: '1px solid',
+              borderColor: (t) => alpha(t.palette.warning.main, 0.2),
+            }}
+          >
+            <Typography variant="caption" sx={{ color: 'warning.main', fontSize: '0.6rem', fontWeight: 600 }}>
+              {stageHint}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+      <Skeleton variant="text" width="100%" height={16} sx={{ mb: 0.5 }} />
+      <Skeleton variant="text" width="85%" height={16} sx={{ mb: 0.5 }} />
+      <Skeleton variant="text" width="70%" height={16} sx={{ mb: 1 }} />
+      <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+    </Box>
+  );
+}
+
+// ============================================================
+// Main Analytics Dashboard
+// ============================================================
+export default function AnalyticsDashboard({ resultsData, statusData }: AnalyticsDashboardProps) {
+  const stageCount = statusData?.current_stage ?? resultsData?.current_stage ?? 0;
+  const totalStages = statusData?.total_stages ?? 8;
+  const isRunning = statusData?.status === 'running';
+
+  // If there's truly no data yet, show a placeholder
+  if (!resultsData && stageCount < 2) {
+    return (
+      <Box
+        sx={{
+          py: 6,
+          textAlign: 'center',
+          border: '1px dashed',
+          borderColor: 'divider',
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="body2" sx={{ color: 'text.disabled' }}>
+          Analytics will appear once at least 2 pipeline stages have completed.
+        </Typography>
+      </Box>
+    );
+  }
+
+  const hasMarket = !!resultsData?.market_analysis;
+  const hasFinancials = !!resultsData?.financial_projections;
+  const hasRisk = !!resultsData?.risk_assessment && resultsData.risk_score !== null;
+  const hasComps = !!resultsData?.comparable_deals;
+  const hasMemo = !!resultsData?.investor_memo;
+
+  return (
+    <Box role="region" aria-label="Analytics dashboard">
+      {/* Panel 1: Key Metrics — full width */}
+      {resultsData && (
+        <Fade in timeout={400}>
+          <Box sx={{ mb: 3 }}>
+            <KeyMetricsPanel
+              resultsData={resultsData}
+              stageCount={stageCount}
+              totalStages={totalStages}
+            />
+          </Box>
+        </Fade>
+      )}
+
+      {/* Panels 2-5: 2-column responsive grid */}
+      <Grid container spacing={2.5}>
+        {/* Panel 2: Investment Highlights (from memo) */}
+        <Grid item xs={12} md={6}>
+          {hasMemo ? (
+            <Fade in timeout={500}>
+              <Box sx={{ height: '100%' }}>
+                <InvestmentHighlightsPanel memoText={resultsData?.investor_memo ?? null} />
+              </Box>
+            </Fade>
+          ) : (
+            <PanelSkeleton
+              label="Investment Highlights"
+              stageHint={isRunning ? 'Stage 6 in progress...' : undefined}
+            />
+          )}
+        </Grid>
+
+        {/* Panel 3: Financial Projections */}
+        <Grid item xs={12} md={6}>
+          {hasFinancials ? (
+            <Fade in timeout={600}>
+              <Box sx={{ height: '100%' }}>
+                <FinancialProjectionsPanel
+                  projections={resultsData?.financial_projections as Record<string, unknown> | null ?? null}
+                />
+              </Box>
+            </Fade>
+          ) : (
+            <PanelSkeleton
+              label="Financial Projections"
+              stageHint={isRunning && stageCount < 3 ? 'Stage 3 in progress...' : undefined}
+            />
+          )}
+        </Grid>
+
+        {/* Panel 4: Risk Assessment */}
+        <Grid item xs={12} md={6}>
+          {hasRisk ? (
+            <Fade in timeout={700}>
+              <Box sx={{ height: '100%' }}>
+                <RiskAssessmentPanel
+                  text={resultsData!.risk_assessment!}
+                  riskScore={resultsData!.risk_score!}
+                />
+              </Box>
+            </Fade>
+          ) : (
+            <PanelSkeleton
+              label="Risk Assessment"
+              stageHint={isRunning && stageCount < 4 ? 'Stage 4 in progress...' : undefined}
+            />
+          )}
+        </Grid>
+
+        {/* Panel 5: Comparable Deals */}
+        <Grid item xs={12} md={6}>
+          {hasComps ? (
+            <Fade in timeout={800}>
+              <Box sx={{ height: '100%' }}>
+                <ComparableDealsPanel text={resultsData!.comparable_deals!} />
+              </Box>
+            </Fade>
+          ) : (
+            <PanelSkeleton
+              label="Comparable Deals"
+              stageHint={isRunning && stageCount < 5 ? 'Stage 5 in progress...' : undefined}
+            />
+          )}
+        </Grid>
+
+        {/* Panel 6: Market Intelligence — full width when available */}
+        {hasMarket && (
+          <Grid item xs={12}>
+            <Fade in timeout={500}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                  Market Intelligence Summary
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    lineHeight: 1.6,
+                    display: 'block',
+                    fontSize: '0.75rem',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: 200,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {resultsData!.market_analysis!.slice(0, 800)}
+                  {(resultsData!.market_analysis!.length ?? 0) > 800 ? '...' : ''}
+                </Typography>
+              </Box>
+            </Fade>
+          </Grid>
+        )}
+      </Grid>
+    </Box>
+  );
+}

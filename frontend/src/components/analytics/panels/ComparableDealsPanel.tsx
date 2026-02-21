@@ -1,0 +1,365 @@
+import { useState, useMemo } from 'react';
+import { Box, Typography, Card, CardContent, Chip, Button, alpha } from '@mui/material';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+
+// ============================================================
+// Types
+// ============================================================
+interface DealItem {
+  name: string;
+  detail: string;
+  valuation: string | null;
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+
+/**
+ * Extract a monetary valuation string from a line of text.
+ * Matches patterns like "$1.2B", "$450M", "€200M", "valued at $X".
+ */
+function extractValuation(text: string): string | null {
+  const match = text.match(
+    /(?:valued?\s+at\s+|valuation\s+of\s+|raised?\s+)?(\$|€|£)[\d.,]+\s*(?:[BbMmKk]|billion|million|thousand)?/,
+  );
+  return match ? match[0].trim() : null;
+}
+
+/**
+ * Parse the comparable deals text into structured DealItem objects.
+ *
+ * Handles formats:
+ *   1. Company Name: description ...
+ *   1. **Company Name** — description ...
+ *   - Company Name ($500M) ...
+ */
+function parseDeals(text: string): DealItem[] {
+  const lines = text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 10);
+
+  const deals: DealItem[] = [];
+
+  for (const line of lines) {
+    // Match numbered or bulleted list items
+    const listMatch = line.match(/^(?:\d+[\.\)]|[-•*])\s+\*{0,2}([^:*–\-]{4,60})\*{0,2}[:\s–\-]+(.+)/);
+    if (listMatch) {
+      const raw = listMatch[1].trim();
+      const detail = listMatch[2].trim().replace(/\*+/g, '');
+      deals.push({
+        name: raw,
+        detail,
+        valuation: extractValuation(line),
+      });
+      if (deals.length >= 8) break;
+      continue;
+    }
+
+    // Match bold-title lines (e.g. "**Stripe** - description")
+    const boldMatch = line.match(/^\*{2}([^*]{3,50})\*{2}\s*[-:–]\s*(.+)/);
+    if (boldMatch) {
+      deals.push({
+        name: boldMatch[1].trim(),
+        detail: boldMatch[2].trim(),
+        valuation: extractValuation(line),
+      });
+      if (deals.length >= 8) break;
+    }
+  }
+
+  // Fallback: if we found fewer than 2 structured items, just treat each
+  // list line as a raw string and parse naively
+  if (deals.length < 2) {
+    return lines
+      .filter((l) => /^(?:\d+[\.\)]|[-•*])\s/.test(l) && l.length > 15)
+      .slice(0, 6)
+      .map((l) => ({
+        name: l.replace(/^(?:\d+[\.\)]|[-•*])\s+/, '').slice(0, 60),
+        detail: l.replace(/^(?:\d+[\.\)]|[-•*])\s+/, ''),
+        valuation: extractValuation(l),
+      }));
+  }
+
+  return deals;
+}
+
+// ============================================================
+// Deal card sub-component
+// ============================================================
+interface DealCardProps {
+  deal: DealItem;
+  index: number;
+}
+
+function DealCard({ deal, index }: DealCardProps) {
+  const ACCENT = '#6366F1';
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1.5,
+        p: 1.25,
+        borderRadius: 1.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: alpha(ACCENT, 0.03),
+        transition: 'background-color 0.18s',
+        '&:hover': { backgroundColor: alpha(ACCENT, 0.07) },
+      }}
+      role="listitem"
+    >
+      {/* Index badge */}
+      <Box
+        sx={{
+          width: 26,
+          height: 26,
+          borderRadius: 1,
+          backgroundColor: alpha(ACCENT, 0.12),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          mt: 0.1,
+        }}
+        aria-hidden="true"
+      >
+        <Typography
+          sx={{ fontSize: '0.65rem', fontWeight: 700, color: ACCENT, fontFamily: 'monospace' }}
+        >
+          {String(index + 1).padStart(2, '0')}
+        </Typography>
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            flexWrap: 'wrap',
+            mb: deal.detail ? 0.25 : 0,
+          }}
+        >
+          <BusinessOutlinedIcon
+            sx={{ fontSize: 12, color: 'text.disabled', flexShrink: 0 }}
+            aria-hidden="true"
+          />
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.78rem', lineHeight: 1.3 }}
+          >
+            {deal.name}
+          </Typography>
+          {deal.valuation && (
+            <Chip
+              label={deal.valuation}
+              size="small"
+              sx={{
+                height: 18,
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                backgroundColor: alpha(ACCENT, 0.12),
+                color: ACCENT,
+                px: 0.25,
+              }}
+              aria-label={`Valuation: ${deal.valuation}`}
+            />
+          )}
+        </Box>
+        {deal.detail && deal.detail !== deal.name && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.71rem',
+              lineHeight: 1.5,
+              // Truncate long descriptions to 2 lines via -webkit-box
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            } as React.CSSProperties}
+          >
+            {deal.detail}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+// ============================================================
+// Props
+// ============================================================
+interface ComparableDealsPanelProps {
+  text: string;
+}
+
+// ============================================================
+// Component
+// ============================================================
+export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const deals = useMemo(() => parseDeals(text), [text]);
+
+  // If structured parsing worked, show deal cards; otherwise fall back to prose
+  const hasStructuredDeals = deals.length >= 2;
+
+  const PREVIEW_CHAR = 600;
+  const preview = text.slice(0, PREVIEW_CHAR);
+  const hasMoreProse = text.length > PREVIEW_CHAR;
+
+  const ACCENT = '#6366F1';
+
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        borderColor: 'divider',
+        backgroundColor: alpha('#ffffff', 0.03),
+      }}
+      role="region"
+      aria-label="Comparable deals"
+    >
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <CompareArrowsIcon fontSize="small" sx={{ color: ACCENT }} aria-hidden="true" />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Comparable Deals
+          </Typography>
+          {hasStructuredDeals && (
+            <Chip
+              label={`${deals.length} deals`}
+              size="small"
+              sx={{
+                ml: 'auto',
+                height: 20,
+                fontSize: '0.62rem',
+                fontWeight: 600,
+                backgroundColor: alpha(ACCENT, 0.1),
+                color: ACCENT,
+              }}
+              aria-label={`${deals.length} comparable deals found`}
+            />
+          )}
+        </Box>
+
+        {hasStructuredDeals ? (
+          <>
+            {/* Card grid */}
+            <Box
+              role="list"
+              aria-label="Comparable deals list"
+              sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+            >
+              {(expanded ? deals : deals.slice(0, 4)).map((deal, i) => (
+                <DealCard key={i} deal={deal} index={i} />
+              ))}
+            </Box>
+
+            {deals.length > 4 && (
+              <Button
+                size="small"
+                onClick={() => setExpanded((v) => !v)}
+                sx={{
+                  mt: 1.25,
+                  fontSize: '0.68rem',
+                  p: 0,
+                  minWidth: 0,
+                  textTransform: 'none',
+                  color: ACCENT,
+                  '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+                }}
+                aria-expanded={expanded}
+                aria-controls="deals-list"
+              >
+                {expanded
+                  ? 'Show fewer deals'
+                  : `Show ${deals.length - 4} more deal${deals.length - 4 > 1 ? 's' : ''}`}
+              </Button>
+            )}
+
+            {/* Prose text toggle */}
+            <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+              <Button
+                size="small"
+                onClick={() => setExpanded((v) => !v)}
+                sx={{
+                  fontSize: '0.65rem',
+                  p: 0,
+                  minWidth: 0,
+                  textTransform: 'none',
+                  color: 'text.disabled',
+                  '&:hover': { backgroundColor: 'transparent', color: 'text.secondary' },
+                }}
+                aria-expanded={expanded}
+              >
+                {expanded ? 'Hide full report' : 'View full comparable deals report'}
+              </Button>
+              {expanded && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: 'block',
+                    mt: 1,
+                    color: 'text.secondary',
+                    lineHeight: 1.6,
+                    fontSize: '0.73rem',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {text}
+                </Typography>
+              )}
+            </Box>
+          </>
+        ) : (
+          /* Fallback: plain prose view */
+          <>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                lineHeight: 1.65,
+                display: 'block',
+                fontSize: '0.75rem',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {expanded ? text : preview}
+              {!expanded && hasMoreProse && '...'}
+            </Typography>
+
+            {hasMoreProse && (
+              <Button
+                size="small"
+                onClick={() => setExpanded((v) => !v)}
+                sx={{
+                  mt: 1,
+                  fontSize: '0.68rem',
+                  p: 0,
+                  minWidth: 0,
+                  textTransform: 'none',
+                  color: ACCENT,
+                  '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+                }}
+                aria-expanded={expanded}
+              >
+                {expanded ? 'Show less' : 'Show more'}
+              </Button>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
