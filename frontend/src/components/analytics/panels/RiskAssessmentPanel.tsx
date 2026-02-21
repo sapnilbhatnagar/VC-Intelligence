@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Typography, Card, CardContent, Button, alpha } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, alpha, Divider } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { cleanMarkdown } from '../../../utils/textClean';
 
 // ============================================================
 // Helpers
@@ -18,18 +20,46 @@ function getRiskLabel(score: number): string {
 }
 
 /**
- * Pull bullet-point risk factors from text.
- * Prefers explicit list lines; falls back to sentences.
+ * Priority 1: Extract the "Top 3 Deal-Killer Risks" section from structured output.
+ * Priority 2: Extract **RiskName** — Severity: X | Likelihood: X% lines.
+ * Priority 3: Extract generic bullet points / sentences.
  */
-function extractBullets(text: string, max = 6): string[] {
+function extractRiskFactors(text: string, max = 6): string[] {
+  // Strategy 1: "Top 3 Deal-Killer Risks:" numbered list
+  const dealKillerMatch = text.match(
+    /Top\s+\d+\s+Deal[- ]Killer\s+Risks?:?\s*\n([\s\S]{20,600}?)(?:\n##|\n\*\*Recommended|\n---|\n\n\n|$)/i,
+  );
+  if (dealKillerMatch) {
+    const section = dealKillerMatch[1];
+    const items = section
+      .split(/\n/)
+      .map((l) => l.trim())
+      .filter((l) => /^\d+[\.\)]/.test(l))
+      .map((l) => l.replace(/^\d+[\.\)]\s*/, '').replace(/\*+/g, '').trim())
+      .filter((l) => l.length > 15)
+      .slice(0, max);
+    if (items.length >= 2) return items;
+  }
+
+  // Strategy 2: **RiskName** — Severity: X | Likelihood: X% structured lines
+  const structuredMatches: string[] = [];
+  const structuredRe = /\*\*([^*\n]{5,60})\*\*\s*[—\-–]\s*Severity:\s*(\w+)\s*\|\s*Likelihood:\s*([^\n]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = structuredRe.exec(text)) !== null && structuredMatches.length < max) {
+    structuredMatches.push(`${m[1].trim()}: ${m[2].trim()} severity, ${m[3].trim()} likelihood`);
+  }
+  if (structuredMatches.length >= 2) return structuredMatches;
+
+  // Strategy 3: Numbered / bulleted list lines
   const bulletLines = text
     .split(/\n+/)
     .filter((l) => /^[-•*\d]+[\.\)]\s/.test(l.trim()) && l.trim().length > 20)
-    .map((l) => l.replace(/^[-•*\d]+[\.\)]\s*/, '').trim())
+    .map((l) => l.replace(/^[-•*\d]+[\.\)]\s*/, '').replace(/\*+/g, '').trim())
+    .filter((l) => l.length > 15)
     .slice(0, max);
-
   if (bulletLines.length >= 2) return bulletLines;
 
+  // Strategy 4: Sentences
   return text
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
@@ -40,26 +70,24 @@ function extractBullets(text: string, max = 6): string[] {
 // ============================================================
 // SVG Donut Ring
 // ============================================================
-const RING_SIZE = 88;           // outer diameter
+const RING_SIZE = 88;
 const STROKE_WIDTH = 9;
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface DonutRingProps {
-  score: number;         // 0–10
+  score: number;
   color: string;
   label: string;
 }
 
 function DonutRing({ score, color, label }: DonutRingProps) {
-  // Animate the stroke-dashoffset from 0 to the correct fill on mount
   const [dashOffset, setDashOffset] = useState(CIRCUMFERENCE);
   const mounted = useRef(false);
 
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
-      // Short delay so the browser registers the initial state before transitioning
       const id = window.setTimeout(() => {
         const filled = CIRCUMFERENCE - (score / 10) * CIRCUMFERENCE;
         setDashOffset(filled);
@@ -83,7 +111,6 @@ function DonutRing({ score, color, label }: DonutRingProps) {
         aria-hidden="true"
         style={{ display: 'block' }}
       >
-        {/* Track circle */}
         <circle
           cx={center}
           cy={center}
@@ -92,8 +119,6 @@ function DonutRing({ score, color, label }: DonutRingProps) {
           stroke="rgba(255,255,255,0.07)"
           strokeWidth={STROKE_WIDTH}
         />
-
-        {/* Filled arc — rotated so it starts at the top (12 o'clock) */}
         <circle
           cx={center}
           cy={center}
@@ -111,8 +136,6 @@ function DonutRing({ score, color, label }: DonutRingProps) {
           }}
         />
       </svg>
-
-      {/* Score label centered inside the ring */}
       <Box
         sx={{
           position: 'absolute',
@@ -139,6 +162,34 @@ function DonutRing({ score, color, label }: DonutRingProps) {
 }
 
 // ============================================================
+// Risk category row — parsed from ## Section headers
+// ============================================================
+interface RiskCategory {
+  name: string;
+  overall: string | null;
+}
+
+function parseRiskCategories(text: string): RiskCategory[] {
+  const categories: RiskCategory[] = [];
+  const re = /###\s+\d+\.\s+(.+?)\s*(?:\[Overall:\s*([^\]]+)\])?(?=\n|$)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    categories.push({
+      name: m[1].trim(),
+      overall: m[2]?.trim() ?? null,
+    });
+  }
+  return categories;
+}
+
+const SEVERITY_COLOR: Record<string, string> = {
+  Low: '#10B981',
+  Medium: '#F59E0B',
+  High: '#EF4444',
+  Critical: '#7F1D1D',
+};
+
+// ============================================================
 // Props
 // ============================================================
 interface RiskAssessmentPanelProps {
@@ -154,7 +205,10 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
 
   const riskColor = getRiskColor(riskScore);
   const riskLabel = getRiskLabel(riskScore);
-  const bullets = useMemo(() => extractBullets(text, 6), [text]);
+
+  const cleanText = useMemo(() => cleanMarkdown(text), [text]);
+  const bullets = useMemo(() => extractRiskFactors(text, 6), [text]);
+  const categories = useMemo(() => parseRiskCategories(text), [text]);
 
   const visibleBullets = expanded ? bullets : bullets.slice(0, 3);
   const hiddenCount = bullets.length - 3;
@@ -186,12 +240,7 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
           <Box>
             <Typography
               variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: riskColor,
-                lineHeight: 1.2,
-                fontSize: '1rem',
-              }}
+              sx={{ fontWeight: 700, color: riskColor, lineHeight: 1.2, fontSize: '1rem' }}
             >
               {riskLabel}
             </Typography>
@@ -200,14 +249,7 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
             </Typography>
 
             {/* Severity band indicator */}
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 0.5,
-                mt: 1,
-              }}
-              aria-hidden="true"
-            >
+            <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }} aria-hidden="true">
               {['Low', 'Med', 'High'].map((band) => {
                 const active =
                   (band === 'Low' && riskScore <= 3) ||
@@ -244,8 +286,8 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
           </Box>
         </Box>
 
-        {/* Risk factor bullets */}
-        {bullets.length > 0 && (
+        {/* Risk categories row (from structured LLM output) */}
+        {categories.length > 0 && (
           <>
             <Typography
               variant="caption"
@@ -255,28 +297,73 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 display: 'block',
-                mb: 1,
+                mb: 0.75,
               }}
             >
-              Risk Factors
+              Risk Categories
             </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+              {categories.map((cat, i) => {
+                const catColor = cat.overall ? (SEVERITY_COLOR[cat.overall] ?? riskColor) : riskColor;
+                return (
+                  <Box
+                    key={i}
+                    sx={{
+                      px: 0.75,
+                      py: 0.3,
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: alpha(catColor, 0.35),
+                      backgroundColor: alpha(catColor, 0.07),
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: '0.62rem', fontWeight: 600, color: catColor }}
+                    >
+                      {cat.name}
+                      {cat.overall && (
+                        <Box component="span" sx={{ opacity: 0.75, ml: 0.4 }}>
+                          · {cat.overall}
+                        </Box>
+                      )}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
+        )}
+
+        {/* Deal-killer / key risk factors */}
+        {bullets.length > 0 && (
+          <>
+            <Divider sx={{ mb: 1.5 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+              <WarningAmberIcon sx={{ fontSize: 13, color: riskColor }} aria-hidden="true" />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.disabled',
+                  fontSize: '0.62rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Key Risk Factors
+              </Typography>
+            </Box>
 
             <Box
               component="ul"
               sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0.75 }}
-              aria-label="Risk factors"
+              aria-label="Key risk factors"
             >
               {visibleBullets.map((bullet, i) => (
                 <Box
                   key={i}
                   component="li"
-                  sx={{
-                    display: 'flex',
-                    gap: 1,
-                    alignItems: 'flex-start',
-                  }}
+                  sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}
                 >
-                  {/* Colored dot */}
                   <Box
                     sx={{
                       width: 6,
@@ -313,13 +400,37 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
                   '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
                 }}
                 aria-expanded={expanded}
-                aria-controls="risk-factors-list"
               >
                 {expanded ? 'Show fewer factors' : `Show ${hiddenCount} more factor${hiddenCount > 1 ? 's' : ''}`}
               </Button>
             )}
           </>
         )}
+
+        {/* Rationale paragraph (from Summary Assessment section) */}
+        {(() => {
+          const rationaleMatch = text.match(/\*\*Rationale:\*\*\s*([^\n]{30,400})/i);
+          if (!rationaleMatch) return null;
+          return (
+            <Box
+              sx={{
+                mt: 1.5,
+                p: 1.25,
+                borderRadius: 1.5,
+                backgroundColor: alpha(riskColor, 0.05),
+                border: '1px solid',
+                borderColor: alpha(riskColor, 0.15),
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', lineHeight: 1.6, fontSize: '0.73rem', fontStyle: 'italic' }}
+              >
+                {cleanText.match(/Rationale:?\s*([^\n]{30,400})/i)?.[1]?.trim() ?? rationaleMatch[1].trim()}
+              </Typography>
+            </Box>
+          );
+        })()}
       </CardContent>
     </Card>
   );

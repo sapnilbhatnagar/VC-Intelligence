@@ -12,29 +12,12 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { ResultsResponse, StatusResponse } from '../../types';
+import { cleanMarkdown } from '../../utils/textClean';
 import KeyMetricsPanel from './panels/KeyMetricsPanel';
 import InvestmentHighlightsPanel from './panels/InvestmentHighlightsPanel';
 import FinancialProjectionsPanel from './panels/FinancialProjectionsPanel';
 import RiskAssessmentPanel from './panels/RiskAssessmentPanel';
 import ComparableDealsPanel from './panels/ComparableDealsPanel';
-
-// ============================================================
-// Markdown cleanup — strips common LLM markdown artifacts from
-// plain-text summaries so they render cleanly in MUI Typography.
-// ============================================================
-function cleanMarkdown(text: string): string {
-  return text
-    .replace(/#{1,6}\s+/gm, '')                        // ## headings
-    .replace(/\*\*([^*]+)\*\*/g, '$1')                  // **bold**
-    .replace(/\*([^*\n]+)\*/g, '$1')                    // *italic*
-    .replace(/_{1,2}([^_\n]+)_{1,2}/g, '$1')            // __underline__
-    .replace(/`([^`]+)`/g, '$1')                        // `code`
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')            // [link](url)
-    .replace(/^[-*•]\s+/gm, '')                         // leading bullet chars
-    .replace(/^---+$/gm, '')                            // horizontal rules
-    .replace(/\n{3,}/g, '\n\n')                         // collapse blank lines
-    .trim();
-}
 
 // ============================================================
 // Market Intelligence Summary — collapsible panel

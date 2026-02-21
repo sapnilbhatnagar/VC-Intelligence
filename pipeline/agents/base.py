@@ -1,8 +1,52 @@
 """Base agent — wraps the Anthropic async client with an agentic tool-use loop."""
 
+import re
 import anthropic
 from app.config import settings
 from tools.web_search import search as tavily_search, WEB_SEARCH_TOOL
+
+# ── Meta-commentary stripper ───────────────────────────────────────────────────
+# Claude often opens its final response with "thinking aloud" sentences before
+# the actual structured content.  We strip these so investors see clean output.
+_META_LINE = re.compile(
+    r'^(?:'
+    r'Excellent[!.]?'
+    r'|Great[!.]?'
+    r'|Perfect[!.]?'
+    r'|Now I(?:\'ve| have)\b'
+    r'|I(?:\'ve| have) (?:now |gathered|completed|collected|researched|found|compiled|performed|conducted)'
+    r'|I(?:\'ll| will) now\b'
+    r'|Let me (?:now |compile|create|write|analyze|synthesize|put together|structure)'
+    r'|Based on (?:(?:all |my |the ))?(?:research|searches?|web searches?|the (?:above|information|data|research))'
+    r'|Having (?:gathered|completed|searched|researched|analyzed|conducted)'
+    r'|With (?:this|the|all) (?:information|data|research|context)'
+    r'|From (?:my|the) (?:research|searches?|analysis)'
+    r'|The (?:research|searches?|web searches?) (?:reveal|show|indicate|provide)'
+    r')\b.*',
+    re.IGNORECASE,
+)
+
+
+def _clean_meta_commentary(text: str) -> str:
+    """
+    Strip LLM "thinking aloud" opener lines that precede the structured output.
+
+    Only removes leading lines that match the meta-commentary pattern, stopping
+    as soon as the first non-matching, non-blank line is encountered.
+    """
+    lines = text.split('\n')
+    # Find where the real content starts
+    start = 0
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped:
+            start = i + 1  # skip blank lines at the top too
+            continue
+        if _META_LINE.match(stripped):
+            start = i + 1  # this line is meta — skip it
+        else:
+            break           # first real content line found
+    return '\n'.join(lines[start:]).lstrip('\n')
 
 
 class BaseAgent:
@@ -91,11 +135,11 @@ class BaseAgent:
 
             # No tool calls → done
             if response.stop_reason != "tool_use" or not self.use_tools:
-                return "\n".join(text_blocks), total_tokens
+                return _clean_meta_commentary("\n".join(text_blocks)), total_tokens
 
             # Safety: cap tool rounds
             if rounds >= max_tool_rounds:
-                return "\n".join(text_blocks), total_tokens
+                return _clean_meta_commentary("\n".join(text_blocks)), total_tokens
 
             # Add full assistant response (incl. thinking blocks) to history
             messages.append({"role": "assistant", "content": response.content})

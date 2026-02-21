@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Box, Typography, Card, CardContent, Chip, Button, alpha } from '@mui/material';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import { cleanMarkdown } from '../../../utils/textClean';
 
 // ============================================================
 // Types
@@ -207,14 +208,15 @@ interface ComparableDealsPanelProps {
 export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
+  const cleanText = useMemo(() => cleanMarkdown(text), [text]);
   const deals = useMemo(() => parseDeals(text), [text]);
 
   // If structured parsing worked, show deal cards; otherwise fall back to prose
   const hasStructuredDeals = deals.length >= 2;
 
   const PREVIEW_CHAR = 600;
-  const preview = text.slice(0, PREVIEW_CHAR);
-  const hasMoreProse = text.length > PREVIEW_CHAR;
+  const preview = cleanText.slice(0, PREVIEW_CHAR);
+  const hasMoreProse = cleanText.length > PREVIEW_CHAR;
 
   const ACCENT = '#6366F1';
 
@@ -317,7 +319,7 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
                     whiteSpace: 'pre-wrap',
                   }}
                 >
-                  {text}
+                  {cleanText}
                 </Typography>
               )}
             </Box>
@@ -335,7 +337,7 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
                 whiteSpace: 'pre-wrap',
               }}
             >
-              {expanded ? text : preview}
+              {expanded ? cleanText : preview}
               {!expanded && hasMoreProse && '...'}
             </Typography>
 

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     admin_email: str = Field("Admin", env="ADMIN_EMAIL")
     admin_password: str = Field("Password", env="ADMIN_PASSWORD")
     google_client_id: str = Field("", env="GOOGLE_CLIENT_ID")
+    google_client_secret: str = Field("", env="GOOGLE_CLIENT_SECRET")
 
     # Server
     host: str = Field("0.0.0.0", env="HOST")
