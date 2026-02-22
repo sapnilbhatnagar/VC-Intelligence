@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,8 +11,10 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { ResultsResponse, StatusResponse } from '../../types';
-import { cleanMarkdown } from '../../utils/textClean';
+import { mdComponents } from '../../utils/markdownComponents';
 import KeyMetricsPanel from './panels/KeyMetricsPanel';
 import InvestmentHighlightsPanel from './panels/InvestmentHighlightsPanel';
 import FinancialProjectionsPanel from './panels/FinancialProjectionsPanel';
@@ -20,15 +22,17 @@ import RiskAssessmentPanel from './panels/RiskAssessmentPanel';
 import ComparableDealsPanel from './panels/ComparableDealsPanel';
 
 // ============================================================
-// Market Intelligence Summary — collapsible panel
+// Market Intelligence Summary — collapsible panel with react-markdown
 // ============================================================
-const PREVIEW_LENGTH = 500;
+const PREVIEW_LINES = 15;
 
 function MarketSummary({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
-  const clean = cleanMarkdown(text);
-  const isLong = clean.length > PREVIEW_LENGTH;
-  const preview = isLong ? clean.slice(0, PREVIEW_LENGTH) + '…' : clean;
+
+  // Split into lines for preview truncation
+  const lines = useMemo(() => text.split('\n'), [text]);
+  const isLong = lines.length > PREVIEW_LINES;
+  const previewText = isLong ? lines.slice(0, PREVIEW_LINES).join('\n') : text;
 
   return (
     <Box
@@ -48,22 +52,23 @@ function MarketSummary({ text }: { text: string }) {
 
       {/* Preview — always visible */}
       {!expanded && (
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', lineHeight: 1.65, display: 'block', fontSize: '0.75rem' }}
-        >
-          {preview}
-        </Typography>
+        <Box>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+            {previewText}
+          </ReactMarkdown>
+          {isLong && (
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+              ...
+            </Typography>
+          )}
+        </Box>
       )}
 
       {/* Full content — revealed on expand */}
       <Collapse in={expanded} unmountOnExit>
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.secondary', lineHeight: 1.65, display: 'block', fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}
-        >
-          {clean}
-        </Typography>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+          {text}
+        </ReactMarkdown>
       </Collapse>
 
       {/* Show more / Show less toggle */}
@@ -204,7 +209,7 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
           ) : (
             <PanelSkeleton
               label="Investment Highlights"
-              stageHint={isRunning ? 'Stage 6 in progress...' : undefined}
+              stageHint={isRunning ? 'Stage 6: Generate Investor Memo' : undefined}
             />
           )}
         </Grid>
@@ -222,7 +227,7 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
           ) : (
             <PanelSkeleton
               label="Financial Projections"
-              stageHint={isRunning && stageCount < 3 ? 'Stage 3 in progress...' : undefined}
+              stageHint={isRunning && stageCount < 3 ? 'Stage 3: Build Financial Model' : undefined}
             />
           )}
         </Grid>
@@ -241,7 +246,7 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
           ) : (
             <PanelSkeleton
               label="Risk Assessment"
-              stageHint={isRunning && stageCount < 4 ? 'Stage 4 in progress...' : undefined}
+              stageHint={isRunning && stageCount < 4 ? 'Stage 4: Conduct Risk Assessment' : undefined}
             />
           )}
         </Grid>
@@ -257,7 +262,7 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
           ) : (
             <PanelSkeleton
               label="Comparable Deals"
-              stageHint={isRunning && stageCount < 5 ? 'Stage 5 in progress...' : undefined}
+              stageHint={isRunning && stageCount < 5 ? 'Stage 5: Research Comparable Deals' : undefined}
             />
           )}
         </Grid>

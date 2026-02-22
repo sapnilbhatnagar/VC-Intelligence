@@ -47,14 +47,14 @@ const RECO_STYLE: Record<RecommendationType, { bg: string; text: string }> = {
 };
 
 const PIPELINE_STAGES = [
-  { icon: <SearchIcon sx={{ fontSize: 14 }} />, name: 'Company Research', desc: 'Web scraping & data extraction' },
-  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Market Analysis', desc: 'TAM/SAM/SOM + trends' },
-  { icon: <CalculateIcon sx={{ fontSize: 14 }} />, name: 'Financial Modeling', desc: 'Revenue projections & metrics' },
-  { icon: <ShieldIcon sx={{ fontSize: 14 }} />, name: 'Risk Assessment', desc: 'Risk scoring & mitigation' },
-  { icon: <CompareArrowsIcon sx={{ fontSize: 14 }} />, name: 'Comparable Deals', desc: 'Peer benchmarking' },
-  { icon: <DescriptionIcon sx={{ fontSize: 14 }} />, name: 'Investor Memo', desc: 'IC-ready investment thesis' },
-  { icon: <StorageIcon sx={{ fontSize: 14 }} />, name: 'HTML Report', desc: 'Full formatted report' },
-  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Infographic', desc: 'Visual deal summary' },
+  { icon: <SearchIcon sx={{ fontSize: 14 }} />, name: 'Execute Company Research', desc: 'Web research & data extraction' },
+  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Perform Market Analysis', desc: 'TAM/SAM/SOM + trends' },
+  { icon: <CalculateIcon sx={{ fontSize: 14 }} />, name: 'Build Financial Model', desc: 'Revenue projections & metrics' },
+  { icon: <ShieldIcon sx={{ fontSize: 14 }} />, name: 'Conduct Risk Assessment', desc: 'Risk scoring & mitigation' },
+  { icon: <CompareArrowsIcon sx={{ fontSize: 14 }} />, name: 'Research Comparable Deals', desc: 'Peer benchmarking & comps' },
+  { icon: <DescriptionIcon sx={{ fontSize: 14 }} />, name: 'Generate Investor Memo', desc: 'IC-ready investment thesis' },
+  { icon: <StorageIcon sx={{ fontSize: 14 }} />, name: 'Render Investor Report', desc: 'Formatted report document' },
+  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Create Visual Summary', desc: 'Executive one-pager' },
 ];
 
 // ============================================================

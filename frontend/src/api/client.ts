@@ -109,6 +109,17 @@ export async function resumeJob(jobId: string): Promise<JobResponse> {
   return data;
 }
 
+/** Complete remaining stages of a partial analysis */
+export async function completeRemaining(
+  jobId: string,
+  selectedStages?: number[] | null,
+): Promise<JobResponse> {
+  const { data } = await apiClient.post<JobResponse>(`/complete/${jobId}`, {
+    selected_stages: selectedStages ?? null,
+  });
+  return data;
+}
+
 // ============================================================
 // Auth API Functions
 // ============================================================
@@ -264,5 +275,4 @@ export async function adminDeleteUser(userId: string): Promise<void> {
 const BASE = '/api/v1';
 
 export const getReportUrl = (jobId: string) => `${BASE}/results/${jobId}/report`;
-export const getChartUrl = (jobId: string) => `${BASE}/results/${jobId}/chart`;
-export const getInfographicUrl = (jobId: string) => `${BASE}/results/${jobId}/infographic`;
+export const getOnePagerUrl = (jobId: string) => `${BASE}/results/${jobId}/one-pager`;

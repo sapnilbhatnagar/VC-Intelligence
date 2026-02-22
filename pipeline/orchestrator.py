@@ -22,20 +22,20 @@ from pipeline.agents.stage5_comparable_deals import ComparableDealsAgent
 from pipeline.agents.stage6_memo_writer import MemoWriterAgent
 from pipeline.agents.stage7_report_generator import ReportGeneratorAgent
 from pipeline.agents.stage8_infographic_creator import InfographicCreatorAgent
-from storage.database import update_analysis, get_analysis
+from storage.database import update_analysis, get_analysis, get_completed_stages
 
 logger = logging.getLogger(__name__)
 
 # Ordered pipeline: (display_name, agent_class)
 PIPELINE = [
-    ("Company Research",   CompanyResearcherAgent),
-    ("Market Analysis",    MarketAnalystAgent),
-    ("Financial Modeling", FinancialModelerAgent),
-    ("Risk Assessment",    RiskAssessorAgent),
-    ("Comparable Deals",   ComparableDealsAgent),
-    ("Investor Memo",      MemoWriterAgent),
-    ("HTML Report",        ReportGeneratorAgent),
-    ("Infographic",        InfographicCreatorAgent),
+    ("Execute Company Research",   CompanyResearcherAgent),
+    ("Perform Market Analysis",    MarketAnalystAgent),
+    ("Build Financial Model",      FinancialModelerAgent),
+    ("Conduct Risk Assessment",    RiskAssessorAgent),
+    ("Research Comparable Deals",  ComparableDealsAgent),
+    ("Generate Investor Memo",     MemoWriterAgent),
+    ("Render Investor Report",     ReportGeneratorAgent),
+    ("Create Visual Summary",      InfographicCreatorAgent),
 ]
 
 # Maps stage number -> output keys that prove the stage completed
@@ -152,6 +152,47 @@ async def resume_pipeline(job_id: str):
     async def _run():
         try:
             await _execute_stages(job_id, state, stages_to_run, start_from=start_from)
+        finally:
+            unregister_job(job_id)
+
+    task = asyncio.create_task(_run())
+    register_job(job_id, task)
+
+
+async def complete_remaining_pipeline(job_id: str, new_stages: list[int]):
+    """
+    Run only the stages that haven't been completed yet.
+    Reuses existing outputs from previously completed stages.
+    """
+    analysis = await get_analysis(job_id)
+    state = _reconstruct_state(analysis)
+
+    already_done = get_completed_stages(analysis)
+    stages_to_run = sorted(set(new_stages) - already_done)
+
+    if not stages_to_run:
+        await update_analysis(job_id, {
+            "status": "completed",
+            "stage_name": "Complete",
+            "selected_stages": new_stages,
+        })
+        return
+
+    logger.info(
+        f"[{job_id[:8]}] Complete-remaining: already done={sorted(already_done)}, "
+        f"will run={stages_to_run}"
+    )
+
+    await update_analysis(job_id, {
+        "status": "running",
+        "selected_stages": sorted(set(new_stages)),
+        "paused_at": None,
+    })
+
+    async def _run():
+        try:
+            # Pass only the delta stages so already-completed ones are not re-run
+            await _execute_stages(job_id, state, stages_to_run, start_from=min(stages_to_run))
         finally:
             unregister_job(job_id)
 

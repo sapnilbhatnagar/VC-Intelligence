@@ -146,14 +146,14 @@ export interface PipelineStage {
 }
 
 export const PIPELINE_STAGES: PipelineStage[] = [
-  { number: 1, name: 'Company Research', icon: 'search' },
-  { number: 2, name: 'Market Analysis', icon: 'trending_up' },
-  { number: 3, name: 'Financial Modeling', icon: 'calculate' },
-  { number: 4, name: 'Risk Assessment', icon: 'shield' },
-  { number: 5, name: 'Comparable Deals', icon: 'compare' },
-  { number: 6, name: 'Investor Memo', icon: 'description' },
-  { number: 7, name: 'HTML Report', icon: 'html' },
-  { number: 8, name: 'Infographic', icon: 'image' },
+  { number: 1, name: 'Execute Company Research', icon: 'search' },
+  { number: 2, name: 'Perform Market Analysis', icon: 'trending_up' },
+  { number: 3, name: 'Build Financial Model', icon: 'calculate' },
+  { number: 4, name: 'Conduct Risk Assessment', icon: 'shield' },
+  { number: 5, name: 'Research Comparable Deals', icon: 'compare' },
+  { number: 6, name: 'Generate Investor Memo', icon: 'description' },
+  { number: 7, name: 'Render Investor Report', icon: 'html' },
+  { number: 8, name: 'Create Visual Summary', icon: 'image' },
 ];
 
 // ============================================================
@@ -198,12 +198,12 @@ export interface StageInfoItem {
 }
 
 export const STAGE_INFO: StageInfoItem[] = [
-  { number: 1, name: 'Company Research', costHint: '0.5 cr' },
-  { number: 2, name: 'Market Analysis', costHint: '0.5 cr' },
-  { number: 3, name: 'Financial Modeling', costHint: '1.5 cr' },
-  { number: 4, name: 'Risk Assessment', costHint: '2 cr' },
-  { number: 5, name: 'Comparable Deals', costHint: '0.5 cr' },
-  { number: 6, name: 'Investor Memo', costHint: '2.5 cr' },
-  { number: 7, name: 'HTML Report', costHint: '0.2 cr', requires: [6] },
-  { number: 8, name: 'Infographic', costHint: '0.3 cr', requires: [6] },
+  { number: 1, name: 'Execute Company Research', costHint: '0.5 cr' },
+  { number: 2, name: 'Perform Market Analysis', costHint: '0.5 cr' },
+  { number: 3, name: 'Build Financial Model', costHint: '1.5 cr' },
+  { number: 4, name: 'Conduct Risk Assessment', costHint: '2 cr' },
+  { number: 5, name: 'Research Comparable Deals', costHint: '0.5 cr' },
+  { number: 6, name: 'Generate Investor Memo', costHint: '2.5 cr' },
+  { number: 7, name: 'Render Investor Report', costHint: '0.2 cr', requires: [6] },
+  { number: 8, name: 'Create Visual Summary', costHint: '0.3 cr', requires: [6] },
 ];

@@ -28,14 +28,14 @@ const STAGE_ICONS: Record<number, React.ReactNode> = {
 };
 
 const STAGE_NAMES = [
-  'Company Research',
-  'Market Analysis',
-  'Financial Modeling',
-  'Risk Assessment',
-  'Comparable Deals',
-  'Investor Memo',
-  'HTML Report',
-  'Infographic',
+  'Execute Company Research',
+  'Perform Market Analysis',
+  'Build Financial Model',
+  'Conduct Risk Assessment',
+  'Research Comparable Deals',
+  'Generate Investor Memo',
+  'Render Investor Report',
+  'Create Visual Summary',
 ];
 
 // ============================================================

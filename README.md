@@ -1,254 +1,336 @@
 # AI VC Due Diligence — Version 2.0
 
-An AI-powered due diligence engine that analyses any startup in minutes and delivers
-a professional investor memo, revenue charts, and a visual infographic — all through
-a simple web API.
+An AI-powered investment analysis engine that researches any company and produces
+a professional investor package — investor memo, formatted report, and visual one-pager
+— in 5–15 minutes.
 
 ---
 
-## What This System Does
+## What This Product Does
 
-You give it a company name or website. It returns:
+Enter a company name or URL. The system runs it through an 8-stage AI pipeline that
+researches the company, models its financials, assesses risks, finds comparable deals,
+and writes an IC-ready investment memo.
 
-| Output | What it is |
-|--------|------------|
-| **Investor Memo** | Full IC-ready investment memo with recommendation |
-| **HTML Report** | Professional, printable investment document |
-| **Revenue Chart** | Bear / Base / Bull 5-year projection chart (PNG) |
-| **Infographic** | One-page visual summary (PNG) |
+**Outputs:**
 
-All analysis runs automatically across **8 specialist AI stages**:
+| Section | What you get |
+|---------|-------------|
+| **Analytics** | Live dashboards — financial projections, risk scoring, investment highlights, comparable deals |
+| **Investor Report** | Full formatted investment document (HTML, printable) |
+| **Visual One-Pager** | Executive summary infographic for presentations |
+| **Pipeline** | Real-time stage progress with pause/resume support |
+
+---
+
+## The 8-Stage Pipeline
+
+Each stage runs a specialist AI agent sequentially, passing findings to the next stage.
 
 ```
-Stage 1 — Company Research     → Who they are, founders, funding, traction
-Stage 2 — Market Analysis      → TAM/SAM, competitors, positioning
-Stage 3 — Financial Modeling   → Revenue projections + chart
-Stage 4 — Risk Assessment      → Deep risk analysis (5 categories, scored)
-Stage 5 — Comparable Deals     → Recent deals in same space, valuation benchmarks  ← NEW
-Stage 6 — Investor Memo        → Full IC memo with recommendation
-Stage 7 — HTML Report          → Professional formatted report
-Stage 8 — Infographic          → Visual one-pager
+Stage 1 — Execute Company Research    → Founders, product, funding history, traction
+Stage 2 — Perform Market Analysis     → TAM/SAM, competitive landscape, positioning
+Stage 3 — Build Financial Model       → 5-year Bear/Base/Bull revenue projections
+Stage 4 — Conduct Risk Assessment     → 5 risk categories, scored deal-killer analysis
+Stage 5 — Research Comparable Deals   → Recent M&A/funding comps, valuation benchmarks
+Stage 6 — Generate Investor Memo      → IC-ready memo with recommendation + risk score
+Stage 7 — Render Investor Report      → Professional formatted HTML report
+Stage 8 — Create Visual Summary       → One-page visual executive summary
 ```
 
----
+**AI models used:**
 
-## How It Works (Plain English)
-
-1. You send a request to the API: *"Analyse Agno AI"*
-2. The system starts 8 AI agents running one after another (sequential pipeline)
-3. Each agent does its job and passes its findings to the next
-4. You can check progress at any time
-5. When complete, you download the memo, report, chart, and infographic
-
-It takes **5–15 minutes** depending on how much information is publicly available.
+| Stage | Model | Reason |
+|-------|-------|---------|
+| 1, 2, 5 | claude-haiku-4-5 | Fast web research |
+| 3 | claude-sonnet-4-6 | Precise financial calculations |
+| 4, 6 | claude-sonnet-4-6 + extended thinking | Deep reasoning |
+| 7 | Python template only | No LLM needed |
+| 8 | claude-haiku-4-5 + Python | Metric extraction |
 
 ---
 
-## Setup (One-Time)
+## Setup — macOS
 
-### Step 1 — Install Python
-
-You need Python 3.11 or newer.
-Download from: https://www.python.org/downloads/
-
-### Step 2 — Install dependencies
-
-Open a terminal in this folder and run:
+### Step 1 — Install Python 3.11+
 
 ```bash
-pip install -r requirements.txt
+# Using Homebrew (recommended)
+brew install python@3.11
+
+# Verify
+python3 --version
 ```
 
-### Step 3 — Add your Anthropic API key
+Or download from: https://www.python.org/downloads/
 
-Open the `.env` file and replace `your_anthropic_api_key_here` with your real key.
+### Step 2 — Install Node.js (for the frontend)
 
-Get your Anthropic API key from: https://console.anthropic.com/
+```bash
+# Using Homebrew
+brew install node
 
-The Tavily key is already pre-filled in `.env`.
+# Verify
+node --version   # should be 18+
+npm --version
+```
+
+Or download the LTS installer from: https://nodejs.org/
+
+### Step 3 — Install Python dependencies
+
+```bash
+cd "AI VC Due Diligence V2"
+pip3 install -r requirements.txt
+```
+
+### Step 4 — Install frontend dependencies
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+### Step 5 — Add your API keys
+
+Open `.env` and fill in your keys:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-...your-key-here...
-TAVILY_API_KEY=tvly-dev-...already-filled...
+TAVILY_API_KEY=tvly-dev-...your-key-here...
 ```
 
-### Step 4 — Start the server
+Get your Anthropic key from: https://console.anthropic.com/
+
+### Step 6 — Build the frontend
 
 ```bash
+cd frontend
+npm run build
+cd ..
+```
+
+### Step 7 — Start the server
+
+```bash
+python3 run.py
+```
+
+Open http://localhost:8000 in your browser.
+
+---
+
+## Setup — Windows
+
+### Step 1 — Install Python 3.11+
+
+Download the installer from: https://www.python.org/downloads/windows/
+
+During installation, check **"Add Python to PATH"**.
+
+Verify in Command Prompt:
+```cmd
+python --version
+```
+
+### Step 2 — Install Node.js (for the frontend)
+
+Download the LTS installer from: https://nodejs.org/
+
+Verify:
+```cmd
+node --version
+npm --version
+```
+
+### Step 3 — Install Python dependencies
+
+Open Command Prompt or PowerShell in the project folder:
+
+```cmd
+pip install -r requirements.txt
+```
+
+### Step 4 — Install frontend dependencies
+
+```cmd
+cd frontend
+npm install
+cd ..
+```
+
+### Step 5 — Add your API keys
+
+Open `.env` in Notepad and fill in your keys:
+
+```
+ANTHROPIC_API_KEY=sk-ant-api03-...your-key-here...
+TAVILY_API_KEY=tvly-dev-...your-key-here...
+```
+
+### Step 6 — Build the frontend
+
+```cmd
+cd frontend
+npm run build
+cd ..
+```
+
+### Step 7 — Start the server
+
+```cmd
 python run.py
 ```
 
-You should see:
-```
-✅ Database initialised
-✅ Outputs directory: ./outputs
-✅ Server ready — visit http://localhost:8000/docs
-INFO:     Uvicorn running on http://0.0.0.0:8000
-```
-
-Leave this terminal window open while you use the system.
+Open http://localhost:8000 in your browser.
 
 ---
 
-## Using the API
+## Using the Web App
 
-### Option A — Interactive Web Interface (Recommended for beginners)
+The web interface at http://localhost:8000 gives you:
 
-Open your browser and go to: **http://localhost:8000/docs**
-
-This shows you a visual interface where you can click buttons and fill in forms
-to try all the API endpoints without writing any code.
-
-### Option B — Direct API calls
-
-Use a tool like Postman, Insomnia, or `curl` in your terminal.
+1. **Dashboard** — Enter a company name, choose analysis depth (Full/Quick/Custom), start
+2. **Pipeline tab** — Watch each stage run in real time, pause/resume as needed
+3. **Analytics tab** — Financial projections chart, risk scores, comparable deals, highlights
+4. **Downloads tab** — Get the Investor Report and Visual One-Pager when complete
 
 ---
 
-## Step-by-Step: Running Your First Analysis
+## API Reference
 
-### 1. Start an analysis
+All endpoints are under `/api/v1`. The interactive Swagger UI is at http://localhost:8000/docs.
 
-**POST** `http://localhost:8000/api/v1/analyze`
+### Analysis
 
-Send this JSON:
-```json
-{
-  "company": "Agno AI",
-  "investment_stage": "Series A",
-  "check_size_min": 5,
-  "check_size_max": 20
-}
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/analyze` | Start a new due diligence analysis |
+| `GET` | `/api/v1/status/{job_id}` | Get analysis pipeline status and stage progress |
+| `GET` | `/api/v1/results/{job_id}` | Full analysis results — all stage outputs as JSON |
+| `POST` | `/api/v1/stop/{job_id}` | Pause a running analysis and preserve progress |
+| `POST` | `/api/v1/resume/{job_id}` | Resume from the last completed stage |
+| `POST` | `/api/v1/complete/{job_id}` | Run remaining stages on a partial analysis |
+| `GET` | `/api/v1/history` | List past analyses |
+| `DELETE` | `/api/v1/analyses/{job_id}` | Delete an analysis |
+
+### Downloads
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/results/{job_id}/report` | Download the investor report (HTML) |
+| `GET` | `/api/v1/results/{job_id}/one-pager` | Download the visual one-pager executive summary (HTML) |
+
+### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/auth/register` | Create an account |
+| `POST` | `/api/v1/auth/login` | Log in |
+| `POST` | `/api/v1/auth/google` | Google OAuth login |
+| `GET` | `/api/v1/auth/me` | Get current user profile and credit balance |
+
+### Example: Start an analysis
+
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"company": "Stripe", "selected_stages": null}'
 ```
 
-You'll get back a `job_id` like: `"a1b2c3d4-..."`
+`selected_stages: null` runs all 8 stages. Pass an array like `[1,2,3,6]` for a custom run.
 
-You can also include a URL:
-```json
-{
-  "company": "Agno AI at https://agno.com"
-}
+### Example: Check progress
+
+```bash
+curl http://localhost:8000/api/v1/status/{job_id}
 ```
 
-### 2. Check progress
-
-**GET** `http://localhost:8000/api/v1/status/{job_id}`
-
-Response example:
-```json
-{
-  "status": "running",
-  "current_stage": 3,
-  "stage_name": "Financial Modeling",
-  "progress_pct": 37.5
-}
-```
-
-Keep checking every 30–60 seconds until `"status": "completed"`.
-
-### 3. Get your results
-
-**GET** `http://localhost:8000/api/v1/results/{job_id}`
-
-Returns the full analysis as JSON including the investor memo text.
-
-### 4. Download the files
-
-| File | URL |
-|------|-----|
-| HTML Report | `GET /api/v1/results/{job_id}/report` |
-| Revenue Chart | `GET /api/v1/results/{job_id}/chart` |
-| Infographic | `GET /api/v1/results/{job_id}/infographic` |
-
-Open the HTML report in any web browser. Save/print the PNGs.
-
-### 5. See past analyses
-
-**GET** `http://localhost:8000/api/v1/history`
-
-Shows all previous analyses with their recommendation and status.
+Poll every 10–30 seconds until `status` is `"completed"`.
 
 ---
 
-## All API Endpoints
+## Credit System
 
-| Method | URL | What it does |
-|--------|-----|--------------|
-| GET | `/` | API info |
-| GET | `/api/v1/health` | Health check |
-| POST | `/api/v1/analyze` | Start a new analysis |
-| GET | `/api/v1/status/{job_id}` | Check pipeline progress |
-| GET | `/api/v1/results/{job_id}` | Full results as JSON |
-| GET | `/api/v1/results/{job_id}/report` | Download HTML report |
-| GET | `/api/v1/results/{job_id}/chart` | Download revenue chart (PNG) |
-| GET | `/api/v1/results/{job_id}/infographic` | Download infographic (PNG) |
-| GET | `/api/v1/history` | List all past analyses |
+| Analysis type | Stages | Cost |
+|--------------|--------|------|
+| Full Analysis | All 8 | 5 credits |
+| Quick Screen | 3 (Research + Market + Memo) | 1 credit |
+| Custom | 4–7 stages | max(2, count−2) credits |
+
+---
+
+## Project Structure
+
+```
+AI VC Due Diligence V2/
+├── app/
+│   ├── config.py           ← Settings (API keys, models, ports)
+│   ├── main.py             ← FastAPI app, CORS, route registration
+│   ├── routes.py           ← All analysis API endpoints
+│   ├── routes_auth.py      ← Auth endpoints (register, login, Google OAuth)
+│   ├── routes_admin.py     ← Admin endpoints (users, credits, analytics)
+│   └── schemas.py          ← Pydantic request/response models
+├── pipeline/
+│   ├── orchestrator.py     ← Runs all 8 stages in sequence
+│   ├── state.py            ← Shared data passed between stages
+│   ├── cancel.py           ← Pause/cancel support via asyncio
+│   └── agents/
+│       ├── base.py                     ← Base agent (Claude API + tool loop)
+│       ├── stage1_company_researcher.py
+│       ├── stage2_market_analyst.py
+│       ├── stage3_financial_modeler.py
+│       ├── stage4_risk_assessor.py
+│       ├── stage5_comparable_deals.py
+│       ├── stage6_memo_writer.py
+│       ├── stage7_report_generator.py
+│       └── stage8_infographic_creator.py
+├── frontend/
+│   ├── src/
+│   │   ├── pages/          ← Dashboard, JobView, Auth, Admin, Credits, Profile
+│   │   ├── components/
+│   │   │   ├── analytics/  ← AnalyticsDashboard + 5 panel components
+│   │   │   ├── job/        ← PipelineStepper, ExecutionLog, DownloadSection
+│   │   │   └── analysis/   ← AnalysisForm (company input + mode selection)
+│   │   ├── api/client.ts   ← Axios API client
+│   │   ├── store/          ← Zustand state (jobStore, authStore)
+│   │   └── types/index.ts  ← TypeScript types + stage metadata
+│   └── dist/               ← Built frontend (served by FastAPI)
+├── storage/
+│   └── database.py         ← SQLite: stores all analyses and users
+├── tools/
+│   ├── web_search.py       ← Tavily search wrapper
+│   ├── chart_generator.py  ← matplotlib revenue chart
+│   ├── html_generator.py   ← HTML report template
+│   └── infographic_generator.py ← Visual one-pager generator
+├── outputs/                ← Generated HTML files saved here
+├── .env                    ← Your API keys (keep private)
+├── requirements.txt        ← Python dependencies
+└── run.py                  ← Start the server
+```
 
 ---
 
 ## System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     FastAPI REST API                        │
-│          (receives requests, runs pipeline in background)   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Sequential Pipeline Orchestrator               │
-│                                                             │
-│  Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5          │
-│                                    ↓                        │
-│             Stage 8 ← Stage 7 ← Stage 6                    │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-           ┌───────────────┼───────────────┐
-           ▼               ▼               ▼
-    Claude API         Tavily API      Python Tools
-  (AI reasoning)    (web search)  (charts, HTML, infographic)
-           │               │               │
-           └───────────────┼───────────────┘
-                           ▼
-                    SQLite Database
-                (persists all results)
-                           │
-                           ▼
-                  outputs/ folder
-           (HTML, PNG files saved here)
+Browser (React + MUI)
+        │
+        ▼
+FastAPI REST API  (/api/v1/...)
+        │
+        ▼
+Pipeline Orchestrator  (asyncio background task)
+        │
+   ┌────┴────┐
+   │         │
+Claude API  Tavily API   Python tools
+(reasoning) (web search) (HTML, charts)
+        │
+        ▼
+   SQLite DB  +  outputs/ folder
 ```
-
-### Models Used
-
-| Stage | Model | Why |
-|-------|-------|-----|
-| Company Research (1) | claude-haiku-4-5 | Fast web research |
-| Market Analysis (2) | claude-haiku-4-5 | Fast web research |
-| Financial Modeling (3) | claude-sonnet-4-6 | Precise calculations |
-| Risk Assessment (4) | claude-sonnet-4-6 + **extended thinking** | Deep reasoning |
-| Comparable Deals (5) | claude-haiku-4-5 | Fast web research |
-| Investor Memo (6) | claude-sonnet-4-6 + **extended thinking** | Highest quality output |
-| HTML Report (7) | Python only | Template rendering |
-| Infographic (8) | claude-haiku-4-5 + Python | Metric extraction + matplotlib |
-
-**Extended thinking** means Claude spends extra computation reasoning through the problem
-before writing its answer — like a human analyst who thinks carefully before concluding.
-This is enabled for the two most important stages: Risk Assessment and Memo Writing.
-
----
-
-## Output Files
-
-All generated files are saved in the `outputs/` folder:
-
-```
-outputs/
-├── revenue_chart_AgnoAI_20260218_143052.png    ← Bear/Base/Bull chart
-├── report_AgnoAI_20260218_143105.html          ← Open in browser
-└── infographic_AgnoAI_20260218_143120.png      ← Visual summary
-```
-
-The investor memo text is stored in the database and returned via the API.
 
 ---
 
@@ -258,88 +340,29 @@ The investor memo text is stored in the database and returned via the API.
 → Edit `.env` and add your key from https://console.anthropic.com/
 
 **Analysis stuck on a stage**
-→ Check the terminal for error messages. The most common cause is an Anthropic API rate limit.
-→ Wait a minute and try again.
+→ Check the terminal for errors. Most common cause: Anthropic API rate limit.
+→ Click **Pause** then **Resume** to retry from the last completed stage.
 
 **"Module not found" error**
-→ Run `pip install -r requirements.txt` again.
+→ Run `pip install -r requirements.txt` again inside the project folder.
 
-**Chart not generating**
-→ Install matplotlib: `pip install matplotlib`
-→ Check the `outputs/` folder exists.
+**Frontend shows blank page**
+→ Run `cd frontend && npm run build && cd ..` then restart the server.
 
 **Port 8000 already in use**
-→ Change the port in `.env`: `PORT=8001`
+→ Change `PORT=8001` in `.env`.
 
 ---
 
 ## Cost Estimate
 
-A typical analysis uses approximately:
-- 50,000–100,000 input tokens (cached, so ~80% cheaper on repeat analyses)
+A typical full analysis (all 8 stages) uses:
+- 50,000–100,000 input tokens (prompt caching gives ~60–80% discount on repeats)
 - 8,000–15,000 output tokens
 
-At standard Anthropic API pricing, **one full analysis costs roughly $0.50–$2.00 USD**
-depending on the company's complexity and how much web research is needed.
+**Estimated Anthropic API cost: $0.50–$2.00 per full analysis** depending on company complexity.
 
 ---
 
-## Project Structure
-
-```
-AI VC Due Diligence V2/
-├── app/
-│   ├── config.py          ← Settings (API keys, models, paths)
-│   ├── main.py            ← FastAPI app
-│   ├── routes.py          ← All API endpoints
-│   └── schemas.py         ← Request/response data shapes
-├── pipeline/
-│   ├── orchestrator.py    ← Runs all 8 stages in sequence
-│   ├── state.py           ← Shared data passed between stages
-│   └── agents/
-│       ├── base.py        ← Base agent (Claude API + tool loop)
-│       ├── stage1_*.py    ← Company Researcher
-│       ├── stage2_*.py    ← Market Analyst
-│       ├── stage3_*.py    ← Financial Modeler
-│       ├── stage4_*.py    ← Risk Assessor
-│       ├── stage5_*.py    ← Comparable Deals  ← NEW in V2
-│       ├── stage6_*.py    ← Memo Writer
-│       ├── stage7_*.py    ← Report Generator
-│       └── stage8_*.py    ← Infographic Creator
-├── tools/
-│   ├── web_search.py      ← Tavily search wrapper
-│   ├── chart_generator.py ← matplotlib revenue chart
-│   ├── html_generator.py  ← HTML report template
-│   └── infographic_generator.py ← matplotlib infographic
-├── storage/
-│   └── database.py        ← SQLite: stores all analyses
-├── outputs/               ← Generated PNGs and HTML files saved here
-├── .env                   ← Your API keys (keep private)
-├── .env.example           ← Template showing what keys are needed
-├── requirements.txt       ← Python dependencies
-├── run.py                 ← Start the server
-└── README.md              ← This file
-```
-
----
-
-## V2 Improvements Over V1
-
-| Feature | V1 (Claude Code) | V2 (This version) |
-|---------|------------------|-------------------|
-| Access | CLI only | REST API — call from anywhere |
-| Comparable deals | Not included | New Stage 5 |
-| History | None | SQLite — all past analyses stored |
-| Progress tracking | Visual in terminal | API endpoint, pollable |
-| Structured outputs | Markdown files | JSON + files via API |
-| Cost tracking | None | Tokens per stage, total cost |
-| Extended thinking | Risk + Memo | Risk + Memo (same) |
-| Prompt caching | Not applicable | Yes — ~60-80% cheaper |
-| Web search | Claude Code built-in | Tavily (more reliable) |
-| Infographic | Gemini image API | matplotlib (always works) |
-| Multi-user | No | Yes — parallel jobs supported |
-
----
-
-*Built with Claude API (Anthropic) · Tavily Search · FastAPI · matplotlib*
+*Built with Claude API (Anthropic) · Tavily Search · FastAPI · React · MUI*
 *Analysis is AI-generated and for informational purposes only. Not investment advice.*

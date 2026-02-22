@@ -22,14 +22,14 @@ import type { StatusResponse } from '../../types';
 // Stage metadata
 // ============================================================
 const STAGE_LABELS: Record<number, string> = {
-  1: 'Company Research',
-  2: 'Market Analysis',
-  3: 'Financial Modeling',
-  4: 'Risk Assessment',
-  5: 'Comparable Deals',
-  6: 'Investor Memo',
-  7: 'HTML Report',
-  8: 'Infographic',
+  1: 'Execute Company Research',
+  2: 'Perform Market Analysis',
+  3: 'Build Financial Model',
+  4: 'Conduct Risk Assessment',
+  5: 'Research Comparable Deals',
+  6: 'Generate Investor Memo',
+  7: 'Render Investor Report',
+  8: 'Create Visual Summary',
 };
 
 function stageActiveMsg(stage: number, company: string): string {
@@ -41,8 +41,8 @@ function stageActiveMsg(stage: number, company: string): string {
     4: `Evaluating risk factors and scoring mitigation strategies`,
     5: `Sourcing comparable deals and benchmarking valuation multiples`,
     6: `Synthesizing all research and drafting the investment memorandum`,
-    7: `Rendering the formatted HTML report`,
-    8: `Generating the visual summary infographic`,
+    7: `Rendering the formatted investor report document`,
+    8: `Creating the visual one-pager executive summary`,
   };
   return msgs[stage] ?? 'Processing...';
 }
@@ -56,8 +56,8 @@ function stageDoneMsg(stage: number, company: string): string {
     4: `Risk factors identified and scored`,
     5: `Comparable deals and valuation benchmarks compiled`,
     6: `Investment memorandum drafted`,
-    7: `HTML report rendered and ready for download`,
-    8: `Infographic created — all deliverables ready`,
+    7: `Investor report rendered and ready for download`,
+    8: `Visual one-pager created — all deliverables ready`,
   };
   return msgs[stage] ?? 'Complete';
 }

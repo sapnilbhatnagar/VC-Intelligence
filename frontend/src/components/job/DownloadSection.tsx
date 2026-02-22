@@ -6,10 +6,9 @@ import {
   alpha,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
-import HtmlIcon from '@mui/icons-material/Html';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import ImageIcon from '@mui/icons-material/Image';
-import { getReportUrl, getChartUrl, getInfographicUrl } from '../../api/client';
+import ArticleIcon from '@mui/icons-material/Article';
+import SummarizeIcon from '@mui/icons-material/Summarize';
+import { getReportUrl, getOnePagerUrl } from '../../api/client';
 
 // ============================================================
 // Download action definitions
@@ -25,28 +24,20 @@ interface DownloadAction {
 
 const DOWNLOADS: DownloadAction[] = [
   {
-    label: 'Download Report',
-    description: 'Full HTML Report',
-    icon: <HtmlIcon fontSize="small" />,
+    label: 'Investor Report',
+    description: 'Full printable analysis document',
+    icon: <ArticleIcon fontSize="small" />,
     getUrl: getReportUrl,
     variant: 'contained',
-    tooltip: 'Download the complete HTML due diligence report',
+    tooltip: 'Download the complete investor due diligence report (HTML)',
   },
   {
-    label: 'Revenue Chart',
-    description: 'PNG Image',
-    icon: <BarChartIcon fontSize="small" />,
-    getUrl: getChartUrl,
+    label: 'Visual One-Pager',
+    description: 'Executive summary — presentation ready',
+    icon: <SummarizeIcon fontSize="small" />,
+    getUrl: getOnePagerUrl,
     variant: 'outlined',
-    tooltip: 'Download the revenue projection chart as PNG',
-  },
-  {
-    label: 'Infographic',
-    description: 'HTML Infographic',
-    icon: <ImageIcon fontSize="small" />,
-    getUrl: getInfographicUrl,
-    variant: 'outlined',
-    tooltip: 'Download the deal summary infographic (presentation-ready HTML)',
+    tooltip: 'Download the visual one-pager executive summary (HTML)',
   },
 ];
 
@@ -69,7 +60,7 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
       role="region"
       aria-label="Download analysis outputs"
       sx={{
-        p: 2,
+        p: 2.5,
         borderRadius: 2,
         border: '1px solid',
         borderColor: isCompleted ? (t) => alpha(t.palette.success.main, 0.25) : 'divider',
@@ -79,17 +70,18 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
         transition: 'all 0.3s ease',
       }}
     >
-      {/* Section title */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+      {/* Section header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
         <DownloadIcon
           fontSize="small"
           sx={{ color: isCompleted ? 'success.main' : 'text.disabled' }}
         />
         <Typography
-          variant="overline"
+          variant="subtitle2"
           sx={{
-            color: isCompleted ? 'success.main' : 'text.disabled',
-            fontSize: '0.65rem',
+            fontWeight: 700,
+            color: isCompleted ? 'text.primary' : 'text.disabled',
+            fontSize: '0.875rem',
           }}
         >
           Downloads
@@ -116,8 +108,17 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
         )}
       </Box>
 
+      <Typography
+        variant="caption"
+        sx={{ color: 'text.disabled', display: 'block', mb: 2, fontSize: '0.7rem' }}
+      >
+        {isCompleted
+          ? 'Your analysis deliverables are ready to download.'
+          : 'Downloads unlock when the analysis pipeline completes.'}
+      </Typography>
+
       {/* Download buttons */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
         {DOWNLOADS.map((dl) => (
           <Tooltip
             key={dl.label}
@@ -137,7 +138,7 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
                 aria-label={`${dl.label} — ${dl.description}`}
                 sx={{
                   justifyContent: 'flex-start',
-                  py: 1,
+                  py: 1.25,
                   fontSize: '0.8125rem',
                   ...(dl.variant === 'contained' && isCompleted
                     ? {
@@ -155,7 +156,7 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
                   <Typography
                     component="span"
                     variant="caption"
-                    sx={{ display: 'block', opacity: 0.7, fontSize: '0.65rem' }}
+                    sx={{ display: 'block', opacity: 0.65, fontSize: '0.65rem' }}
                   >
                     {dl.description}
                   </Typography>
@@ -165,15 +166,6 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
           </Tooltip>
         ))}
       </Box>
-
-      {!isCompleted && (
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.disabled', mt: 1.5, display: 'block', textAlign: 'center' }}
-        >
-          Downloads unlock when analysis completes
-        </Typography>
-      )}
     </Box>
   );
 }

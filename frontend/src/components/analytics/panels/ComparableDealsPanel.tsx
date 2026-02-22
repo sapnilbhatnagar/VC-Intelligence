@@ -1,8 +1,21 @@
 import { useState, useMemo } from 'react';
-import { Box, Typography, Card, CardContent, Chip, Button, alpha } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Button,
+  Divider,
+  Collapse,
+  alpha,
+} from '@mui/material';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
-import { cleanMarkdown } from '../../../utils/textClean';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { mdComponents } from '../../../utils/markdownComponents';
 
 // ============================================================
 // Types
@@ -45,21 +58,15 @@ function parseDeals(text: string): DealItem[] {
   const deals: DealItem[] = [];
 
   for (const line of lines) {
-    // Match numbered or bulleted list items
     const listMatch = line.match(/^(?:\d+[\.\)]|[-•*])\s+\*{0,2}([^:*–\-]{4,60})\*{0,2}[:\s–\-]+(.+)/);
     if (listMatch) {
       const raw = listMatch[1].trim();
       const detail = listMatch[2].trim().replace(/\*+/g, '');
-      deals.push({
-        name: raw,
-        detail,
-        valuation: extractValuation(line),
-      });
+      deals.push({ name: raw, detail, valuation: extractValuation(line) });
       if (deals.length >= 8) break;
       continue;
     }
 
-    // Match bold-title lines (e.g. "**Stripe** - description")
     const boldMatch = line.match(/^\*{2}([^*]{3,50})\*{2}\s*[-:–]\s*(.+)/);
     if (boldMatch) {
       deals.push({
@@ -71,8 +78,6 @@ function parseDeals(text: string): DealItem[] {
     }
   }
 
-  // Fallback: if we found fewer than 2 structured items, just treat each
-  // list line as a raw string and parse naively
   if (deals.length < 2) {
     return lines
       .filter((l) => /^(?:\d+[\.\)]|[-•*])\s/.test(l) && l.length > 15)
@@ -95,9 +100,9 @@ interface DealCardProps {
   index: number;
 }
 
-function DealCard({ deal, index }: DealCardProps) {
-  const ACCENT = '#6366F1';
+const ACCENT = '#6366F1';
 
+function DealCard({ deal, index }: DealCardProps) {
   return (
     <Box
       sx={{
@@ -180,7 +185,6 @@ function DealCard({ deal, index }: DealCardProps) {
               color: 'text.secondary',
               fontSize: '0.71rem',
               lineHeight: 1.5,
-              // Truncate long descriptions to 2 lines via -webkit-box
               overflow: 'hidden',
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -206,19 +210,12 @@ interface ComparableDealsPanelProps {
 // Component
 // ============================================================
 export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
-  const [expanded, setExpanded] = useState(false);
+  // Two independent expansion states: deal list and full report
+  const [showMoreDeals, setShowMoreDeals] = useState(false);
+  const [showFullReport, setShowFullReport] = useState(false);
 
-  const cleanText = useMemo(() => cleanMarkdown(text), [text]);
   const deals = useMemo(() => parseDeals(text), [text]);
-
-  // If structured parsing worked, show deal cards; otherwise fall back to prose
   const hasStructuredDeals = deals.length >= 2;
-
-  const PREVIEW_CHAR = 600;
-  const preview = cleanText.slice(0, PREVIEW_CHAR);
-  const hasMoreProse = cleanText.length > PREVIEW_CHAR;
-
-  const ACCENT = '#6366F1';
 
   return (
     <Card
@@ -229,21 +226,31 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
         backgroundColor: alpha('#ffffff', 0.03),
       }}
       role="region"
-      aria-label="Comparable deals"
+      aria-label="Comparable deals and market benchmarks"
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <CompareArrowsIcon fontSize="small" sx={{ color: ACCENT }} aria-hidden="true" />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Comparable Deals
-          </Typography>
+
+        {/* ── Header ── */}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.75 }}>
+          <CompareArrowsIcon
+            fontSize="small"
+            sx={{ color: ACCENT, mt: 0.15, flexShrink: 0 }}
+            aria-hidden="true"
+          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              Comparable Deals
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem', lineHeight: 1.3 }}>
+              Recent transactions, valuations, and benchmarks in the same sector
+            </Typography>
+          </Box>
           {hasStructuredDeals && (
             <Chip
-              label={`${deals.length} deals`}
+              label={`${deals.length} comps`}
               size="small"
               sx={{
-                ml: 'auto',
+                flexShrink: 0,
                 height: 20,
                 fontSize: '0.62rem',
                 fontWeight: 600,
@@ -257,13 +264,13 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
 
         {hasStructuredDeals ? (
           <>
-            {/* Card grid */}
+            {/* ── Deal cards ── */}
             <Box
               role="list"
               aria-label="Comparable deals list"
-              sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+              sx={{ display: 'flex', flexDirection: 'column', gap: 0.875, mt: 1.5 }}
             >
-              {(expanded ? deals : deals.slice(0, 4)).map((deal, i) => (
+              {(showMoreDeals ? deals : deals.slice(0, 4)).map((deal, i) => (
                 <DealCard key={i} deal={deal} index={i} />
               ))}
             </Box>
@@ -271,7 +278,7 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
             {deals.length > 4 && (
               <Button
                 size="small"
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => setShowMoreDeals((v) => !v)}
                 sx={{
                   mt: 1.25,
                   fontSize: '0.68rem',
@@ -281,84 +288,118 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
                   color: ACCENT,
                   '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
                 }}
-                aria-expanded={expanded}
-                aria-controls="deals-list"
+                aria-expanded={showMoreDeals}
               >
-                {expanded
-                  ? 'Show fewer deals'
-                  : `Show ${deals.length - 4} more deal${deals.length - 4 > 1 ? 's' : ''}`}
+                {showMoreDeals
+                  ? 'Show fewer comps'
+                  : `Show ${deals.length - 4} more comp${deals.length - 4 > 1 ? 's' : ''}`}
               </Button>
             )}
 
-            {/* Prose text toggle */}
-            <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+            {/* ── Full report toggle ── */}
+            <Divider sx={{ mt: 1.5, mb: 1 }} />
+            <Box>
               <Button
                 size="small"
-                onClick={() => setExpanded((v) => !v)}
+                startIcon={<ArticleOutlinedIcon fontSize="small" />}
+                onClick={() => setShowFullReport((v) => !v)}
                 sx={{
-                  fontSize: '0.65rem',
-                  p: 0,
-                  minWidth: 0,
-                  textTransform: 'none',
-                  color: 'text.disabled',
-                  '&:hover': { backgroundColor: 'transparent', color: 'text.secondary' },
-                }}
-                aria-expanded={expanded}
-              >
-                {expanded ? 'Hide full report' : 'View full comparable deals report'}
-              </Button>
-              {expanded && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    mt: 1,
-                    color: 'text.secondary',
-                    lineHeight: 1.6,
-                    fontSize: '0.73rem',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {cleanText}
-                </Typography>
-              )}
-            </Box>
-          </>
-        ) : (
-          /* Fallback: plain prose view */
-          <>
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.secondary',
-                lineHeight: 1.65,
-                display: 'block',
-                fontSize: '0.75rem',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {expanded ? cleanText : preview}
-              {!expanded && hasMoreProse && '...'}
-            </Typography>
-
-            {hasMoreProse && (
-              <Button
-                size="small"
-                onClick={() => setExpanded((v) => !v)}
-                sx={{
-                  mt: 1,
                   fontSize: '0.68rem',
                   p: 0,
                   minWidth: 0,
                   textTransform: 'none',
-                  color: ACCENT,
-                  '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+                  color: 'text.secondary',
+                  '&:hover': { backgroundColor: 'transparent', color: 'text.primary' },
                 }}
-                aria-expanded={expanded}
+                aria-expanded={showFullReport}
+                aria-controls="comps-full-report"
               >
-                {expanded ? 'Show less' : 'Show more'}
+                {showFullReport ? 'Hide detailed comps analysis' : 'View detailed comps analysis'}
               </Button>
-            )}
+
+              <Collapse in={showFullReport} unmountOnExit>
+                <Box
+                  id="comps-full-report"
+                  sx={{
+                    mt: 1.5,
+                    pt: 1.5,
+                    borderTop: '1px solid',
+                    borderColor: 'divider',
+                    // Markdown styles within this section
+                    '& h2, & h3': { fontSize: '0.85rem', fontWeight: 700, mt: 1.5, mb: 0.5 },
+                    '& h4': { fontSize: '0.78rem', fontWeight: 700, mt: 1.25, mb: 0.25 },
+                    '& p': { fontSize: '0.78rem', lineHeight: 1.65, color: 'text.secondary', mb: 0.75 },
+                    '& li': { fontSize: '0.78rem', lineHeight: 1.65, color: 'text.secondary' },
+                    '& strong': { color: 'text.primary', fontWeight: 700 },
+                    '& table': { width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', mb: 1 },
+                    '& th': {
+                      textAlign: 'left',
+                      p: 0.75,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      color: 'text.disabled',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontSize: '0.65rem',
+                    },
+                    '& td': {
+                      p: 0.75,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      color: 'text.secondary',
+                    },
+                  }}
+                  aria-label="Full comparable deals analysis"
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      color: ACCENT,
+                      fontWeight: 600,
+                      fontSize: '0.65rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      mb: 1,
+                    }}
+                  >
+                    Full Comps Analysis Report
+                  </Typography>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {text}
+                  </ReactMarkdown>
+                </Box>
+              </Collapse>
+            </Box>
+          </>
+        ) : (
+          /* Fallback: the AI produced prose rather than a structured list */
+          <>
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                color: 'text.disabled',
+                fontSize: '0.65rem',
+                mb: 1.5,
+                fontStyle: 'italic',
+              }}
+            >
+              Comps presented as narrative analysis
+            </Typography>
+            <Box
+              sx={{
+                '& h2, & h3': { fontSize: '0.85rem', fontWeight: 700, mt: 1.25, mb: 0.5 },
+                '& p': { fontSize: '0.78rem', lineHeight: 1.65, color: 'text.secondary', mb: 0.75 },
+                '& li': { fontSize: '0.78rem', lineHeight: 1.65, color: 'text.secondary' },
+                '& strong': { color: 'text.primary', fontWeight: 700 },
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                {text}
+              </ReactMarkdown>
+            </Box>
           </>
         )}
       </CardContent>
