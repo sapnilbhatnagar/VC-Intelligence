@@ -17,6 +17,10 @@ import {
   CardContent,
   Tabs,
   Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
@@ -32,7 +36,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import CodeIcon from '@mui/icons-material/Code';
 import ImageIcon from '@mui/icons-material/Image';
 import BoltIcon from '@mui/icons-material/Bolt';
-import { getJobStatus, getJobResults, stopJob, resumeJob, startAnalysis } from '../api/client';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { getJobStatus, getJobResults, stopJob, resumeJob, startAnalysis, completeRemaining } from '../api/client';
 import { useJobStore } from '../store/jobStore';
 import { useAuthStore } from '../store/authStore';
 import PipelineStepper from '../components/job/PipelineStepper';
@@ -494,8 +499,10 @@ export default function JobView() {
     accessibilitySettings,
     stopInProgress,
     resumeInProgress,
+    completeInProgress,
     setStopInProgress,
     setResumeInProgress,
+    setCompleteInProgress,
     pendingAnalysis,
     setPendingAnalysis,
     setCurrentJobId,
@@ -509,6 +516,9 @@ export default function JobView() {
 
   // ── Tab state ─────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState(0);
+
+  // ── Complete remaining dialog ────────────────────────────
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
   // If /job/new but no pending analysis, redirect home
   useEffect(() => {
@@ -562,15 +572,17 @@ export default function JobView() {
   const isPaused = statusData?.status === 'paused';
   const isRunning = statusData?.status === 'running';
 
-  // ── Clear stop/resume flags when status actually changes ──
+  // ── Clear stop/resume/complete flags when status actually changes ──
   useEffect(() => {
     if (isPaused || isFailed || isCompleted) {
       setStopInProgress(false);
+      setCompleteInProgress(false);
     }
     if (isRunning) {
       setResumeInProgress(false);
+      setCompleteInProgress(false);
     }
-  }, [statusData?.status, isPaused, isFailed, isCompleted, isRunning, setStopInProgress, setResumeInProgress]);
+  }, [statusData?.status, isPaused, isFailed, isCompleted, isRunning, setStopInProgress, setResumeInProgress, setCompleteInProgress]);
 
   // ── Stop/Resume handlers ───────────────────────────────────
   const handleStop = async () => {
@@ -596,6 +608,28 @@ export default function JobView() {
       setResumeInProgress(false);
     }
   };
+
+  const handleCompleteRemaining = async () => {
+    if (!jobId) return;
+    setCompleteDialogOpen(false);
+    setCompleteInProgress(true);
+    try {
+      await completeRemaining(jobId, null); // null = all 8 stages
+      await queryClient.refetchQueries({ queryKey: ['status', jobId] });
+      await queryClient.refetchQueries({ queryKey: ['results', jobId] });
+    } catch (e) {
+      console.error('Complete remaining failed:', e);
+      setCompleteInProgress(false);
+    }
+  };
+
+  // Determine if "Complete Full Analysis" button should show
+  const allStages = [1, 2, 3, 4, 5, 6, 7, 8];
+  const selectedStages = statusData?.selected_stages ?? null;
+  const isPartialAnalysis = selectedStages !== null && selectedStages.length < 8;
+  const showCompleteButton = (isCompleted || isPaused) && isPartialAnalysis && !completeInProgress;
+  const missingStages = selectedStages ? allStages.filter((s) => !selectedStages.includes(s)) : [];
+  const deltaCost = Math.max(0, computeCreditCost(null) - computeCreditCost(selectedStages));
 
   // ── Results fetch (completed, paused, OR running for progressive loading) ─
   const { data: resultsData } = useQuery<ResultsResponse>({
@@ -782,6 +816,33 @@ export default function JobView() {
             </Button>
           )}
 
+          {/* COMPLETE FULL ANALYSIS button */}
+          {showCompleteButton && (
+            <Button
+              variant="outlined"
+              color="success"
+              size="small"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={() => setCompleteDialogOpen(true)}
+              aria-label="Complete full analysis"
+              sx={{ fontWeight: 700, borderWidth: 2, '&:hover': { borderWidth: 2 } }}
+            >
+              Complete Full Analysis
+            </Button>
+          )}
+          {completeInProgress && (
+            <Button
+              variant="outlined"
+              color="success"
+              size="small"
+              startIcon={<CircularProgress size={14} color="inherit" />}
+              disabled
+              sx={{ fontWeight: 700, borderWidth: 2 }}
+            >
+              Completing...
+            </Button>
+          )}
+
           {/* Status chip */}
           {statusLoading ? (
             <Skeleton width={90} height={26} sx={{ borderRadius: 2 }} />
@@ -931,6 +992,73 @@ export default function JobView() {
           />
         )}
       </Box>
+
+      {/* ── Complete Full Analysis Confirmation Dialog ── */}
+      <Dialog
+        open={completeDialogOpen}
+        onClose={() => setCompleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1rem' }}>
+          Complete Full Analysis
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+            Run the remaining pipeline stages to get a complete analysis.
+          </Typography>
+
+          <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+            Completed stages
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
+            {(selectedStages ?? []).map((s) => (
+              <Chip
+                key={s}
+                label={STAGE_INFO[s - 1]?.name ?? `Stage ${s}`}
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ fontSize: '0.7rem', height: 24 }}
+              />
+            ))}
+          </Box>
+
+          <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+            Stages to run
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 2 }}>
+            {missingStages.map((s) => (
+              <Chip
+                key={s}
+                label={STAGE_INFO[s - 1]?.name ?? `Stage ${s}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontSize: '0.7rem', height: 24 }}
+              />
+            ))}
+          </Box>
+
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            Additional cost: {deltaCost} credit{deltaCost !== 1 ? 's' : ''}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCompleteDialogOpen(false)} size="small">
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            onClick={handleCompleteRemaining}
+            sx={{ fontWeight: 700 }}
+          >
+            Complete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import DataSourceTooltip from '../DataSourceTooltip';
 
 // ============================================================
 // Helpers
@@ -354,7 +355,7 @@ interface FinancialProjectionsPanelProps {
 // ============================================================
 // Component
 // ============================================================
-export default function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelProps) {
+function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelProps) {
   const { lines, currentArrRaw, year5Base, moicEstimate, stage, yearStart } = useMemo(() => {
     const empty = { lines: [] as LineData[], currentArrRaw: null, year5Base: null, moicEstimate: null, stage: null, yearStart: null };
     if (!projections) return empty;
@@ -488,6 +489,11 @@ export default function FinancialProjectionsPanel({ projections }: FinancialProj
               5-year revenue projections — Bear / Base / Bull scenarios
             </Typography>
           </Box>
+          <DataSourceTooltip
+            stageName="Build Financial Model"
+            stageNumber={3}
+            description="Revenue projections computed from AI-generated growth rate scenarios (Bear/Base/Bull) applied to the company's current ARR."
+          />
           {stage && (
             <Chip
               label={stage}
@@ -549,3 +555,5 @@ export default function FinancialProjectionsPanel({ projections }: FinancialProj
     </Card>
   );
 }
+
+export default memo(FinancialProjectionsPanel);

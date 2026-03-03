@@ -23,6 +23,28 @@ def credit_cost(selected_stages: list[int] | None) -> int:
     return max(2, len(selected_stages) - 2)
 
 
+# Stage number -> output keys that prove the stage completed (mirrors orchestrator.py)
+_STAGE_OUTPUT_KEYS = {
+    1: ["company_info"],
+    2: ["market_analysis"],
+    3: ["financial_model_text"],
+    4: ["risk_assessment"],
+    5: ["comparable_deals"],
+    6: ["investor_memo"],
+    7: ["html_report_path"],
+    8: ["infographic_path"],
+}
+
+
+def get_completed_stages(analysis: dict) -> set[int]:
+    """Return set of stage numbers that have outputs in the DB."""
+    completed = set()
+    for stage_num, keys in _STAGE_OUTPUT_KEYS.items():
+        if all(analysis.get(k) is not None for k in keys):
+            completed.add(stage_num)
+    return completed
+
+
 # ============================================================
 # Schema init
 # ============================================================

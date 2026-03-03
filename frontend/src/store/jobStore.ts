@@ -24,9 +24,10 @@ interface JobState {
   sidebarOpen: boolean;
   apiHealthy: boolean | null;
 
-  // In-flight stop/resume flags
+  // In-flight stop/resume/complete flags
   stopInProgress: boolean;
   resumeInProgress: boolean;
+  completeInProgress: boolean;
 
   // Actions
   setCurrentJobId: (jobId: string | null) => void;
@@ -43,6 +44,7 @@ interface JobState {
   setThemeMode: (mode: ThemeMode) => void;
   setStopInProgress: (v: boolean) => void;
   setResumeInProgress: (v: boolean) => void;
+  setCompleteInProgress: (v: boolean) => void;
 }
 
 // ============================================================
@@ -70,6 +72,7 @@ export const useJobStore = create<JobState>()(
         apiHealthy: null,
         stopInProgress: false,
         resumeInProgress: false,
+        completeInProgress: false,
 
         // ── Actions ───────────────────────────────────────────
         setCurrentJobId: (jobId) =>
@@ -117,6 +120,9 @@ export const useJobStore = create<JobState>()(
 
         setResumeInProgress: (v) =>
           set({ resumeInProgress: v }, false, 'setResumeInProgress'),
+
+        setCompleteInProgress: (v) =>
+          set({ completeInProgress: v }, false, 'setCompleteInProgress'),
       }),
       {
         name: 'vc-job-store',

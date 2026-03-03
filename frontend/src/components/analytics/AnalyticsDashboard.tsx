@@ -15,6 +15,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ResultsResponse, StatusResponse } from '../../types';
 import { mdComponents } from '../../utils/markdownComponents';
+import DataSourceTooltip from './DataSourceTooltip';
 import KeyMetricsPanel from './panels/KeyMetricsPanel';
 import InvestmentHighlightsPanel from './panels/InvestmentHighlightsPanel';
 import FinancialProjectionsPanel from './panels/FinancialProjectionsPanel';
@@ -22,14 +23,12 @@ import RiskAssessmentPanel from './panels/RiskAssessmentPanel';
 import ComparableDealsPanel from './panels/ComparableDealsPanel';
 
 // ============================================================
-// Market Intelligence Summary — collapsible panel with react-markdown
+// Market Intelligence Summary — collapsible, secondary placement
 // ============================================================
-const PREVIEW_LINES = 15;
+const PREVIEW_LINES = 12;
 
 function MarketSummary({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
-
-  // Split into lines for preview truncation
   const lines = useMemo(() => text.split('\n'), [text]);
   const isLong = lines.length > PREVIEW_LINES;
   const previewText = isLong ? lines.slice(0, PREVIEW_LINES).join('\n') : text;
@@ -46,11 +45,17 @@ function MarketSummary({ text }: { text: string }) {
       role="region"
       aria-label="Market intelligence summary"
     >
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
-        Market Intelligence Summary
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Market Intelligence Summary
+        </Typography>
+        <DataSourceTooltip
+          stageName="Perform Market Analysis"
+          stageNumber={2}
+          description="Comprehensive market analysis including TAM/SAM/SOM sizing, competitive landscape, and industry trends from the market research stage."
+        />
+      </Box>
 
-      {/* Preview — always visible */}
       {!expanded && (
         <Box>
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
@@ -64,14 +69,12 @@ function MarketSummary({ text }: { text: string }) {
         </Box>
       )}
 
-      {/* Full content — revealed on expand */}
       <Collapse in={expanded} unmountOnExit>
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
           {text}
         </ReactMarkdown>
       </Collapse>
 
-      {/* Show more / Show less toggle */}
       {isLong && (
         <Button
           size="small"
@@ -88,7 +91,7 @@ function MarketSummary({ text }: { text: string }) {
           }}
           aria-expanded={expanded}
         >
-          {expanded ? 'Show less' : 'Read more…'}
+          {expanded ? 'Show less' : 'Read more...'}
         </Button>
       )}
     </Box>
@@ -106,7 +109,7 @@ export interface AnalyticsDashboardProps {
 // ============================================================
 // Skeleton panel placeholder
 // ============================================================
-function PanelSkeleton({ label: _label, stageHint }: { label: string; stageHint?: string }) {
+function PanelSkeleton({ stageHint }: { stageHint?: string }) {
   return (
     <Box
       sx={{
@@ -156,7 +159,6 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
   const totalStages = statusData?.total_stages ?? 8;
   const isRunning = statusData?.status === 'running';
 
-  // If there's truly no data yet, show a placeholder
   if (!resultsData && stageCount < 2) {
     return (
       <Box
@@ -183,10 +185,10 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
 
   return (
     <Box role="region" aria-label="Analytics dashboard">
-      {/* Panel 1: Key Metrics — full width */}
+      {/* ── Row 1: Key Metrics Tiles (full width) ── */}
       {resultsData && (
         <Fade in timeout={400}>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 2.5 }}>
             <KeyMetricsPanel
               resultsData={resultsData}
               stageCount={stageCount}
@@ -196,9 +198,8 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
         </Fade>
       )}
 
-      {/* Panels 2-5: 2-column responsive grid */}
-      <Grid container spacing={2.5}>
-        {/* Panel 2: Investment Highlights (from memo) */}
+      {/* ── Row 2: Primary investor panels — Highlights + Financial ── */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
           {hasMemo ? (
             <Fade in timeout={500}>
@@ -208,13 +209,11 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
             </Fade>
           ) : (
             <PanelSkeleton
-              label="Investment Highlights"
               stageHint={isRunning ? 'Stage 6: Generate Investor Memo' : undefined}
             />
           )}
         </Grid>
 
-        {/* Panel 3: Financial Projections */}
         <Grid item xs={12} md={6}>
           {hasFinancials ? (
             <Fade in timeout={600}>
@@ -226,13 +225,14 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
             </Fade>
           ) : (
             <PanelSkeleton
-              label="Financial Projections"
               stageHint={isRunning && stageCount < 3 ? 'Stage 3: Build Financial Model' : undefined}
             />
           )}
         </Grid>
+      </Grid>
 
-        {/* Panel 4: Risk Assessment */}
+      {/* ── Row 3: Risk + Comps ── */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
           {hasRisk ? (
             <Fade in timeout={700}>
@@ -245,13 +245,11 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
             </Fade>
           ) : (
             <PanelSkeleton
-              label="Risk Assessment"
               stageHint={isRunning && stageCount < 4 ? 'Stage 4: Conduct Risk Assessment' : undefined}
             />
           )}
         </Grid>
 
-        {/* Panel 5: Comparable Deals */}
         <Grid item xs={12} md={6}>
           {hasComps ? (
             <Fade in timeout={800}>
@@ -261,23 +259,20 @@ export default function AnalyticsDashboard({ resultsData, statusData }: Analytic
             </Fade>
           ) : (
             <PanelSkeleton
-              label="Comparable Deals"
               stageHint={isRunning && stageCount < 5 ? 'Stage 5: Research Comparable Deals' : undefined}
             />
           )}
         </Grid>
-
-        {/* Panel 6: Market Intelligence — full width when available */}
-        {hasMarket && (
-          <Grid item xs={12}>
-            <Fade in timeout={500}>
-              <Box>
-                <MarketSummary text={resultsData!.market_analysis!} />
-              </Box>
-            </Fade>
-          </Grid>
-        )}
       </Grid>
+
+      {/* ── Row 4: Market Intelligence — full width, secondary importance ── */}
+      {hasMarket && (
+        <Fade in timeout={500}>
+          <Box>
+            <MarketSummary text={resultsData!.market_analysis!} />
+          </Box>
+        </Fade>
+      )}
     </Box>
   );
 }

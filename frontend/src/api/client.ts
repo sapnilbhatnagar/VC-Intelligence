@@ -15,8 +15,12 @@ import type {
 // ============================================================
 // Axios Instance
 // ============================================================
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1';
+
 export const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -272,7 +276,5 @@ export async function adminDeleteUser(userId: string): Promise<void> {
 // ============================================================
 // Download URL helpers (use window.open — no auth required)
 // ============================================================
-const BASE = '/api/v1';
-
-export const getReportUrl = (jobId: string) => `${BASE}/results/${jobId}/report`;
-export const getOnePagerUrl = (jobId: string) => `${BASE}/results/${jobId}/one-pager`;
+export const getReportUrl = (jobId: string) => `${API_BASE}/results/${jobId}/report`;
+export const getOnePagerUrl = (jobId: string) => `${API_BASE}/results/${jobId}/one-pager`;

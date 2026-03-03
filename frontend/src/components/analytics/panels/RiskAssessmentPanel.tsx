@@ -1,8 +1,13 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Typography, Card, CardContent, Button, alpha, Divider } from '@mui/material';
+import { useState, useEffect, useMemo, useRef, memo } from 'react';
+import { Box, Typography, Card, CardContent, Button, alpha, Divider, Collapse } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import { cleanMarkdown } from '../../../utils/textClean';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { mdComponents } from '../../../utils/markdownComponents';
+import DataSourceTooltip from '../DataSourceTooltip';
 
 // ============================================================
 // Helpers
@@ -200,15 +205,19 @@ interface RiskAssessmentPanelProps {
 // ============================================================
 // Component
 // ============================================================
-export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
+function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
   const [expanded, setExpanded] = useState(false);
+  const [fullExpanded, setFullExpanded] = useState(false);
 
   const riskColor = getRiskColor(riskScore);
   const riskLabel = getRiskLabel(riskScore);
 
-  const cleanText = useMemo(() => cleanMarkdown(text), [text]);
   const bullets = useMemo(() => extractRiskFactors(text, 6), [text]);
   const categories = useMemo(() => parseRiskCategories(text), [text]);
+  const rationaleText = useMemo(() => {
+    const m = text.match(/\*\*Rationale:\*\*\s*([^\n]{30,400})/i);
+    return m ? m[1].trim() : null;
+  }, [text]);
 
   const visibleBullets = expanded ? bullets : bullets.slice(0, 3);
   const hiddenCount = bullets.length - 3;
@@ -226,11 +235,16 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 2 }}>
           <ShieldIcon fontSize="small" sx={{ color: riskColor }} aria-hidden="true" />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>
             Risk Assessment
           </Typography>
+          <DataSourceTooltip
+            stageName="Conduct Risk Assessment"
+            stageNumber={4}
+            description="Risk factors and composite score from the AI risk assessment stage, evaluating market, financial, regulatory, execution, and technology risks."
+          />
         </Box>
 
         {/* Donut + summary */}
@@ -408,30 +422,63 @@ export default function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentP
         )}
 
         {/* Rationale paragraph (from Summary Assessment section) */}
-        {(() => {
-          const rationaleMatch = text.match(/\*\*Rationale:\*\*\s*([^\n]{30,400})/i);
-          if (!rationaleMatch) return null;
-          return (
+        {rationaleText && (
+          <Box
+            sx={{
+              mt: 1.5,
+              p: 1.25,
+              borderRadius: 1.5,
+              backgroundColor: alpha(riskColor, 0.05),
+              border: '1px solid',
+              borderColor: alpha(riskColor, 0.15),
+            }}
+          >
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+              {`*${rationaleText}*`}
+            </ReactMarkdown>
+          </Box>
+        )}
+
+        {/* View Full Assessment — expandable */}
+        <Box sx={{ mt: 1.5 }}>
+          <Button
+            size="small"
+            onClick={() => setFullExpanded((v) => !v)}
+            endIcon={fullExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            sx={{
+              p: 0,
+              minWidth: 0,
+              fontSize: '0.7rem',
+              textTransform: 'none',
+              color: riskColor,
+              '&:hover': { backgroundColor: 'transparent', textDecoration: 'underline' },
+            }}
+            aria-expanded={fullExpanded}
+          >
+            {fullExpanded ? 'Hide full assessment' : 'View full assessment'}
+          </Button>
+          <Collapse in={fullExpanded} unmountOnExit>
             <Box
               sx={{
-                mt: 1.5,
-                p: 1.25,
+                mt: 1,
+                p: 1.5,
                 borderRadius: 1.5,
-                backgroundColor: alpha(riskColor, 0.05),
                 border: '1px solid',
-                borderColor: alpha(riskColor, 0.15),
+                borderColor: 'divider',
+                backgroundColor: alpha('#ffffff', 0.02),
+                maxHeight: 400,
+                overflow: 'auto',
               }}
             >
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', lineHeight: 1.6, fontSize: '0.73rem', fontStyle: 'italic' }}
-              >
-                {cleanText.match(/Rationale:?\s*([^\n]{30,400})/i)?.[1]?.trim() ?? rationaleMatch[1].trim()}
-              </Typography>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                {text}
+              </ReactMarkdown>
             </Box>
-          );
-        })()}
+          </Collapse>
+        </Box>
       </CardContent>
     </Card>
   );
 }
+
+export default memo(RiskAssessmentPanel);

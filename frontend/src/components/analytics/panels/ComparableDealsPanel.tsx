@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   Box,
   Typography,
@@ -16,6 +16,7 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { mdComponents } from '../../../utils/markdownComponents';
+import DataSourceTooltip from '../DataSourceTooltip';
 
 // ============================================================
 // Types
@@ -209,7 +210,7 @@ interface ComparableDealsPanelProps {
 // ============================================================
 // Component
 // ============================================================
-export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
+function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
   // Two independent expansion states: deal list and full report
   const [showMoreDeals, setShowMoreDeals] = useState(false);
   const [showFullReport, setShowFullReport] = useState(false);
@@ -245,6 +246,11 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
               Recent transactions, valuations, and benchmarks in the same sector
             </Typography>
           </Box>
+          <DataSourceTooltip
+            stageName="Research Comparable Deals"
+            stageNumber={5}
+            description="Comparable transactions and market benchmarks identified by the AI comps research stage, including deal sizes and valuations."
+          />
           {hasStructuredDeals && (
             <Chip
               label={`${deals.length} comps`}
@@ -406,3 +412,5 @@ export default function ComparableDealsPanel({ text }: ComparableDealsPanelProps
     </Card>
   );
 }
+
+export default memo(ComparableDealsPanel);

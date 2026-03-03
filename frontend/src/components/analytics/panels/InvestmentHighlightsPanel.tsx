@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import DataSourceTooltip from '../DataSourceTooltip';
 
 // ============================================================
 // Accent palette cycling through multiple colors
@@ -135,7 +136,7 @@ interface InvestmentHighlightsPanelProps {
 // ============================================================
 // Component
 // ============================================================
-export default function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps) {
+function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps) {
   const highlights = useMemo(
     () => (memoText ? extractHighlights(memoText) : []),
     [memoText],
@@ -154,11 +155,16 @@ export default function InvestmentHighlightsPanel({ memoText }: InvestmentHighli
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 2 }}>
           <StarBorderIcon fontSize="small" sx={{ color: '#F59E0B' }} aria-hidden="true" />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>
             Key Investment Highlights
           </Typography>
+          <DataSourceTooltip
+            stageName="Generate Investor Memo"
+            stageNumber={6}
+            description="Key highlights extracted from the AI-generated investor memo, which synthesizes company research, market analysis, and financial modelling."
+          />
         </Box>
 
         {/* Content */}
@@ -251,3 +257,5 @@ export default function InvestmentHighlightsPanel({ memoText }: InvestmentHighli
     </Card>
   );
 }
+
+export default memo(InvestmentHighlightsPanel);

@@ -30,6 +30,13 @@ class AnalyzeRequest(BaseModel):
     )
 
 
+class CompleteRemainingRequest(BaseModel):
+    selected_stages: Optional[list[int]] = Field(
+        None,
+        description="New full stage set. null = all 8. Delta cost is charged.",
+    )
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: str
