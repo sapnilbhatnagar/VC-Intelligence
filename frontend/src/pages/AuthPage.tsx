@@ -183,9 +183,6 @@ export default function AuthPage() {
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'background.default',
-        // Subtle radial glow from top
-        backgroundImage: (t) =>
-          `radial-gradient(ellipse 80% 60% at 50% 0%, ${alpha(t.palette.primary.main, 0.06)} 0%, transparent 70%)`,
         px: 2,
       }}
     >
@@ -224,8 +221,7 @@ export default function AuthPage() {
           maxWidth: 460,
           position: 'relative',
           overflow: 'visible',
-          boxShadow: (t) =>
-            `0 0 0 1px ${alpha(t.palette.primary.main, 0.25)}, 0 24px 48px ${alpha('#000', 0.45)}`,
+          boxShadow: `0 24px 48px ${alpha('#000', 0.45)}`,
           '&::before': {
             content: '""',
             position: 'absolute',

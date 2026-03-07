@@ -315,7 +315,6 @@ export function createAppTheme(mode: ThemeMode): Theme {
               '&:hover fieldset': { borderColor: C.borderHover },
               '&.Mui-focused fieldset': {
                 borderColor: C.accent,
-                boxShadow: `0 0 0 3px ${alpha(C.accent, 0.15)}`,
               },
             },
           },
