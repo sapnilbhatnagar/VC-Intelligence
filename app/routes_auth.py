@@ -10,7 +10,7 @@ from app.schemas import (
 )
 from storage.database import (
     create_user, get_user_by_email, get_user_by_id, get_user_by_username,
-    add_credits, list_analyses_by_user, update_user,
+    add_credits, list_analyses_by_user, update_user, update_last_login, log_credit_transaction,
 )
 from app.config import settings
 
@@ -28,6 +28,7 @@ async def register(req: UserRegisterRequest):
         user_id, req.email, hash_password(req.password),
         role="user", credits=5, username=req.username, name=req.name,
     )
+    await log_credit_transaction(user_id, 5, "signup_bonus", "Welcome credits on registration")
     return TokenResponse(
         access_token=create_access_token(user_id, req.email, "user"),
         user_id=user_id, email=req.email, username=req.username,
@@ -44,6 +45,7 @@ async def login(req: UserLoginRequest):
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     token = create_access_token(user["id"], user["email"], user["role"])
+    await update_last_login(user["id"])
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
@@ -77,6 +79,7 @@ async def my_analyses(current_user: dict = Depends(require_auth)):
 async def purchase_credits(req: AddCreditsRequest, current_user: dict = Depends(require_auth)):
     """Mock payment endpoint — adds credits without real payment processing."""
     await add_credits(current_user["id"], req.amount)
+    await log_credit_transaction(current_user["id"], req.amount, "purchase", f"User purchased {req.amount} credits")
     user = await get_user_by_id(current_user["id"])
     return {"message": f"Added {req.amount} credits.", "new_balance": user["credits"]}
 
@@ -140,6 +143,7 @@ async def google_auth(req: GoogleAuthRequest):
         user = await get_user_by_id(uid)
 
     token = create_access_token(user["id"], user["email"], user["role"])
+    await update_last_login(user["id"])
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],

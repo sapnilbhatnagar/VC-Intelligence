@@ -87,6 +87,7 @@ class UserResponse(BaseModel):
     role: str
     credits: int
     created_at: str
+    last_login_at: Optional[str] = None
 
 class AssignCreditsRequest(BaseModel):
     credits: int = Field(..., ge=0)

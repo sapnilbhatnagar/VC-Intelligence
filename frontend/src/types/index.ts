@@ -106,13 +106,33 @@ export interface AdminStats {
   total_users: number;
   total_analyses: number;
   completed_analyses: number;
+  running_analyses: number;
+  failed_analyses: number;
+  paused_analyses: number;
+  total_credits_in_circulation: number;
+  users_low_credits: number;
+  analyses_today: number;
+  new_users_today: number;
 }
 
 export interface AdminUser {
   id: string;
   email: string;
+  username?: string;
+  name?: string;
   role: 'admin' | 'user';
   credits: number;
+  created_at: string;
+  last_login_at?: string;
+}
+
+export interface CreditTransaction {
+  id: string;
+  user_id: string;
+  user_email: string;
+  amount: number;
+  type: 'purchase' | 'admin_grant' | 'admin_set' | 'usage' | 'signup_bonus';
+  description: string;
   created_at: string;
 }
 

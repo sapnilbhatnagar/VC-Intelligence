@@ -1,1035 +1,1133 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import {
+  Box, Typography, Card, CardContent, Grid, Chip, Avatar,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  IconButton, Button, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Select, MenuItem, FormControl, InputLabel,
+  Tabs, Tab, Tooltip, Alert, Skeleton, Badge,
+} from '@mui/material';
+import {
+  People, BarChart, CheckCircle, Error, Pause, CreditCard,
+  Warning, TrendingUp, Add, Edit, Delete, Refresh,
+  PersonAdd, AdminPanelSettings, Timeline, MonetizationOn,
+} from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  TextField,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert,
-  Skeleton,
-  Tooltip,
-  alpha,
-  Collapse,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import PeopleIcon from '@mui/icons-material/People';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
-import CloseIcon from '@mui/icons-material/Close';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import PersonIcon from '@mui/icons-material/Person';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import {
-  getAdminStats,
-  getAdminUsers,
-  getAdminAnalyses,
-  setUserCredits,
-  grantUserCredits,
-  adminUpdateUser,
-  adminCreateUser,
-  adminDeleteUser,
+  getAdminStats, getAdminUsers, getAdminAnalyses, getAdminCreditTransactions,
+  grantUserCredits, adminUpdateUser, adminCreateUser, adminDeleteUser, deleteAnalysis,
 } from '../api/client';
-import type { AdminUser, AdminAnalysis, AdminStats, RecommendationType } from '../types';
+import type { AdminUser, AdminAnalysis, CreditTransaction, AdminStats } from '../types';
 
-// ============================================================
-// Recommendation colors
-// ============================================================
-const RECO_COLOR: Record<RecommendationType, string> = {
-  'STRONG BUY': '#10B981',
-  BUY: '#3B82F6',
-  HOLD: '#F59E0B',
-  PASS: '#EF4444',
-  'STRONG PASS': '#7F1D1D',
-};
+// ── Helpers ────────────────────────────────────────────────────────────────
 
-// ============================================================
-// Stat card
-// ============================================================
-interface StatCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: number | null;
-  loading: boolean;
-  color: string;
+function timeAgo(iso: string | null | undefined): string {
+  if (!iso) return 'Never';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
-function StatCard({ icon, label, value, loading, color }: StatCardProps) {
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  completed: '#10B981', running: '#3B82F6', paused: '#F59E0B',
+  failed: '#EF4444', pending: '#6B7280',
+};
+
+const REC_COLORS: Record<string, string> = {
+  'STRONG BUY': '#10B981', 'BUY': '#3B82F6', 'HOLD': '#F59E0B',
+  'PASS': '#EF4444', 'STRONG PASS': '#7F1D1D',
+};
+
+const TX_COLORS: Record<string, string> = {
+  purchase: '#10B981', admin_grant: '#3B82F6', admin_set: '#8B5CF6',
+  usage: '#EF4444', signup_bonus: '#F59E0B',
+};
+
+// ── Stat Card ──────────────────────────────────────────────────────────────
+
+interface StatCardProps {
+  label: string;
+  value: number | string;
+  icon: React.ReactNode;
+  color: string;
+  loading?: boolean;
+  subtitle?: string;
+}
+
+function StatCard({ label, value, icon, color, loading, subtitle }: StatCardProps) {
   return (
-    <Card sx={{ flex: '1 1 180px' }}>
+    <Card sx={{ height: '100%', border: '1px solid', borderColor: 'divider' }}>
       <CardContent sx={{ p: 2.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1.5,
-              backgroundColor: alpha(color, 0.12),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color,
-              flexShrink: 0,
-            }}
-            aria-hidden="true"
-          >
-            {icon}
-          </Box>
+        <Box display="flex" alignItems="flex-start" justifyContent="space-between">
           <Box>
-            <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={600}
+              textTransform="uppercase"
+              letterSpacing={0.5}
+            >
               {label}
             </Typography>
             {loading ? (
-              <Skeleton width={60} height={28} />
+              <Skeleton width={80} height={40} />
             ) : (
-              <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                {value?.toLocaleString() ?? '—'}
+              <Typography variant="h4" fontWeight={700} color="text.primary" mt={0.5}>
+                {value}
               </Typography>
             )}
+            {subtitle && (
+              <Typography variant="caption" color="text.secondary">{subtitle}</Typography>
+            )}
           </Box>
+          <Avatar sx={{ bgcolor: `${color}20`, color, width: 44, height: 44 }}>
+            {icon}
+          </Avatar>
         </Box>
       </CardContent>
     </Card>
   );
 }
 
-// ============================================================
-// Add Credits Dialog
-// ============================================================
-interface AddCreditsDialogProps {
-  user: AdminUser | null;
-  onClose: () => void;
-  onSuccess: () => void;
+// ── Tab Panel ──────────────────────────────────────────────────────────────
+
+function TabPanel({
+  children, value, index,
+}: {
+  children: React.ReactNode;
+  value: number;
+  index: number;
+}) {
+  return value === index ? <Box pt={3}>{children}</Box> : null;
 }
 
-function AddCreditsDialog({ user, onClose, onSuccess }: AddCreditsDialogProps) {
-  const queryClient = useQueryClient();
-  const [amount, setAmount] = useState<string>('10');
-  const [error, setError] = useState<string | null>(null);
+// ── Create User Dialog ─────────────────────────────────────────────────────
 
-  const mutation = useMutation({
-    mutationFn: ({ userId, amt }: { userId: string; amt: number }) =>
-      grantUserCredits(userId, amt),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      onSuccess();
-      onClose();
-    },
-    onError: (err: Error) => setError(err.message),
-  });
-
-  const handleSubmit = () => {
-    const parsed = parseInt(amount, 10);
-    if (!parsed || parsed < 1) {
-      setError('Enter a positive amount');
-      return;
-    }
-    if (!user) return;
-    setError(null);
-    mutation.mutate({ userId: user.id, amt: parsed });
-  };
-
-  return (
-    <Dialog
-      open={user !== null}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      aria-labelledby="add-credits-title"
-    >
-      <DialogTitle id="add-credits-title">
-        Add Credits — {user?.email}
-      </DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-        <TextField
-          label="Credits to add"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          fullWidth
-          autoFocus
-          inputProps={{ min: 1, step: 1 }}
-          sx={{ mt: 1 }}
-        />
-        <Typography variant="caption" sx={{ color: 'text.disabled', mt: 1, display: 'block' }}>
-          Current balance: {user?.credits ?? 0} credits
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={mutation.isPending}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? 'Adding...' : 'Add Credits'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-// ============================================================
-// Delete user confirmation dialog
-// ============================================================
-interface DeleteUserDialogProps {
-  user: AdminUser | null;
-  onClose: () => void;
-  onConfirm: () => void;
-  deleting: boolean;
-}
-
-function DeleteUserDialog({ user, onClose, onConfirm, deleting }: DeleteUserDialogProps) {
-  return (
-    <Dialog
-      open={user !== null}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      aria-labelledby="delete-user-title"
-    >
-      <DialogTitle id="delete-user-title">Delete User</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2">
-          Permanently delete <strong>{user?.email}</strong>? This cannot be undone and will remove all their data.
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={deleting}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={onConfirm}
-          disabled={deleting}
-          aria-label="Confirm delete user"
-        >
-          {deleting ? 'Deleting...' : 'Delete User'}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-// ============================================================
-// Create user dialog
-// ============================================================
-interface CreateUserDialogProps {
+function CreateUserDialog({
+  open, onClose, onCreated,
+}: {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
-}
-
-function CreateUserDialog({ open, onClose, onSuccess }: CreateUserDialogProps) {
-  const queryClient = useQueryClient();
+  onCreated: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
-  const [credits, setCredits] = useState<string>('5');
-  const [error, setError] = useState<string | null>(null);
+  const [credits, setCredits] = useState(5);
+  const [error, setError] = useState('');
 
   const mutation = useMutation({
-    mutationFn: () =>
-      adminCreateUser({
-        email: email.trim(),
-        password,
-        role,
-        credits: parseInt(credits, 10) || 0,
-      }),
+    mutationFn: () => adminCreateUser({ email, password, role, credits }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      onSuccess();
+      onCreated();
       onClose();
       setEmail('');
       setPassword('');
       setRole('user');
-      setCredits('5');
+      setCredits(5);
+      setError('');
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (e: Error) => setError(e.message),
   });
 
-  const handleSubmit = () => {
-    if (!email.trim() || !password) {
-      setError('Email and password are required.');
-      return;
-    }
-    setError(null);
-    mutation.mutate();
-  };
-
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      aria-labelledby="create-user-title"
-    >
-      <DialogTitle id="create-user-title">Create New User</DialogTitle>
-      <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-          <TextField
-            label="Email address"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            fullWidth
-            autoFocus
-            inputProps={{ 'aria-label': 'User email address' }}
-          />
-          <TextField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            fullWidth
-            helperText="Minimum 6 characters"
-            inputProps={{ 'aria-label': 'User password' }}
-          />
-          <FormControl fullWidth>
-            <InputLabel id="create-role-label">Role</InputLabel>
-            <Select
-              labelId="create-role-label"
-              value={role}
-              label="Role"
-              onChange={(e) => setRole(e.target.value as 'user' | 'admin')}
-            >
-              <MenuItem value="user">User</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Starting credits"
-            type="number"
-            value={credits}
-            onChange={(e) => setCredits(e.target.value)}
-            fullWidth
-            inputProps={{ min: 0, step: 1 }}
-          />
-        </Box>
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="create-user-title">
+      <DialogTitle id="create-user-title">Create User</DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '12px !important' }}>
+        {error && <Alert severity="error">{error}</Alert>}
+        <TextField
+          label="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          fullWidth
+          size="small"
+          type="email"
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          fullWidth
+          size="small"
+        />
+        <FormControl size="small" fullWidth>
+          <InputLabel>Role</InputLabel>
+          <Select
+            value={role}
+            label="Role"
+            onChange={e => setRole(e.target.value as 'user' | 'admin')}
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Initial Credits"
+          type="number"
+          value={credits}
+          onChange={e => setCredits(Number(e.target.value))}
+          fullWidth
+          size="small"
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={mutation.isPending}>
-          Cancel
-        </Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
-          disabled={mutation.isPending}
-          startIcon={<AddIcon />}
+          onClick={() => mutation.mutate()}
+          disabled={!email || !password || mutation.isPending}
         >
-          {mutation.isPending ? 'Creating...' : 'Create User'}
+          {mutation.isPending ? 'Creating…' : 'Create'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
 
-// ============================================================
-// Inline editable credit cell
-// ============================================================
-interface CreditCellProps {
-  user: AdminUser;
-  onSaved: () => void;
-}
+// ── Grant Credits Dialog ───────────────────────────────────────────────────
 
-function CreditCell({ user, onSaved }: CreditCellProps) {
-  const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState<string>(String(user.credits));
-  const [error, setError] = useState<string | null>(null);
-
+function GrantCreditsDialog({
+  user, open, onClose, onDone,
+}: {
+  user: AdminUser | null;
+  open: boolean;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [amount, setAmount] = useState(10);
   const mutation = useMutation({
-    mutationFn: (credits: number) => setUserCredits(user.id, credits),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      setEditing(false);
-      onSaved();
-    },
-    onError: (err: Error) => setError(err.message),
+    mutationFn: () => grantUserCredits(user!.id, amount),
+    onSuccess: () => { onDone(); onClose(); },
   });
 
-  const handleSave = () => {
-    const parsed = parseInt(value, 10);
-    if (isNaN(parsed) || parsed < 0) {
-      setError('Invalid value');
-      return;
-    }
-    setError(null);
-    mutation.mutate(parsed);
-  };
-
-  if (!editing) {
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-          {user.credits}
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="grant-credits-title">
+      <DialogTitle id="grant-credits-title">Grant Credits — {user?.email}</DialogTitle>
+      <DialogContent sx={{ pt: '12px !important' }}>
+        <TextField
+          label="Credits to Add"
+          type="number"
+          value={amount}
+          onChange={e => setAmount(Number(e.target.value))}
+          fullWidth
+          size="small"
+          inputProps={{ min: 1 }}
+        />
+        <Typography variant="caption" color="text.secondary" mt={1} display="block">
+          Current balance: {user?.credits ?? 0} credits
         </Typography>
-        <Tooltip title="Edit credits" arrow>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setValue(String(user.credits));
-              setEditing(true);
-            }}
-            aria-label={`Edit credits for ${user.email}`}
-          >
-            <EditIcon sx={{ fontSize: '0.875rem' }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      <TextField
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        type="number"
-        size="small"
-        error={!!error}
-        inputProps={{ min: 0, style: { width: 70, padding: '4px 8px' } }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSave();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-        autoFocus
-        aria-label="Credit amount"
-      />
-      <Tooltip title="Save" arrow>
-        <IconButton
-          size="small"
-          onClick={handleSave}
-          disabled={mutation.isPending}
-          color="primary"
-          aria-label="Save credits"
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          onClick={() => mutation.mutate()}
+          disabled={amount < 1 || mutation.isPending}
         >
-          <SaveIcon sx={{ fontSize: '0.875rem' }} />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Cancel" arrow>
-        <IconButton
-          size="small"
-          onClick={() => setEditing(false)}
-          aria-label="Cancel edit"
-        >
-          <CloseIcon sx={{ fontSize: '0.875rem' }} />
-        </IconButton>
-      </Tooltip>
-    </Box>
+          {mutation.isPending ? 'Granting…' : `Grant ${amount} Credits`}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
-// ============================================================
-// Inline editable email cell
-// ============================================================
-interface EmailCellProps {
-  user: AdminUser;
-  onSaved: () => void;
-}
+// ── Delete User Dialog ─────────────────────────────────────────────────────
 
-function EmailCell({ user, onSaved }: EmailCellProps) {
-  const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(user.email);
-  const [error, setError] = useState<string | null>(null);
-
+function DeleteUserDialog({
+  user, open, onClose, onDone,
+}: {
+  user: AdminUser | null;
+  open: boolean;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const mutation = useMutation({
-    mutationFn: (email: string) => adminUpdateUser(user.id, { email }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      setEditing(false);
-      onSaved();
-    },
-    onError: (err: Error) => setError(err.message),
+    mutationFn: () => adminDeleteUser(user!.id),
+    onSuccess: () => { onDone(); onClose(); },
   });
 
-  const handleSave = () => {
-    if (!value.trim() || !value.includes('@')) {
-      setError('Invalid email');
-      return;
-    }
-    setError(null);
-    mutation.mutate(value.trim());
-  };
-
-  if (!editing) {
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          {user.email}
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth aria-labelledby="delete-user-title">
+      <DialogTitle id="delete-user-title">Delete User?</DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to delete <strong>{user?.email}</strong>? This cannot be undone.
         </Typography>
-        <Tooltip title="Edit email" arrow>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setValue(user.email);
-              setEditing(true);
-            }}
-            aria-label={`Edit email for ${user.email}`}
-          >
-            <EditIcon sx={{ fontSize: '0.875rem' }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      <TextField
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        type="email"
-        size="small"
-        error={!!error}
-        helperText={error ?? undefined}
-        inputProps={{ style: { padding: '4px 8px' }, 'aria-label': 'Email address' }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSave();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-        autoFocus
-        sx={{ minWidth: 200 }}
-      />
-      <Tooltip title="Save" arrow>
-        <IconButton
-          size="small"
-          onClick={handleSave}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          color="primary"
-          aria-label="Save email"
         >
-          <SaveIcon sx={{ fontSize: '0.875rem' }} />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Cancel" arrow>
-        <IconButton size="small" onClick={() => setEditing(false)} aria-label="Cancel edit">
-          <CloseIcon sx={{ fontSize: '0.875rem' }} />
-        </IconButton>
-      </Tooltip>
-    </Box>
+          {mutation.isPending ? 'Deleting…' : 'Delete'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
-// ============================================================
-// Role selector cell
-// ============================================================
-interface RoleCellProps {
-  user: AdminUser;
-  onSaved: () => void;
-}
+// ── Overview Tab ───────────────────────────────────────────────────────────
 
-function RoleCell({ user, onSaved }: RoleCellProps) {
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: (role: string) => adminUpdateUser(user.id, { role }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      onSaved();
-    },
-  });
-
-  const handleChange = (newRole: string) => {
-    mutation.mutate(newRole);
-  };
-
-  return (
-    <Select
-      value={user.role}
-      onChange={(e) => handleChange(e.target.value)}
-      size="small"
-      disabled={mutation.isPending}
-      aria-label={`Role for ${user.email}`}
-      sx={{ minWidth: 100, fontSize: '0.8rem' }}
-      renderValue={(val) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {val === 'admin' ? (
-            <AdminPanelSettingsIcon sx={{ fontSize: '0.875rem', color: 'info.main' }} />
-          ) : (
-            <PersonIcon sx={{ fontSize: '0.875rem', color: 'text.secondary' }} />
-          )}
-          <Chip
-            label={val.toUpperCase()}
-            size="small"
-            sx={{
-              height: 18,
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              backgroundColor: (t) =>
-                val === 'admin'
-                  ? alpha(t.palette.info.main ?? '#0288d1', 0.15)
-                  : alpha(t.palette.text.primary, 0.08),
-              color: val === 'admin' ? 'info.main' : 'text.secondary',
-            }}
-          />
-        </Box>
-      )}
-    >
-      <MenuItem value="user">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-          User
-        </Box>
-      </MenuItem>
-      <MenuItem value="admin">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AdminPanelSettingsIcon fontSize="small" sx={{ color: 'info.main' }} />
-          Admin
-        </Box>
-      </MenuItem>
-    </Select>
-  );
-}
-
-// ============================================================
-// Users Table
-// ============================================================
-interface UsersTableProps {
+function OverviewTab({
+  stats, statsLoading, users, usersLoading,
+}: {
+  stats?: AdminStats;
+  statsLoading: boolean;
   users: AdminUser[];
-  loading: boolean;
-  onAddCredits: (user: AdminUser) => void;
-  onDeleteUser: (user: AdminUser) => void;
-  onCreditSaved: () => void;
-}
+  usersLoading: boolean;
+}) {
+  const recentLogins = [...users]
+    .filter(u => u.last_login_at)
+    .sort((a, b) => new Date(b.last_login_at!).getTime() - new Date(a.last_login_at!).getTime())
+    .slice(0, 8);
 
-function UsersTable({ users, loading, onAddCredits, onDeleteUser, onCreditSaved }: UsersTableProps) {
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} variant="rounded" height={52} />
-        ))}
-      </Box>
-    );
-  }
-
-  return (
-    <TableContainer>
-      <Table size="small" aria-label="Users table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Credits</TableCell>
-            <TableCell>Joined</TableCell>
-            <TableCell align="right">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.disabled' }}>
-                No users found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            users.map((u) => (
-              <TableRow key={u.id} hover>
-                <TableCell>
-                  <EmailCell user={u} onSaved={onCreditSaved} />
-                </TableCell>
-                <TableCell>
-                  <RoleCell user={u} onSaved={onCreditSaved} />
-                </TableCell>
-                <TableCell>
-                  <CreditCell user={u} onSaved={onCreditSaved} />
-                </TableCell>
-                <TableCell>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {new Date(u.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-                    <Tooltip title="Add credits" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={() => onAddCredits(u)}
-                        aria-label={`Add credits to ${u.email}`}
-                        color="primary"
-                      >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete user" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={() => onDeleteUser(u)}
-                        aria-label={`Delete user ${u.email}`}
-                        sx={{
-                          color: 'text.disabled',
-                          '&:hover': { color: 'error.main' },
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
-// ============================================================
-// Analyses Table (collapsible section)
-// ============================================================
-interface AnalysesTableProps {
-  analyses: AdminAnalysis[];
-  loading: boolean;
-}
-
-function AnalysesTable({ analyses, loading }: AnalysesTableProps) {
-  const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(false);
+  const lowCreditUsers = users.filter(u => u.role === 'user' && u.credits <= 2).slice(0, 8);
 
   return (
     <Box>
-      {/* Section toggle header */}
-      <Box
-        onClick={() => setExpanded((v) => !v)}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: 'pointer',
-          py: 1,
-          px: 0,
-          userSelect: 'none',
-        }}
-        role="button"
-        aria-expanded={expanded}
-        aria-controls="analyses-table-collapse"
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AnalyticsIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-          <Typography variant="h6" sx={{ textTransform: 'none', letterSpacing: 0 }}>
-            All Analyses
-          </Typography>
-          <Chip
-            label={loading ? '…' : analyses.length}
-            size="small"
-            sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+      {/* Primary stats row */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="Total Users"
+            value={stats?.total_users ?? 0}
+            icon={<People fontSize="small" />}
+            color="#3B82F6"
+            loading={statsLoading}
           />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="New Today"
+            value={stats?.new_users_today ?? 0}
+            icon={<PersonAdd fontSize="small" />}
+            color="#10B981"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="Total Analyses"
+            value={stats?.total_analyses ?? 0}
+            icon={<BarChart fontSize="small" />}
+            color="#8B5CF6"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="Completed"
+            value={stats?.completed_analyses ?? 0}
+            icon={<CheckCircle fontSize="small" />}
+            color="#10B981"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="Credits in Use"
+            value={stats?.total_credits_in_circulation ?? 0}
+            icon={<CreditCard fontSize="small" />}
+            color="#F59E0B"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
+          <StatCard
+            label="Low Credit Users"
+            value={stats?.users_low_credits ?? 0}
+            icon={<Warning fontSize="small" />}
+            color="#EF4444"
+            loading={statsLoading}
+            subtitle="2 credits or fewer"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Pipeline status row */}
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Running Now"
+            value={stats?.running_analyses ?? 0}
+            icon={<Timeline fontSize="small" />}
+            color="#3B82F6"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Paused"
+            value={stats?.paused_analyses ?? 0}
+            icon={<Pause fontSize="small" />}
+            color="#F59E0B"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Failed"
+            value={stats?.failed_analyses ?? 0}
+            icon={<Error fontSize="small" />}
+            color="#EF4444"
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Analyses Today"
+            value={stats?.analyses_today ?? 0}
+            icon={<TrendingUp fontSize="small" />}
+            color="#8B5CF6"
+            loading={statsLoading}
+          />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}>
+        {/* Recent Logins */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ pb: '16px !important' }}>
+              <Typography variant="subtitle1" fontWeight={700} mb={2}>
+                Recent Logins
+              </Typography>
+              {usersLoading ? (
+                [1, 2, 3].map(i => <Skeleton key={i} height={40} sx={{ mb: 1 }} />)
+              ) : recentLogins.length === 0 ? (
+                <Typography color="text.secondary" variant="body2">
+                  No logins recorded yet.
+                </Typography>
+              ) : (
+                <TableContainer>
+                  <Table size="small" aria-label="Recent logins">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          User
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Last Seen
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Credits
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentLogins.map(u => (
+                        <TableRow key={u.id} hover>
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body2" fontWeight={500}>{u.email}</Typography>
+                              {u.name && (
+                                <Typography variant="caption" color="text.secondary">{u.name}</Typography>
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Tooltip title={fmtDate(u.last_login_at)}>
+                              <Typography variant="body2" color="text.secondary">
+                                {timeAgo(u.last_login_at)}
+                              </Typography>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={u.credits}
+                              size="small"
+                              color={u.credits <= 2 ? 'error' : 'default'}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Low Credit Users */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ pb: '16px !important' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Typography variant="subtitle1" fontWeight={700}>Low Credit Users</Typography>
+                <Chip label="Need top-up" size="small" color="warning" />
+              </Box>
+              {usersLoading ? (
+                [1, 2, 3].map(i => <Skeleton key={i} height={40} sx={{ mb: 1 }} />)
+              ) : lowCreditUsers.length === 0 ? (
+                <Typography color="text.secondary" variant="body2">
+                  No users with low credits.
+                </Typography>
+              ) : (
+                <TableContainer>
+                  <Table size="small" aria-label="Low credit users">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          User
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Credits
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Last Active
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lowCreditUsers.map(u => (
+                        <TableRow key={u.id} hover>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={500}>{u.email}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={`${u.credits} left`}
+                              size="small"
+                              color={u.credits === 0 ? 'error' : 'warning'}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {timeAgo(u.last_login_at)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
+
+// ── Users Tab ──────────────────────────────────────────────────────────────
+
+function UsersTab({
+  users, loading, onRefresh,
+}: {
+  users: AdminUser[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [grantUser, setGrantUser] = useState<AdminUser | null>(null);
+  const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
+  const [editingCredits, setEditingCredits] = useState<{ id: string; val: string } | null>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<{ email: string; role: string; credits: number }> }) =>
+      adminUpdateUser(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
+
+  const saveCredits = (user: AdminUser) => {
+    const val = parseInt(editingCredits?.val ?? '0');
+    if (!isNaN(val) && val >= 0) {
+      updateMutation.mutate({ id: user.id, data: { credits: val } });
+    }
+    setEditingCredits(null);
+  };
+
+  return (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight={700}>All Users ({users.length})</Typography>
+        <Box display="flex" gap={1}>
+          <IconButton onClick={onRefresh} size="small" aria-label="Refresh users">
+            <Refresh />
+          </IconButton>
+          <Button
+            variant="contained"
+            startIcon={<PersonAdd />}
+            size="small"
+            onClick={() => setCreateOpen(true)}
+          >
+            Create User
+          </Button>
         </Box>
-        {expanded ? (
-          <ExpandLessIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-        ) : (
-          <ExpandMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-        )}
       </Box>
 
-      <Collapse in={expanded} id="analyses-table-collapse">
-        <TableContainer sx={{ mt: 1 }}>
-          <Table size="small" aria-label="All analyses table">
+      <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <TableContainer>
+          <Table size="small" aria-label="Users management table">
             <TableHead>
-              <TableRow>
-                <TableCell>Company</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Stage</TableCell>
-                <TableCell>Recommendation</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="right">View</TableCell>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Credits</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Last Login</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Joined</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
-                [0, 1, 2].map((i) => (
+                [1, 2, 3, 4, 5].map(i => (
                   <TableRow key={i}>
-                    <TableCell colSpan={6}>
-                      <Skeleton variant="text" />
-                    </TableCell>
+                    {[1, 2, 3, 4, 5, 6].map(j => (
+                      <TableCell key={j}><Skeleton /></TableCell>
+                    ))}
                   </TableRow>
                 ))
-              ) : analyses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.disabled' }}>
-                    No analyses found.
+              ) : users.map(user => (
+                <TableRow key={user.id} hover>
+                  <TableCell>
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Avatar
+                        sx={{
+                          width: 32, height: 32,
+                          bgcolor: user.role === 'admin' ? '#8B5CF620' : '#3B82F620',
+                          color: user.role === 'admin' ? '#8B5CF6' : '#3B82F6',
+                          fontSize: '0.75rem', fontWeight: 700,
+                        }}
+                      >
+                        {user.email[0].toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>{user.email}</Typography>
+                        {(user.name || user.username) && (
+                          <Typography variant="caption" color="text.secondary">
+                            {user.name || user.username}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
                   </TableCell>
-                </TableRow>
-              ) : (
-                analyses.map((a) => (
-                  <TableRow key={a.job_id} hover>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {a.company_input}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={a.status}
-                        size="small"
-                        color={
-                          a.status === 'completed'
-                            ? 'success'
-                            : a.status === 'failed'
-                            ? 'error'
-                            : 'primary'
-                        }
-                        sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                        {a.current_stage}/8
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {a.recommendation ? (
-                        <Chip
-                          label={a.recommendation}
+                  <TableCell>
+                    <Chip
+                      label={user.role}
+                      size="small"
+                      icon={
+                        user.role === 'admin'
+                          ? <AdminPanelSettings sx={{ fontSize: '14px !important' }} />
+                          : undefined
+                      }
+                      sx={{
+                        bgcolor: user.role === 'admin' ? '#8B5CF620' : '#3B82F620',
+                        color: user.role === 'admin' ? '#8B5CF6' : '#3B82F6',
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {editingCredits?.id === user.id ? (
+                      <Box display="flex" gap={0.5} alignItems="center">
+                        <TextField
                           size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            backgroundColor: RECO_COLOR[a.recommendation],
-                            color: '#fff',
+                          value={editingCredits.val}
+                          onChange={e => setEditingCredits({ id: user.id, val: e.target.value })}
+                          sx={{ width: 70 }}
+                          inputProps={{ min: 0, 'aria-label': 'Credits amount' }}
+                          type="number"
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') saveCredits(user);
+                            if (e.key === 'Escape') setEditingCredits(null);
                           }}
                         />
-                      ) : (
-                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                          —
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        {new Date(a.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        <Button size="small" onClick={() => saveCredits(user)}>Save</Button>
+                        <Button size="small" onClick={() => setEditingCredits(null)}>Cancel</Button>
+                      </Box>
+                    ) : (
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Chip
+                          label={user.credits === 999999 ? 'Unlimited' : user.credits}
+                          size="small"
+                          color={user.credits === 0 ? 'error' : user.credits <= 2 ? 'warning' : 'default'}
+                        />
+                        {user.role !== 'admin' && (
+                          <IconButton
+                            size="small"
+                            onClick={() => setEditingCredits({ id: user.id, val: String(user.credits) })}
+                            aria-label={`Edit credits for ${user.email}`}
+                          >
+                            <Edit sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        )}
+                      </Box>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title={fmtDate(user.last_login_at)}>
+                      <Typography variant="body2" color="text.secondary">
+                        {timeAgo(user.last_login_at)}
                       </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="View job" arrow>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {fmtDate(user.created_at)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" gap={0.5}>
+                      <Tooltip title="Grant Credits">
                         <IconButton
                           size="small"
-                          onClick={() => navigate(`/job/${a.job_id}`)}
-                          aria-label={`View analysis for ${a.company_input}`}
+                          color="primary"
+                          onClick={() => setGrantUser(user)}
+                          aria-label={`Grant credits to ${user.email}`}
                         >
-                          <OpenInNewIcon sx={{ fontSize: '0.875rem' }} />
+                          <MonetizationOn sx={{ fontSize: 16 }} />
                         </IconButton>
                       </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+                      {user.role !== 'admin' && (
+                        <Tooltip title="Delete User">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => setDeleteUser(user)}
+                            aria-label={`Delete user ${user.email}`}
+                          >
+                            <Delete sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
-      </Collapse>
+      </Card>
+
+      <CreateUserDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}
+      />
+      <GrantCreditsDialog
+        user={grantUser}
+        open={!!grantUser}
+        onClose={() => setGrantUser(null)}
+        onDone={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-credit-transactions'] });
+        }}
+      />
+      <DeleteUserDialog
+        user={deleteUser}
+        open={!!deleteUser}
+        onClose={() => setDeleteUser(null)}
+        onDone={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        }}
+      />
     </Box>
   );
 }
 
-// ============================================================
-// Page
-// ============================================================
-export default function AdminDashboard() {
+// ── Analyses Tab ───────────────────────────────────────────────────────────
+
+function AnalysesTab({
+  analyses, loading, onRefresh,
+}: {
+  analyses: AdminAnalysis[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
   const queryClient = useQueryClient();
-  const [addCreditsTarget, setAddCreditsTarget] = useState<AdminUser | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
-    queryKey: ['admin-stats'],
-    queryFn: getAdminStats,
-    staleTime: 30_000,
-  });
-
-  const { data: users = [], isLoading: usersLoading } = useQuery<AdminUser[]>({
-    queryKey: ['admin-users'],
-    queryFn: getAdminUsers,
-    staleTime: 30_000,
-  });
-
-  const { data: analyses = [], isLoading: analysesLoading } = useQuery<AdminAnalysis[]>({
-    queryKey: ['admin-analyses'],
-    queryFn: getAdminAnalyses,
-    staleTime: 30_000,
-  });
 
   const deleteMutation = useMutation({
-    mutationFn: (userId: string) => adminDeleteUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      setDeleteTarget(null);
-      setSuccessMsg('User deleted successfully.');
-      setTimeout(() => setSuccessMsg(null), 3000);
-    },
+    mutationFn: (jobId: string) => deleteAnalysis(jobId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-analyses'] }),
   });
 
-  const handleCreditSaved = () => {
-    setSuccessMsg('Changes saved successfully.');
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
+  return (
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight={700}>All Analyses ({analyses.length})</Typography>
+        <IconButton onClick={onRefresh} size="small" aria-label="Refresh analyses">
+          <Refresh />
+        </IconButton>
+      </Box>
 
-  const handleAddCreditsSuccess = () => {
-    setSuccessMsg('Credits added successfully.');
-    setTimeout(() => setSuccessMsg(null), 3000);
-    queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-  };
+      <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <TableContainer>
+          <Table size="small" aria-label="All analyses table">
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ fontWeight: 700 }}>Company</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Recommendation</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Risk</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Stage</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                [1, 2, 3, 4].map(i => (
+                  <TableRow key={i}>
+                    {[1, 2, 3, 4, 5, 6, 7].map(j => (
+                      <TableCell key={j}><Skeleton /></TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : analyses.map(a => (
+                <TableRow key={a.job_id} hover>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>{a.company_input}</Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontFamily: 'monospace' }}
+                    >
+                      {a.job_id.slice(0, 8)}…
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={a.status}
+                      size="small"
+                      sx={{
+                        bgcolor: `${STATUS_COLORS[a.status] || '#6B7280'}20`,
+                        color: STATUS_COLORS[a.status] || '#6B7280',
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {a.recommendation ? (
+                      <Chip
+                        label={a.recommendation}
+                        size="small"
+                        sx={{
+                          bgcolor: `${REC_COLORS[a.recommendation] || '#6B7280'}20`,
+                          color: REC_COLORS[a.recommendation] || '#6B7280',
+                          fontWeight: 600,
+                          fontSize: '0.65rem',
+                        }}
+                      />
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {a.risk_score != null ? (
+                      <Chip
+                        label={`${a.risk_score}/10`}
+                        size="small"
+                        color={a.risk_score >= 7 ? 'error' : a.risk_score >= 5 ? 'warning' : 'success'}
+                      />
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{a.current_stage}/8</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {timeAgo(a.created_at)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Delete Analysis">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => deleteMutation.mutate(a.job_id)}
+                        disabled={deleteMutation.isPending}
+                        aria-label={`Delete analysis for ${a.company_input}`}
+                      >
+                        <Delete sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Box>
+  );
+}
 
-  const handleCreateSuccess = () => {
-    setSuccessMsg('User created successfully.');
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
+// ── Credit Activity Tab ────────────────────────────────────────────────────
+
+function CreditActivityTab({
+  transactions, loading, onRefresh,
+}: {
+  transactions: CreditTransaction[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const totalGranted = transactions
+    .filter(t => ['admin_grant', 'purchase', 'signup_bonus'].includes(t.type))
+    .reduce((s, t) => s + t.amount, 0);
+
+  const totalUsed = transactions
+    .filter(t => t.type === 'usage')
+    .reduce((s, t) => s + Math.abs(t.amount), 0);
+
+  const purchases = transactions.filter(t => t.type === 'purchase');
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
-      {/* Page header */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" fontWeight={700}>Credit Activity</Typography>
+        <IconButton onClick={onRefresh} size="small" aria-label="Refresh credit transactions">
+          <Refresh />
+        </IconButton>
+      </Box>
+
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Total Transactions"
+            value={transactions.length}
+            icon={<Timeline fontSize="small" />}
+            color="#8B5CF6"
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Credits Issued"
+            value={totalGranted}
+            icon={<Add fontSize="small" />}
+            color="#10B981"
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Credits Used"
+            value={totalUsed}
+            icon={<TrendingUp fontSize="small" />}
+            color="#EF4444"
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <StatCard
+            label="Purchases"
+            value={purchases.length}
+            icon={<MonetizationOn fontSize="small" />}
+            color="#F59E0B"
+          />
+        </Grid>
+      </Grid>
+
+      <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <TableContainer>
+          <Table size="small" aria-label="Credit transactions table">
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Amount</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Time</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                [1, 2, 3, 4, 5].map(i => (
+                  <TableRow key={i}>
+                    {[1, 2, 3, 4, 5].map(j => (
+                      <TableCell key={j}><Skeleton /></TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <Typography color="text.secondary">
+                      No credit transactions recorded yet.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : transactions.map(tx => (
+                <TableRow key={tx.id} hover>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={500}>
+                      {tx.user_email || tx.user_id.slice(0, 8)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={tx.type.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        bgcolor: `${TX_COLORS[tx.type] || '#6B7280'}20`,
+                        color: TX_COLORS[tx.type] || '#6B7280',
+                        fontWeight: 600,
+                        textTransform: 'capitalize',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      fontWeight={700}
+                      color={tx.amount > 0 ? 'success.main' : 'error.main'}
+                    >
+                      {tx.amount > 0 ? `+${tx.amount}` : tx.amount}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {tx.description || '—'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title={fmtDate(tx.created_at)}>
+                      <Typography variant="body2" color="text.secondary">
+                        {timeAgo(tx.created_at)}
+                      </Typography>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Box>
+  );
+}
+
+// ── Main AdminDashboard ────────────────────────────────────────────────────
+
+export default function AdminDashboard() {
+  const [tab, setTab] = useState(0);
+
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: getAdminStats,
+    refetchInterval: 30000,
+  });
+
+  const {
+    data: users = [],
+    isLoading: usersLoading,
+    refetch: refetchUsers,
+  } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: getAdminUsers,
+    refetchInterval: 30000,
+  });
+
+  const {
+    data: analyses = [],
+    isLoading: analysesLoading,
+    refetch: refetchAnalyses,
+  } = useQuery({
+    queryKey: ['admin-analyses'],
+    queryFn: getAdminAnalyses,
+    refetchInterval: 30000,
+  });
+
+  const {
+    data: transactions = [],
+    isLoading: txLoading,
+    refetch: refetchTx,
+  } = useQuery({
+    queryKey: ['admin-credit-transactions'],
+    queryFn: getAdminCreditTransactions,
+    refetchInterval: 30000,
+  });
+
+  return (
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: 'auto' }}>
+      {/* Header */}
+      <Box display="flex" alignItems="center" gap={2} mb={3}>
+        <Avatar sx={{ bgcolor: '#8B5CF620', color: '#8B5CF6', width: 48, height: 48 }}>
+          <AdminPanelSettings />
+        </Avatar>
         <Box>
-          <Typography variant="h2" sx={{ mb: 0.5 }}>
-            Admin Dashboard
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Platform-wide management: users, credits, and analyses.
+          <Typography variant="h5" fontWeight={800}>Admin Dashboard</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage users, credits, and platform activity
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          aria-label="Create new user"
-        >
-          Create User
-        </Button>
       </Box>
 
-      {successMsg && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMsg(null)}>
-          {successMsg}
-        </Alert>
-      )}
-
-      {/* ── Stats row ─────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
-        <StatCard
-          icon={<PeopleIcon />}
-          label="Total Users"
-          value={stats?.total_users ?? null}
-          loading={statsLoading}
-          color="#3B82F6"
+      {/* Tabs */}
+      <Tabs
+        value={tab}
+        onChange={(_, v: number) => setTab(v)}
+        sx={{ mb: 1, borderBottom: '1px solid', borderColor: 'divider' }}
+        aria-label="Admin dashboard sections"
+      >
+        <Tab label="Overview" id="admin-tab-0" aria-controls="admin-tabpanel-0" />
+        <Tab
+          id="admin-tab-1"
+          aria-controls="admin-tabpanel-1"
+          label={
+            <Badge badgeContent={stats?.users_low_credits || 0} color="warning" max={99}>
+              <Box sx={{ pr: stats?.users_low_credits ? 1.5 : 0 }}>Users</Box>
+            </Badge>
+          }
         />
-        <StatCard
-          icon={<AnalyticsIcon />}
-          label="Total Analyses"
-          value={stats?.total_analyses ?? null}
-          loading={statsLoading}
-          color="#6366F1"
+        <Tab
+          id="admin-tab-2"
+          aria-controls="admin-tabpanel-2"
+          label={
+            <Badge badgeContent={stats?.running_analyses || 0} color="primary" max={99}>
+              <Box sx={{ pr: stats?.running_analyses ? 1.5 : 0 }}>Analyses</Box>
+            </Badge>
+          }
         />
-        <StatCard
-          icon={<CheckCircleIcon />}
-          label="Completed"
-          value={stats?.completed_analyses ?? null}
-          loading={statsLoading}
-          color="#10B981"
+        <Tab label="Credit Activity" id="admin-tab-3" aria-controls="admin-tabpanel-3" />
+      </Tabs>
+
+      <TabPanel value={tab} index={0}>
+        <OverviewTab
+          stats={stats}
+          statsLoading={statsLoading}
+          users={users}
+          usersLoading={usersLoading}
         />
-      </Box>
-
-      {/* ── Users table ───────────────────────────────────────── */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <PeopleIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-            <Typography variant="h6" sx={{ textTransform: 'none', letterSpacing: 0 }}>
-              Users
-            </Typography>
-            <Chip
-              label={usersLoading ? '…' : users.length}
-              size="small"
-              sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-            />
-          </Box>
-          <UsersTable
-            users={users}
-            loading={usersLoading}
-            onAddCredits={(u) => setAddCreditsTarget(u)}
-            onDeleteUser={(u) => setDeleteTarget(u)}
-            onCreditSaved={handleCreditSaved}
-          />
-        </CardContent>
-      </Card>
-
-      {/* ── Analyses section ──────────────────────────────────── */}
-      <Card>
-        <CardContent>
-          <AnalysesTable analyses={analyses} loading={analysesLoading} />
-        </CardContent>
-      </Card>
-
-      {/* ── Dialogs ───────────────────────────────────────────── */}
-      <AddCreditsDialog
-        user={addCreditsTarget}
-        onClose={() => setAddCreditsTarget(null)}
-        onSuccess={handleAddCreditsSuccess}
-      />
-
-      <DeleteUserDialog
-        user={deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-        deleting={deleteMutation.isPending}
-      />
-
-      <CreateUserDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
+      </TabPanel>
+      <TabPanel value={tab} index={1}>
+        <UsersTab
+          users={users}
+          loading={usersLoading}
+          onRefresh={() => refetchUsers()}
+        />
+      </TabPanel>
+      <TabPanel value={tab} index={2}>
+        <AnalysesTab
+          analyses={analyses}
+          loading={analysesLoading}
+          onRefresh={() => refetchAnalyses()}
+        />
+      </TabPanel>
+      <TabPanel value={tab} index={3}>
+        <CreditActivityTab
+          transactions={transactions}
+          loading={txLoading}
+          onRefresh={() => refetchTx()}
+        />
+      </TabPanel>
     </Box>
   );
 }

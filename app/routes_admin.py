@@ -11,7 +11,7 @@ from app.schemas import (
 from storage.database import (
     list_users, get_user_by_id, get_user_by_email,
     create_user, update_user, update_user_credits, add_credits,
-    list_analyses, get_admin_stats, delete_analysis,
+    list_analyses, get_admin_stats, delete_analysis, list_credit_transactions, log_credit_transaction,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -67,6 +67,7 @@ async def set_credits(user_id: str, req: AssignCreditsRequest, admin=Depends(req
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     await update_user_credits(user_id, req.credits)
+    await log_credit_transaction(user_id, req.credits, "admin_set", f"Admin set credits to {req.credits}")
     return {"message": f"Credits set to {req.credits} for {user['email']}."}
 
 
@@ -77,6 +78,7 @@ async def grant_credits(user_id: str, req: AddCreditsRequest, admin=Depends(requ
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     await add_credits(user_id, req.amount)
+    await log_credit_transaction(user_id, req.amount, "admin_grant", f"Admin granted {req.amount} credits")
     updated = await get_user_by_id(user_id)
     return {"message": f"Granted {req.amount} credits to {user['email']}.", "new_balance": updated["credits"]}
 
@@ -94,6 +96,11 @@ async def delete_user_account(user_id: str, admin=Depends(require_admin)):
     async with aiosqlite.connect(DATABASE_PATH) as db:
         await db.execute("DELETE FROM users WHERE id = ?", (user_id,))
         await db.commit()
+
+
+@router.get("/credit-transactions")
+async def get_credit_transactions(admin=Depends(require_admin)):
+    return await list_credit_transactions(100)
 
 
 @router.get("/analyses")

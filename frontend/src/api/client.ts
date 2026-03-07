@@ -10,6 +10,7 @@ import type {
   AdminStats,
   AdminUser,
   AdminAnalysis,
+  CreditTransaction,
 } from '../types';
 
 // ============================================================
@@ -271,6 +272,12 @@ export async function adminCreateUser(data: {
 /** Delete a user account (admin-only) */
 export async function adminDeleteUser(userId: string): Promise<void> {
   await apiClient.delete(`/admin/users/${userId}`);
+}
+
+/** Fetch all credit transactions (admin-only) */
+export async function getAdminCreditTransactions(): Promise<CreditTransaction[]> {
+  const { data } = await apiClient.get<CreditTransaction[]>('/admin/credit-transactions');
+  return data;
 }
 
 // ============================================================

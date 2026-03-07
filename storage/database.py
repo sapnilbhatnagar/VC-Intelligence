@@ -102,6 +102,24 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
+        # Add last_login_at to users
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN last_login_at TEXT")
+        except Exception:
+            pass
+
+        # Credit transactions table
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS credit_transactions (
+                id          TEXT PRIMARY KEY,
+                user_id     TEXT NOT NULL,
+                amount      INTEGER NOT NULL,
+                type        TEXT NOT NULL,
+                description TEXT,
+                created_at  TEXT NOT NULL
+            )
+        """)
+
         await db.commit()
 
 
@@ -244,7 +262,7 @@ async def list_users() -> list:
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            """SELECT id, email, username, name, role, credits, created_at FROM users ORDER BY created_at DESC"""
+            """SELECT id, email, username, name, role, credits, created_at, last_login_at FROM users ORDER BY created_at DESC"""
         )
         rows = await cursor.fetchall()
         return [dict(r) for r in rows]
@@ -358,11 +376,61 @@ async def delete_analysis(job_id: str):
 
 async def get_admin_stats() -> dict:
     async with aiosqlite.connect(DATABASE_PATH) as db:
-        users_count = (await (await db.execute("SELECT COUNT(*) FROM users WHERE role='user'")).fetchone())[0]
+        total_users = (await (await db.execute("SELECT COUNT(*) FROM users WHERE role='user'")).fetchone())[0]
         total_analyses = (await (await db.execute("SELECT COUNT(*) FROM analyses")).fetchone())[0]
         completed = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE status='completed'")).fetchone())[0]
+        running = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE status='running'")).fetchone())[0]
+        failed = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE status='failed'")).fetchone())[0]
+        paused = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE status='paused'")).fetchone())[0]
+        total_credits = (await (await db.execute("SELECT COALESCE(SUM(credits), 0) FROM users WHERE role='user'")).fetchone())[0]
+        low_credits = (await (await db.execute("SELECT COUNT(*) FROM users WHERE role='user' AND credits <= 2")).fetchone())[0]
+        today = datetime.now(timezone.utc).date().isoformat()
+        analyses_today = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE created_at LIKE ?", (f"{today}%",))).fetchone())[0]
+        new_users_today = (await (await db.execute("SELECT COUNT(*) FROM users WHERE created_at LIKE ? AND role='user'", (f"{today}%",))).fetchone())[0]
         return {
-            "total_users": users_count,
+            "total_users": total_users,
             "total_analyses": total_analyses,
             "completed_analyses": completed,
+            "running_analyses": running,
+            "failed_analyses": failed,
+            "paused_analyses": paused,
+            "total_credits_in_circulation": total_credits,
+            "users_low_credits": low_credits,
+            "analyses_today": analyses_today,
+            "new_users_today": new_users_today,
         }
+
+
+async def update_last_login(user_id: str):
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            "UPDATE users SET last_login_at = ? WHERE id = ?",
+            (datetime.now(timezone.utc).isoformat(), user_id),
+        )
+        await db.commit()
+
+
+async def log_credit_transaction(user_id: str, amount: int, type_: str, description: str = ""):
+    import uuid as _uuid
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            """INSERT INTO credit_transactions (id, user_id, amount, type, description, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (_uuid.uuid4().hex, user_id, amount, type_, description, datetime.now(timezone.utc).isoformat()),
+        )
+        await db.commit()
+
+
+async def list_credit_transactions(limit: int = 100) -> list:
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            """SELECT ct.id, ct.user_id, ct.amount, ct.type, ct.description, ct.created_at,
+                      u.email as user_email
+               FROM credit_transactions ct
+               LEFT JOIN users u ON ct.user_id = u.id
+               ORDER BY ct.created_at DESC LIMIT ?""",
+            (limit,),
+        )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
