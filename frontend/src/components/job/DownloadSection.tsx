@@ -8,7 +8,7 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import ArticleIcon from '@mui/icons-material/Article';
 import SummarizeIcon from '@mui/icons-material/Summarize';
-import { getReportUrl, getOnePagerUrl } from '../../api/client';
+import { openReport, openOnePager } from '../../api/client';
 
 // ============================================================
 // Download action definitions
@@ -17,7 +17,7 @@ interface DownloadAction {
   label: string;
   description: string;
   icon: React.ReactNode;
-  getUrl: (jobId: string) => string;
+  open: (jobId: string) => Promise<void>;
   variant: 'contained' | 'outlined';
   tooltip: string;
 }
@@ -27,7 +27,7 @@ const DOWNLOADS: DownloadAction[] = [
     label: 'Investor Report',
     description: 'Full printable analysis document',
     icon: <ArticleIcon fontSize="small" />,
-    getUrl: getReportUrl,
+    open: openReport,
     variant: 'contained',
     tooltip: 'Download the complete investor due diligence report (HTML)',
   },
@@ -35,7 +35,7 @@ const DOWNLOADS: DownloadAction[] = [
     label: 'Visual One-Pager',
     description: 'Executive summary — presentation ready',
     icon: <SummarizeIcon fontSize="small" />,
-    getUrl: getOnePagerUrl,
+    open: openOnePager,
     variant: 'outlined',
     tooltip: 'Download the visual one-pager executive summary (HTML)',
   },
@@ -50,9 +50,13 @@ interface DownloadSectionProps {
 }
 
 export default function DownloadSection({ jobId, isCompleted }: DownloadSectionProps) {
-  const handleDownload = (getUrl: (id: string) => string) => {
+  const handleDownload = async (open: (id: string) => Promise<void>) => {
     if (!jobId) return;
-    window.open(getUrl(jobId), '_blank', 'noopener,noreferrer');
+    try {
+      await open(jobId);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
   };
 
   return (
@@ -134,7 +138,7 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
                 disabled={!isCompleted || !jobId}
                 startIcon={dl.icon}
                 endIcon={<DownloadIcon fontSize="small" />}
-                onClick={() => handleDownload(dl.getUrl)}
+                onClick={() => handleDownload(dl.open)}
                 aria-label={`${dl.label} — ${dl.description}`}
                 sx={{
                   justifyContent: 'flex-start',

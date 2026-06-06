@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -30,6 +30,21 @@ import { loginApi, register, googleAuth } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { AuthUser } from '../types';
 
+// ── Editorial tokens for the left brand panel (always dark, matches /) ────────
+const AUTH_INK = '#0A0E17';
+const AUTH_LINE = '#1E2530';
+const AUTH_PAPER = '#F4F6F8';
+const AUTH_PAPER_DIM = '#9BA6B4';
+const AUTH_PAPER_FAINT = '#5B6675';
+const AUTH_SIGNAL = '#10B981';
+const AUTH_DISPLAY = '"Fraunces", Georgia, serif';
+const AUTH_MONO = '"JetBrains Mono", ui-monospace, monospace';
+const AUTH_POINTS: [string, string][] = [
+  ['01', 'Company research, market sizing, and a five-year financial model'],
+  ['02', 'A scored risk assessment and comparable-deal benchmarking'],
+  ['03', 'An IC-ready memo and a one-page summary, generated in minutes'],
+];
+
 // ============================================================
 // AuthPage — standalone full-page layout (no AppLayout wrapper)
 // Handles login and registration. Login accepts email OR username.
@@ -39,9 +54,11 @@ import type { AuthUser } from '../types';
 export default function AuthPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const [searchParams] = useSearchParams();
 
-  // Tab: 0 = Login, 1 = Register
-  const [tab, setTab] = useState<0 | 1>(0);
+  // Tab: 0 = Login, 1 = Register. ?mode=register opens on the register tab
+  // (the landing page's "Start free" links here).
+  const [tab, setTab] = useState<0 | 1>(searchParams.get('mode') === 'register' ? 1 : 0);
   const isRegister = tab === 1;
 
   // Login fields
@@ -175,47 +192,156 @@ export default function AuthPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        px: 2,
-      }}
-    >
-      {/* Brand header */}
-      <Box sx={{ mb: 3, textAlign: 'center' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* ── Left brand panel (desktop) — reflects product capabilities ─── */}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          width: '44%',
+          maxWidth: 560,
+          p: 6,
+          color: AUTH_PAPER,
+          backgroundColor: AUTH_INK,
+          borderRight: `1px solid ${AUTH_LINE}`,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(50% 40% at 80% 8%, ${AUTH_SIGNAL}1a 0%, transparent 70%)`,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* brand */}
+        <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${AUTH_SIGNAL}`,
+              color: AUTH_SIGNAL,
+              fontFamily: AUTH_MONO,
+              fontWeight: 600,
+              fontSize: '0.82rem',
+            }}
+            aria-hidden="true"
+          >
+            VC
+          </Box>
+          <Typography sx={{ fontWeight: 600, fontSize: '0.98rem' }}>VC Intelligence</Typography>
+        </Box>
+
+        {/* headline + capability list */}
+        <Box sx={{ position: 'relative' }}>
+          <Typography
+            sx={{
+              fontFamily: AUTH_DISPLAY,
+              fontWeight: 500,
+              fontSize: 'clamp(2rem, 3vw, 2.7rem)',
+              lineHeight: 1.08,
+              letterSpacing: '-0.02em',
+              mb: 3.5,
+            }}
+          >
+            Institutional diligence, in minutes.
+          </Typography>
+          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {AUTH_POINTS.map(([n, label]) => (
+              <Box component="li" key={n} sx={{ display: 'flex', gap: 2, alignItems: 'baseline' }}>
+                <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.78rem', color: AUTH_SIGNAL, minWidth: 24 }}>
+                  {n}
+                </Typography>
+                <Typography sx={{ fontSize: '0.95rem', color: AUTH_PAPER_DIM, lineHeight: 1.5 }}>{label}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* specimen signal line */}
         <Box
           sx={{
-            display: 'inline-flex',
+            position: 'relative',
+            display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            width: 52,
-            height: 52,
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
-            mb: 1.5,
-            boxShadow: (t) => `0 8px 28px ${alpha(t.palette.primary.main, 0.4)}`,
+            gap: 1.5,
+            pt: 2.5,
+            borderTop: `1px solid ${AUTH_LINE}`,
           }}
-          aria-hidden="true"
         >
-          <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '1rem', letterSpacing: '-0.03em' }}>
-            VC
+          <Box
+            sx={{
+              fontFamily: AUTH_MONO,
+              fontSize: '0.66rem',
+              fontWeight: 600,
+              letterSpacing: '0.08em',
+              color: AUTH_INK,
+              backgroundColor: AUTH_SIGNAL,
+              px: 1,
+              py: 0.4,
+              borderRadius: '5px',
+            }}
+          >
+            STRONG BUY
+          </Box>
+          <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.72rem', color: AUTH_PAPER_FAINT }}>
+            Tomoro AI · risk 3.2 / 10 · 8 / 8 stages
           </Typography>
         </Box>
-        <Typography variant="h1" sx={{ fontSize: '1.5rem', mb: 0.25 }}>
-          VC Intelligence
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.disabled', letterSpacing: '0.1em' }}>
-          DUE DILIGENCE PLATFORM
-        </Typography>
       </Box>
 
-      {/* Auth card */}
-      <Card
+      {/* ── Right column: the auth form ──────────────────────────────── */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+          py: 6,
+        }}
+      >
+        {/* Mobile-only brand header (left panel is hidden below md) */}
+        <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 3, textAlign: 'center' }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 52,
+              height: 52,
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+              mb: 1.5,
+              boxShadow: (t) => `0 8px 28px ${alpha(t.palette.primary.main, 0.4)}`,
+            }}
+            aria-hidden="true"
+          >
+            <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '1rem', letterSpacing: '-0.03em' }}>
+              VC
+            </Typography>
+          </Box>
+          <Typography variant="h1" sx={{ fontSize: '1.5rem', mb: 0.25 }}>
+            VC Intelligence
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.disabled', letterSpacing: '0.1em' }}>
+            DUE DILIGENCE PLATFORM
+          </Typography>
+        </Box>
+
+        {/* Auth card */}
+        <Card
         sx={{
           width: '100%',
           maxWidth: 460,
@@ -577,6 +703,7 @@ export default function AuthPage() {
           </Box>
         </CardContent>
       </Card>
+      </Box>
     </Box>
   );
 }

@@ -31,6 +31,23 @@ STAGE_NAMES = {
 }
 
 
+def _authorize_job_access(analysis: dict, current_user: Optional[dict]) -> None:
+    """Enforce that the caller may read or act on this analysis.
+
+    Policy: authentication is required; the owner or an admin is allowed.
+    Jobs with no owner (legacy/unowned, user_id is None) are accessible to any
+    authenticated user since they cannot be attributed to anyone. Raises 401 for
+    anonymous callers and 403 for a logged-in user who does not own the job.
+    """
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    if current_user.get("role") == "admin":
+        return
+    owner_id = analysis.get("user_id")
+    if owner_id is not None and owner_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not authorised to access this analysis.")
+
+
 @router.get("/health")
 async def health():
     return {"status": "ok"}
@@ -41,7 +58,10 @@ async def start_analysis(
     request: AnalyzeRequest,
     current_user: Optional[dict] = Depends(get_current_user),
 ):
-    """Submit a company for due diligence analysis. Deducts credits if authenticated."""
+    """Submit a company for due diligence analysis. Requires authentication; deducts credits."""
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+
     cost = credit_cost(request.selected_stages)
 
     if current_user:
@@ -76,7 +96,7 @@ async def start_analysis(
 
 
 @router.post("/stop/{job_id}", response_model=JobResponse, summary="Pause a running analysis and preserve progress")
-async def pause_analysis(job_id: str):
+async def pause_analysis(job_id: str, current_user: Optional[dict] = Depends(get_current_user)):
     """
     Immediately cancel a running pipeline.
 
@@ -87,6 +107,7 @@ async def pause_analysis(job_id: str):
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
 
     status = analysis["status"]
 
@@ -132,7 +153,7 @@ async def pause_analysis(job_id: str):
 
 
 @router.post("/resume/{job_id}", response_model=JobResponse, summary="Resume a paused or failed analysis from the last completed stage")
-async def resume_analysis(job_id: str):
+async def resume_analysis(job_id: str, current_user: Optional[dict] = Depends(get_current_user)):
     """
     Resume a paused or failed pipeline from the last completed stage.
     Completed stages are not re-run. Token usage is preserved.
@@ -140,6 +161,7 @@ async def resume_analysis(job_id: str):
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
 
     status = analysis["status"]
 
@@ -174,6 +196,7 @@ async def complete_remaining_stages(
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
 
     status = analysis["status"]
     if status not in ("completed", "paused"):
@@ -226,14 +249,7 @@ async def get_analysis_status(job_id: str, current_user: Optional[dict] = Depend
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
-    # Ownership check: non-admin users can only see their own jobs
-    if (
-        current_user
-        and current_user.get("role") != "admin"
-        and analysis.get("user_id")
-        and analysis["user_id"] != current_user["id"]
-    ):
-        raise HTTPException(status_code=403, detail="Not authorised to view this analysis.")
+    _authorize_job_access(analysis, current_user)
 
     stage = analysis.get("current_stage", 0)
     status = analysis["status"]
@@ -277,24 +293,18 @@ async def get_analysis_results(job_id: str, current_user: Optional[dict] = Depen
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
-    # Ownership check
-    if (
-        current_user
-        and current_user.get("role") != "admin"
-        and analysis.get("user_id")
-        and analysis["user_id"] != current_user["id"]
-    ):
-        raise HTTPException(status_code=403, detail="Not authorised to view this analysis.")
+    _authorize_job_access(analysis, current_user)
 
     # Return full partial results even during running state (for progressive loading)
     return analysis
 
 
 @router.get("/results/{job_id}/report", summary="Download the investor report (HTML)")
-async def download_investor_report(job_id: str):
+async def download_investor_report(job_id: str, current_user: Optional[dict] = Depends(get_current_user)):
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
     path = analysis.get("html_report_path")
     if not path or not Path(path).exists():
         raise HTTPException(status_code=404, detail="HTML report not yet generated.")
@@ -302,10 +312,11 @@ async def download_investor_report(job_id: str):
 
 
 @router.get("/results/{job_id}/chart", summary="Download revenue projection chart (PNG) — internal use only")
-async def download_revenue_chart(job_id: str):
+async def download_revenue_chart(job_id: str, current_user: Optional[dict] = Depends(get_current_user)):
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
     path = analysis.get("chart_path")
     if not path or not Path(path).exists():
         raise HTTPException(status_code=404, detail="Revenue chart not yet generated.")
@@ -313,10 +324,11 @@ async def download_revenue_chart(job_id: str):
 
 
 @router.get("/results/{job_id}/one-pager", summary="Download the visual one-pager executive summary (HTML)")
-async def download_one_pager(job_id: str):
+async def download_one_pager(job_id: str, current_user: Optional[dict] = Depends(get_current_user)):
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+    _authorize_job_access(analysis, current_user)
     path = analysis.get("infographic_path")
     if not path or not Path(path).exists():
         raise HTTPException(status_code=404, detail="Visual one-pager not yet generated.")
@@ -334,10 +346,8 @@ async def delete_job(
     analysis = await get_analysis(job_id)
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found.")
-    # Only owner or admin may delete
-    if current_user:
-        if analysis.get("user_id") and analysis["user_id"] != current_user["id"] and current_user["role"] != "admin":
-            raise HTTPException(status_code=403, detail="Not authorised to delete this analysis.")
+    # Only the owner or an admin may delete (anonymous callers are rejected)
+    _authorize_job_access(analysis, current_user)
     await delete_analysis(job_id)
 
 

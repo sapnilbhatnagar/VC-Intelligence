@@ -1,0 +1,4 @@
+# Test/development dependencies (not needed for production deploy).
+# Install with: uv pip install -r requirements-backend.txt -r requirements-dev.txt
+pytest>=8.0.0
+httpx>=0.27.0

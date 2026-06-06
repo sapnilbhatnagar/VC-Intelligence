@@ -284,7 +284,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   {apiHealthy === null ? 'Unknown' : apiHealthy ? 'Connected' : 'Disconnected'}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  localhost:8000
+                  {import.meta.env.VITE_API_URL
+                    ? new URL(import.meta.env.VITE_API_URL).host
+                    : 'same origin'}
                 </Typography>
               </Box>
             </Box>

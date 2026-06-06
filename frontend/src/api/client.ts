@@ -281,7 +281,22 @@ export async function getAdminCreditTransactions(): Promise<CreditTransaction[]>
 }
 
 // ============================================================
-// Download URL helpers (use window.open — no auth required)
+// Download helpers
+// The report/one-pager endpoints require the owner's auth, so we
+// fetch them through apiClient (which attaches the Bearer token),
+// then open the returned file as an object URL. A plain window.open
+// would not carry the token and would 401.
 // ============================================================
-export const getReportUrl = (jobId: string) => `${API_BASE}/results/${jobId}/report`;
-export const getOnePagerUrl = (jobId: string) => `${API_BASE}/results/${jobId}/one-pager`;
+async function openAuthedFile(path: string): Promise<void> {
+  const response = await apiClient.get(path, { responseType: 'blob' });
+  const objectUrl = URL.createObjectURL(response.data as Blob);
+  window.open(objectUrl, '_blank', 'noopener,noreferrer');
+  // Revoke after a delay so the new tab has time to load it.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+}
+
+/** Open the investor report (HTML) in a new tab, authenticated. */
+export const openReport = (jobId: string) => openAuthedFile(`/results/${jobId}/report`);
+
+/** Open the visual one-pager (HTML) in a new tab, authenticated. */
+export const openOnePager = (jobId: string) => openAuthedFile(`/results/${jobId}/one-pager`);

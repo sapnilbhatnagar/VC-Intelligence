@@ -16,3 +16,16 @@ outputs/
 
 # OS
 .DS_Store
+.vercel
+
+# Local Python virtualenv + tooling (tests run via: uv venv .venv)
+.venv/
+.python-version
+pyproject.toml
+uv.lock
+
+# Root-level lockfile (the real one is frontend/package-lock.json)
+/package-lock.json
+
+# Built frontend assets — Vercel rebuilds these from source on each deploy
+frontend/dist/
