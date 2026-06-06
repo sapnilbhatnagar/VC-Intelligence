@@ -295,7 +295,7 @@ export default function AuthPage() {
             STRONG BUY
           </Box>
           <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.72rem', color: AUTH_PAPER_FAINT }}>
-            Tomoro AI · risk 3.2 / 10 · 8 / 8 stages
+            Sample memo · risk 3.2 / 10 · 8 / 8 stages
           </Typography>
         </Box>
       </Box>
@@ -322,13 +322,13 @@ export default function AuthPage() {
               width: 52,
               height: 52,
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+              border: '1.5px solid',
+              borderColor: 'primary.main',
               mb: 1.5,
-              boxShadow: (t) => `0 8px 28px ${alpha(t.palette.primary.main, 0.4)}`,
             }}
             aria-hidden="true"
           >
-            <Typography sx={{ fontWeight: 800, color: '#fff', fontSize: '1rem', letterSpacing: '-0.03em' }}>
+            <Typography sx={{ fontWeight: 700, color: 'primary.main', fontSize: '1rem', fontFamily: '"JetBrains Mono", monospace' }}>
               VC
             </Typography>
           </Box>
@@ -355,8 +355,8 @@ export default function AuthPage() {
             borderRadius: 'inherit',
             padding: 1,
             background: adminMode
-              ? 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)'
-              : 'linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, transparent 100%)',
+              ? 'linear-gradient(135deg, #F5A623 0%, #E5484D 100%)'
+              : 'linear-gradient(135deg, #10B981 0%, #0E7C5A 50%, transparent 100%)',
             WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
             WebkitMaskComposite: 'xor',
             maskComposite: 'exclude',

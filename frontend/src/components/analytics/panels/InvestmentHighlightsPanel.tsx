@@ -19,9 +19,9 @@ import DataSourceTooltip from '../DataSourceTooltip';
 // Accent palette cycling through multiple colors
 // ============================================================
 const ACCENT_COLORS = [
-  '#6366F1', // indigo
+  '#8B93F8', // indigo
   '#10B981', // emerald
-  '#3B82F6', // blue
+  '#5B9DF9', // blue
   '#F59E0B', // amber
   '#EC4899', // pink
 ];
@@ -111,7 +111,7 @@ function HighlightSkeleton() {
             border: '1px solid',
             borderColor: 'divider',
             borderLeft: '4px solid',
-            borderLeftColor: alpha('#6366F1', 0.3),
+            borderLeftColor: alpha('#8B93F8', 0.3),
           }}
         >
           <Skeleton variant="circular" width={24} height={24} sx={{ flexShrink: 0 }} />

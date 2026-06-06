@@ -39,10 +39,10 @@ import type { HistoryItem, RecommendationType } from '../types';
 // Constants
 // ============================================================
 const RECO_STYLE: Record<RecommendationType, { bg: string; text: string }> = {
-  'STRONG BUY': { bg: '#10B981', text: '#fff' },
-  BUY: { bg: '#3B82F6', text: '#fff' },
-  HOLD: { bg: '#F59E0B', text: '#000' },
-  PASS: { bg: '#EF4444', text: '#fff' },
+  'STRONG BUY': { bg: '#10B981', text: '#06120D' },
+  BUY: { bg: '#0E7C5A', text: '#fff' },
+  HOLD: { bg: '#F5A623', text: '#06120D' },
+  PASS: { bg: '#E5484D', text: '#fff' },
   'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
 };
 
@@ -88,35 +88,28 @@ function StatCard({ icon, label, value, accentColor, loading, pulse = false }: S
         borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
-        backgroundColor: (t) => alpha(t.palette.background.paper, 0.8),
-        borderTop: `3px solid ${accentColor}`,
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          backgroundColor: accentColor,
-          opacity: 0.05,
-          transform: 'translate(20px, -20px)',
-        },
+        backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
+        transition: 'border-color 0.2s ease',
+        '&:hover': { borderColor: alpha(accentColor, 0.4) },
       }}
     >
       <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.75,
-          mb: 1.5,
-          color: accentColor,
-        }}
-        aria-hidden="true"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
       >
-        {icon}
+        <Box sx={{ color: accentColor, display: 'flex' }} aria-hidden="true">
+          {icon}
+        </Box>
+        <Typography
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.66rem',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'text.secondary',
+          }}
+        >
+          {label}
+        </Typography>
         {pulse && (
           <Box
             sx={{
@@ -125,7 +118,7 @@ function StatCard({ icon, label, value, accentColor, loading, pulse = false }: S
               borderRadius: '50%',
               backgroundColor: accentColor,
               ml: 'auto',
-              animation: 'statPulse 1.4s ease-in-out infinite',
+              animation: 'statPulse 1.6s ease-in-out infinite',
               '@keyframes statPulse': {
                 '0%, 100%': { opacity: 1, transform: 'scale(1)' },
                 '50%': { opacity: 0.4, transform: 'scale(0.8)' },
@@ -135,21 +128,20 @@ function StatCard({ icon, label, value, accentColor, loading, pulse = false }: S
         )}
       </Box>
       {loading ? (
-        <Skeleton width={48} height={36} />
+        <Skeleton width={48} height={32} />
       ) : (
         <Typography
-          variant="h4"
-          sx={{ fontWeight: 700, color: 'text.primary', fontSize: '1.75rem', lineHeight: 1 }}
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontWeight: 600,
+            color: 'text.primary',
+            fontSize: '1.9rem',
+            lineHeight: 1,
+          }}
         >
           {value}
         </Typography>
       )}
-      <Typography
-        variant="caption"
-        sx={{ color: 'text.secondary', mt: 0.5, display: 'block', fontSize: '0.75rem' }}
-      >
-        {label}
-      </Typography>
     </Box>
   );
 }
@@ -290,19 +282,19 @@ function PlatformCard() {
       <Box
         sx={{
           p: 2,
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #1a1f35 100%)',
+          background: 'linear-gradient(135deg, #0E2A20 0%, #0B1410 100%)',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: (t) => alpha(t.palette.primary.main, 0.25),
           flexShrink: 0,
         }}
       >
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}
+          sx={{ fontWeight: 700, color: '#ECFDF5', letterSpacing: '0.02em' }}
         >
           8-Stage AI Pipeline
         </Typography>
-        <Typography variant="caption" sx={{ color: alpha('#fff', 0.6), fontSize: '0.7rem' }}>
+        <Typography variant="caption" sx={{ color: alpha('#ECFDF5', 0.6), fontSize: '0.7rem' }}>
           Full institutional-grade due diligence
         </Typography>
       </Box>
@@ -390,7 +382,7 @@ function RecentAnalysesTable({ items, loading }: RecentTableProps) {
   const statusColor = (status: string) => {
     if (status === 'completed') return 'success';
     if (status === 'failed') return 'error';
-    if (status === 'running') return 'primary';
+    if (status === 'running') return 'info';
     if (status === 'paused') return 'warning';
     return 'default';
   };
@@ -620,21 +612,13 @@ export default function Dashboard() {
         </Typography>
         <Typography
           variant="h1"
-          sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, fontWeight: 700, mb: 0.5, lineHeight: 1.2 }}
+          sx={{ fontSize: { xs: '1.75rem', md: '2.2rem' }, mb: 0.5, lineHeight: 1.15 }}
         >
           {greeting}
           {userName && (
             <>
               {', '}
-              <Box
-                component="span"
-                sx={{
-                  background: 'linear-gradient(90deg, #3B82F6 0%, #6366F1 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
+              <Box component="span" sx={{ color: 'primary.main' }}>
                 {userName}
               </Box>
             </>
@@ -658,7 +642,7 @@ export default function Dashboard() {
             icon: <StorageIcon fontSize="small" />,
             label: 'Total Analyses',
             value: totalCount,
-            accentColor: '#3B82F6',
+            accentColor: '#5B9DF9',
           },
           {
             icon: <CheckCircleOutlineIcon fontSize="small" />,
@@ -670,7 +654,7 @@ export default function Dashboard() {
             icon: <AutorenewIcon fontSize="small" />,
             label: 'Running Now',
             value: runningCount,
-            accentColor: '#6366F1',
+            accentColor: '#F5A623',
             pulse: runningCount > 0,
           },
           {
@@ -687,13 +671,13 @@ export default function Dashboard() {
                   sx={{
                     fontSize: '1rem',
                     fontWeight: 700,
-                    color: topPick.includes('BUY') ? '#10B981' : topPick === 'HOLD' ? '#F59E0B' : '#EF4444',
+                    color: topPick.includes('BUY') ? '#10B981' : topPick === 'HOLD' ? '#F5A623' : '#E5484D',
                   }}
                 >
                   {topPick}
                 </Typography>
               ),
-            accentColor: '#F59E0B',
+            accentColor: '#98A4A0',
           },
         ].map((card) => (
           <Grid key={card.label} item xs={6} lg={3}>

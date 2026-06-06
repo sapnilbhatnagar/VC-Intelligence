@@ -38,7 +38,7 @@ import type { HistoryItem, RecommendationType } from '../types';
 // ============================================================
 const RECO_COLOR: Record<RecommendationType, { bg: string; text: string }> = {
   'STRONG BUY': { bg: '#10B981', text: '#fff' },
-  BUY: { bg: '#3B82F6', text: '#fff' },
+  BUY: { bg: '#5B9DF9', text: '#fff' },
   HOLD: { bg: '#F59E0B', text: '#000' },
   PASS: { bg: '#EF4444', text: '#fff' },
   'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
@@ -187,7 +187,7 @@ export default function ProfilePage() {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

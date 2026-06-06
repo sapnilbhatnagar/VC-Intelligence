@@ -207,7 +207,7 @@ export default function AnalysisForm() {
               inset: -1,
               borderRadius: 'inherit',
               padding: 1,
-              background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, transparent 100%)',
+              background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 50%, transparent 100%)',
               WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
               maskComposite: 'exclude',
@@ -227,13 +227,13 @@ export default function AnalysisForm() {
                   width: 48,
                   height: 48,
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                  background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 100%)',
                   mb: 2,
                   boxShadow: (t) => `0 8px 24px ${alpha(t.palette.primary.main, 0.35)}`,
                 }}
                 aria-hidden="true"
               >
-                <RocketLaunchIcon sx={{ color: '#fff', fontSize: 22 }} />
+                <RocketLaunchIcon sx={{ color: '#06120D', fontSize: 22 }} />
               </Box>
               <Typography variant="h2" sx={{ mb: 0.5, fontSize: '1.375rem' }}>
                 New Due Diligence Analysis

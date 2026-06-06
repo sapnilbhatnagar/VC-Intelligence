@@ -387,7 +387,7 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
       if (Array.isArray(baseRates) && baseRates.length > 0) {
         builtLines.push({
           label: 'Base',
-          color: '#3B82F6',
+          color: '#5B9DF9',
           values: computeRevenuesFromRates(currentArr!, baseRates as number[]),
         });
       }
@@ -439,7 +439,7 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
 
     const legacyLines: LineData[] = [];
     if (bearVals.length > 0) legacyLines.push({ label: 'Bear', color: '#EF4444', values: bearVals });
-    if (baseVals.length > 0) legacyLines.push({ label: 'Base', color: '#3B82F6', values: baseVals });
+    if (baseVals.length > 0) legacyLines.push({ label: 'Base', color: '#5B9DF9', values: baseVals });
     if (bullVals.length > 0) legacyLines.push({ label: 'Bull', color: '#10B981', values: bullVals });
 
     if (legacyLines.length === 0) return empty;
@@ -536,7 +536,7 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
               <MetricTile
                 label="Current ARR"
                 value={formatCurrency(currentArrRaw)}
-                color="#3B82F6"
+                color="#5B9DF9"
               />
               <MetricTile
                 label="Year 5 Base"

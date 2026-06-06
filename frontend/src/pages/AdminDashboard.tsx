@@ -41,17 +41,17 @@ function fmtDate(iso: string | null | undefined): string {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: '#10B981', running: '#3B82F6', paused: '#F59E0B',
+  completed: '#10B981', running: '#5B9DF9', paused: '#F59E0B',
   failed: '#EF4444', pending: '#6B7280',
 };
 
 const REC_COLORS: Record<string, string> = {
-  'STRONG BUY': '#10B981', 'BUY': '#3B82F6', 'HOLD': '#F59E0B',
+  'STRONG BUY': '#10B981', 'BUY': '#5B9DF9', 'HOLD': '#F59E0B',
   'PASS': '#EF4444', 'STRONG PASS': '#7F1D1D',
 };
 
 const TX_COLORS: Record<string, string> = {
-  purchase: '#10B981', admin_grant: '#3B82F6', admin_set: '#8B5CF6',
+  purchase: '#10B981', admin_grant: '#5B9DF9', admin_set: '#8B5CF6',
   usage: '#EF4444', signup_bonus: '#F59E0B',
 };
 
@@ -308,7 +308,7 @@ function OverviewTab({
             label="Total Users"
             value={stats?.total_users ?? 0}
             icon={<People fontSize="small" />}
-            color="#3B82F6"
+            color="#5B9DF9"
             loading={statsLoading}
           />
         </Grid>
@@ -367,7 +367,7 @@ function OverviewTab({
             label="Running Now"
             value={stats?.running_analyses ?? 0}
             icon={<Timeline fontSize="small" />}
-            color="#3B82F6"
+            color="#5B9DF9"
             loading={statsLoading}
           />
         </Grid>
@@ -604,8 +604,8 @@ function UsersTab({
                       <Avatar
                         sx={{
                           width: 32, height: 32,
-                          bgcolor: user.role === 'admin' ? '#8B5CF620' : '#3B82F620',
-                          color: user.role === 'admin' ? '#8B5CF6' : '#3B82F6',
+                          bgcolor: user.role === 'admin' ? '#8B5CF620' : '#5B9DF920',
+                          color: user.role === 'admin' ? '#8B5CF6' : '#5B9DF9',
                           fontSize: '0.75rem', fontWeight: 700,
                         }}
                       >
@@ -631,8 +631,8 @@ function UsersTab({
                           : undefined
                       }
                       sx={{
-                        bgcolor: user.role === 'admin' ? '#8B5CF620' : '#3B82F620',
-                        color: user.role === 'admin' ? '#8B5CF6' : '#3B82F6',
+                        bgcolor: user.role === 'admin' ? '#8B5CF620' : '#5B9DF920',
+                        color: user.role === 'admin' ? '#8B5CF6' : '#5B9DF9',
                         fontWeight: 600,
                       }}
                     />

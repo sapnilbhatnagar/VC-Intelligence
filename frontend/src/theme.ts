@@ -15,8 +15,10 @@ interface ThemeTokens {
   surfaceHover: string;
   border: string;
   borderHover: string;
-  accent: string;
+  accent: string;       // emerald signal — brand, CTAs, links, active state
   accentDim: string;
+  accentText: string;   // text/icon colour that sits on top of `accent`
+  info: string;         // cool tone for in-progress / secondary data series
   success: string;
   warning: string;
   error: string;
@@ -24,62 +26,78 @@ interface ThemeTokens {
   textSecondary: string;
   textDisabled: string;
   fontFamily: string;
+  displayFamily: string; // editorial serif for page headings
   borderRadius: number;
   muiMode: 'dark' | 'light';
 }
 
+const INTER = '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const FRAUNCES = '"Fraunces", Georgia, "Times New Roman", serif';
+
 const TOKENS: Record<ThemeMode, ThemeTokens> = {
+  // ── Dark: the editorial "research desk" — warm ink + emerald signal ──────────
   dark: {
-    bg: '#0A0E1A',
-    surface: '#111827',
-    surfaceHover: '#1A2235',
-    border: '#1F2937',
-    borderHover: '#374151',
-    accent: '#3B82F6',
-    accentDim: '#1D4ED8',
+    bg: '#0A0E14',
+    surface: '#0F141C',
+    surfaceHover: '#161D27',
+    border: '#1E2630',
+    borderHover: '#2C3640',
+    accent: '#10B981',
+    accentDim: '#0E7C5A',
+    accentText: '#06120D',
+    info: '#5B9DF9',
     success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    textPrimary: '#F9FAFB',
-    textSecondary: '#9CA3AF',
-    textDisabled: '#4B5563',
-    fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    borderRadius: 8,
+    warning: '#F5A623',
+    error: '#F0686A',
+    textPrimary: '#F2F5F4',
+    textSecondary: '#98A4A0',
+    textDisabled: '#5A655F',
+    fontFamily: INTER,
+    displayFamily: FRAUNCES,
+    borderRadius: 10,
     muiMode: 'dark',
   },
+  // ── Light: warm paper, the colour of a printed memo ─────────────────────────
   light: {
-    bg: '#F8F9FA',
+    bg: '#F6F5F1',
     surface: '#FFFFFF',
-    surfaceHover: '#F3F4F6',
-    border: '#E5E7EB',
-    borderHover: '#D1D5DB',
-    accent: '#2563EB',
-    accentDim: '#1D4ED8',
-    success: '#059669',
-    warning: '#D97706',
-    error: '#DC2626',
-    textPrimary: '#111827',
-    textSecondary: '#6B7280',
-    textDisabled: '#9CA3AF',
-    fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    borderRadius: 8,
+    surfaceHover: '#F0EEE8',
+    border: '#E5E2DA',
+    borderHover: '#D3CFC4',
+    accent: '#0E7C5A',
+    accentDim: '#0B5E45',
+    accentText: '#FFFFFF',
+    info: '#2D6FE0',
+    success: '#0E7C5A',
+    warning: '#B5790C',
+    error: '#D4504F',
+    textPrimary: '#16201B',
+    textSecondary: '#5C665F',
+    textDisabled: '#9AA39D',
+    fontFamily: INTER,
+    displayFamily: FRAUNCES,
+    borderRadius: 10,
     muiMode: 'light',
   },
+  // ── Advanced: a deeper, higher-contrast green-black "focus" mode ────────────
   advanced: {
-    bg: '#0D0D14',
-    surface: '#16162A',
-    surfaceHover: '#1E1E35',
-    border: '#2D2D52',
-    borderHover: '#3D3D72',
-    accent: '#A78BFA',
-    accentDim: '#7C3AED',
-    success: '#34D399',
+    bg: '#07100C',
+    surface: '#0D1A14',
+    surfaceHover: '#12241B',
+    border: '#1C3328',
+    borderHover: '#2A4A39',
+    accent: '#2BE0A0',
+    accentDim: '#12A874',
+    accentText: '#04130C',
+    info: '#5BC8FF',
+    success: '#2BE0A0',
     warning: '#FBBF24',
-    error: '#F87171',
-    textPrimary: '#EDE9FE',
-    textSecondary: '#A78BFA',
-    textDisabled: '#4B4B7A',
-    fontFamily: '"Inter", system-ui, sans-serif',
+    error: '#FB7185',
+    textPrimary: '#E8F5EE',
+    textSecondary: '#8FB3A2',
+    textDisabled: '#4A6657',
+    fontFamily: INTER,
+    displayFamily: FRAUNCES,
     borderRadius: 14,
     muiMode: 'dark',
   },
@@ -137,11 +155,12 @@ export function createAppTheme(mode: ThemeMode): Theme {
       primary: {
         main: C.accent,
         dark: C.accentDim,
-        contrastText: '#FFFFFF',
+        contrastText: C.accentText,
       },
       secondary: {
-        main: isAdvanced ? '#818CF8' : '#6366F1',
+        main: C.info,
       },
+      info: { main: C.info },
       success: { main: C.success },
       warning: { main: C.warning },
       error: { main: C.error },
@@ -164,15 +183,17 @@ export function createAppTheme(mode: ThemeMode): Theme {
       fontWeightMedium: 500,
       fontWeightBold: 600,
       h1: {
-        fontSize: '2rem',
-        fontWeight: 700,
-        letterSpacing: isAdvanced ? '-0.03em' : '-0.02em',
+        fontFamily: C.displayFamily,
+        fontSize: '2.05rem',
+        fontWeight: 600,
+        letterSpacing: '-0.02em',
         color: C.textPrimary,
       },
       h2: {
-        fontSize: '1.5rem',
+        fontFamily: C.displayFamily,
+        fontSize: '1.55rem',
         fontWeight: 600,
-        letterSpacing: isAdvanced ? '-0.02em' : '-0.01em',
+        letterSpacing: '-0.015em',
       },
       h3: { fontSize: '1.25rem', fontWeight: 600 },
       h4: { fontSize: '1.125rem', fontWeight: 600 },
@@ -238,29 +259,19 @@ export function createAppTheme(mode: ThemeMode): Theme {
             fontWeight: 600,
             transition: 'all 0.2s ease',
           },
-          contained: isAdvanced
-            ? {
-                // Advanced: violet gradient + subtle glow
-                background: `linear-gradient(135deg, ${C.accent} 0%, ${C.accentDim} 100%)`,
-                color: '#FFFFFF',
-                boxShadow: `0 2px 12px ${alpha(C.accent, 0.35)}`,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${C.accent} 0%, ${C.accentDim} 100%)`,
-                  boxShadow: `0 4px 20px ${alpha(C.accent, 0.55)}, 0 0 0 1px ${alpha(C.accent, 0.3)}`,
-                  transform: 'translateY(-1px)',
-                },
-                '&:active': { transform: 'translateY(0)' },
-              }
-            : {
-                // Dark / Light: gradient button with glow
-                background: `linear-gradient(135deg, ${C.accent} 0%, ${C.accentDim} 100%)`,
-                boxShadow: `0 2px 8px ${alpha(C.accent, 0.3)}`,
-                '&:hover': {
-                  boxShadow: `0 4px 16px ${alpha(C.accent, 0.5)}`,
-                  transform: 'translateY(-1px)',
-                },
-                '&:active': { transform: 'translateY(0)' },
-              },
+          // Solid emerald CTA with ink text — editorial, quiet, no decorative glow
+          contained: {
+            backgroundColor: C.accent,
+            color: C.accentText,
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: C.accent,
+              filter: 'brightness(1.08)',
+              boxShadow: `0 4px 16px ${alpha(C.accent, 0.28)}`,
+              transform: 'translateY(-1px)',
+            },
+            '&:active': { transform: 'translateY(0)' },
+          },
           outlined: {
             borderColor: C.border,
             '&:hover': {
@@ -359,8 +370,8 @@ export function createAppTheme(mode: ThemeMode): Theme {
         styleOverrides: {
           root: isAdvanced
             ? {
-                // Advanced: deep indigo with blur
-                backgroundColor: alpha('#0D0D20', 0.92),
+                // Advanced: deep green-black with blur
+                backgroundColor: alpha('#091410', 0.92),
                 backgroundImage: 'none',
                 borderBottom: `1px solid ${C.border}`,
                 backdropFilter: 'blur(20px)',
@@ -384,7 +395,7 @@ export function createAppTheme(mode: ThemeMode): Theme {
           },
           bar: {
             borderRadius: 4,
-            background: `linear-gradient(90deg, ${C.accent} 0%, ${isAdvanced ? '#818CF8' : '#6366F1'} 100%)`,
+            background: `linear-gradient(90deg, ${C.accentDim} 0%, ${C.accent} 100%)`,
           },
         },
       },

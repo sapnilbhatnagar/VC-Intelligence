@@ -482,7 +482,7 @@ function useElapsedTime(startIso: string | undefined, stopped: boolean) {
 function statusChipProps(status: string) {
   if (status === 'completed') return { color: 'success' as const, label: 'COMPLETED' };
   if (status === 'failed') return { color: 'error' as const, label: 'FAILED' };
-  if (status === 'running') return { color: 'primary' as const, label: 'RUNNING' };
+  if (status === 'running') return { color: 'info' as const, label: 'RUNNING' };
   if (status === 'paused') return { color: 'warning' as const, label: 'PAUSED' };
   return { color: 'default' as const, label: status.toUpperCase() };
 }

@@ -346,7 +346,7 @@ export default function ExecutionLog({ statusData, company }: ExecutionLogProps)
       : null;
 
   const badgePaletteKey =
-    jobStatus === 'running' ? 'primary'
+    jobStatus === 'running' ? 'info'
       : jobStatus === 'completed' ? 'success'
       : jobStatus === 'paused' ? 'warning'
       : 'error';

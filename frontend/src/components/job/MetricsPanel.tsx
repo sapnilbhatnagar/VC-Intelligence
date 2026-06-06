@@ -18,7 +18,7 @@ const RECO_COLOR: Record<
   { bg: string; text: string; label: string }
 > = {
   'STRONG BUY': { bg: '#10B981', text: '#fff', label: 'STRONG BUY' },
-  BUY: { bg: '#3B82F6', text: '#fff', label: 'BUY' },
+  BUY: { bg: '#5B9DF9', text: '#fff', label: 'BUY' },
   HOLD: { bg: '#F59E0B', text: '#000', label: 'HOLD' },
   PASS: { bg: '#EF4444', text: '#fff', label: 'PASS' },
   'STRONG PASS': { bg: '#7F1D1D', text: '#fff', label: 'STRONG PASS' },

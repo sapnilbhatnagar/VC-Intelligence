@@ -101,7 +101,7 @@ interface DealCardProps {
   index: number;
 }
 
-const ACCENT = '#6366F1';
+const ACCENT = '#8B93F8';
 
 function DealCard({ deal, index }: DealCardProps) {
   return (

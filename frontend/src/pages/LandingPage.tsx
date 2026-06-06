@@ -112,14 +112,19 @@ function SpecimenCard() {
         ...reveal(180),
       }}
     >
+      {/* Example label — this is an illustrative output, not a real deal */}
+      <Typography sx={{ display: 'block', fontFamily: mono, fontSize: '0.6rem', letterSpacing: '0.2em', color: paperFaint, mb: 2 }}>
+        EXAMPLE OUTPUT
+      </Typography>
+
       {/* Header: company + recommendation */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 2.5 }}>
         <Box>
           <Typography sx={{ fontFamily: display, fontSize: '1.5rem', fontWeight: 600, color: paper, lineHeight: 1.1 }}>
-            Tomoro AI
+            Northwind Robotics
           </Typography>
           <Typography sx={{ fontFamily: mono, fontSize: '0.68rem', letterSpacing: '0.14em', color: paperFaint, mt: 0.5 }}>
-            SEED · AGENTIC SUPPORT OPS
+            SERIES A · INDUSTRIAL AI
           </Typography>
         </Box>
         <Box
@@ -171,8 +176,8 @@ function SpecimenCard() {
         THESIS
       </Typography>
       <Typography sx={{ fontSize: '0.9rem', color: paper, lineHeight: 1.55, mb: 2.5 }}>
-        Category-defining wedge in agentic support operations, with data network
-        effects that compound as deployments grow.
+        Defensible wedge in warehouse automation, with data network effects that
+        compound as deployed fleets scale.
       </Typography>
 
       {/* Footer meta */}
@@ -336,46 +341,83 @@ export default function LandingPage() {
             forward to the partnership.
           </Typography>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
+          {/* Hero input: type a company, land on sign-up. Conveys "name in". */}
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              goRegister();
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              p: 0.75,
+              pl: 2,
+              maxWidth: 480,
+              border: `1px solid ${inkLine}`,
+              borderRadius: '12px',
+              backgroundColor: inkRaised,
+              mb: 2,
+              transition: 'border-color 160ms ease',
+              '&:focus-within': { borderColor: signal },
+            }}
+          >
+            <Box
+              component="input"
+              placeholder="Company name or URL, e.g. northwind.ai"
+              aria-label="Company name or URL"
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                color: paper,
+                fontSize: '0.95rem',
+                fontFamily: 'inherit',
+                '&::placeholder': { color: paperFaint },
+              }}
+            />
             <Button
-              onClick={goRegister}
+              type="submit"
               endIcon={<ArrowForwardIcon />}
               sx={{
                 backgroundColor: signal,
                 color: ink,
                 fontWeight: 600,
                 textTransform: 'none',
-                fontSize: '0.95rem',
-                px: 2.75,
-                py: 1.25,
-                borderRadius: '10px',
-                '&:hover': { backgroundColor: '#0FBF85', transform: 'translateY(-1px)' },
-                transition: 'transform 160ms ease, background-color 160ms ease',
+                fontSize: '0.9rem',
+                px: 2.25,
+                py: 1,
+                borderRadius: '9px',
+                flexShrink: 0,
+                '&:hover': { backgroundColor: '#0FBF85' },
               }}
             >
-              Start your first analysis
+              Analyze
             </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
             <Button
               onClick={() => scrollTo('pipeline')}
               sx={{
-                color: paper,
+                color: paperDim,
                 fontWeight: 500,
                 textTransform: 'none',
-                fontSize: '0.95rem',
-                px: 2.75,
-                py: 1.25,
-                borderRadius: '10px',
-                border: `1px solid ${inkLine}`,
-                '&:hover': { borderColor: paperFaint, backgroundColor: 'transparent' },
+                fontSize: '0.875rem',
+                px: 0,
+                minWidth: 0,
+                '&:hover': { color: paper, backgroundColor: 'transparent' },
               }}
             >
               See the 8 stages
             </Button>
+            <Typography sx={{ fontFamily: mono, fontSize: '0.72rem', letterSpacing: '0.04em', color: paperFaint }}>
+              5 free credits · no card required
+            </Typography>
           </Box>
-
-          <Typography sx={{ fontFamily: mono, fontSize: '0.72rem', letterSpacing: '0.06em', color: paperFaint }}>
-            5 free credits on sign-up. No card required.
-          </Typography>
         </Box>
 
         {/* Right: the output specimen */}

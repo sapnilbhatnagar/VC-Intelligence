@@ -135,8 +135,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
               sx={{
                 width: 28,
                 height: 28,
-                borderRadius: '6px',
-                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                borderRadius: '7px',
+                border: '1px solid',
+                borderColor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -144,7 +145,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               }}
               aria-hidden="true"
             >
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#fff' }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main', fontFamily: '"JetBrains Mono", monospace' }}>
                 VC
               </Typography>
             </Box>

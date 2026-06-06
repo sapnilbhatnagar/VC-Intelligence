@@ -108,7 +108,7 @@ function PackageCard({ pkg, onPurchaseClick, purchasing }: PackageCardProps) {
               fontSize: '0.65rem',
               fontWeight: 700,
               letterSpacing: '0.06em',
-              background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+              background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 100%)',
               color: '#fff',
               boxShadow: (t) => `0 2px 8px ${alpha(t.palette.primary.main, 0.4)}`,
             }}

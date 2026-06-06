@@ -8,7 +8,7 @@ import DataSourceTooltip from '../DataSourceTooltip';
 // ============================================================
 const RECO_STYLE: Record<RecommendationType, { bg: string; text: string; glow: string }> = {
   'STRONG BUY': { bg: '#10B981', text: '#fff', glow: 'rgba(16, 185, 129, 0.25)' },
-  BUY:          { bg: '#3B82F6', text: '#fff', glow: 'rgba(59, 130, 246, 0.25)' },
+  BUY:          { bg: '#5B9DF9', text: '#fff', glow: 'rgba(59, 130, 246, 0.25)' },
   HOLD:         { bg: '#F59E0B', text: '#000', glow: 'rgba(245, 158, 11, 0.2)' },
   PASS:         { bg: '#EF4444', text: '#fff', glow: 'rgba(239, 68, 68, 0.25)' },
   'STRONG PASS':{ bg: '#7F1D1D', text: '#fff', glow: 'rgba(127, 29, 29, 0.3)' },
@@ -211,9 +211,9 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
 
           {/* Tile 3: Current ARR (if available) */}
           {currentArr !== null && (
-            <MetricTile label="Current ARR" accentColor="#3B82F6">
+            <MetricTile label="Current ARR" accentColor="#5B9DF9">
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#3B82F6', fontSize: '1.1rem' }}>
+                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#5B9DF9', fontSize: '1.1rem' }}>
                   {formatCurr(currentArr)}
                 </Typography>
                 <DataSourceTooltip
@@ -252,8 +252,8 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   fontFamily: 'monospace',
-                  backgroundColor: alpha('#3B82F6', 0.12),
-                  color: '#3B82F6',
+                  backgroundColor: alpha('#5B9DF9', 0.12),
+                  color: '#5B9DF9',
                 }}
               />
               {resultsData.total_tokens !== null && (

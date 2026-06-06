@@ -17,9 +17,9 @@ import type { HistoryItem, JobStatus, RecommendationType } from '../../types';
 // ============================================================
 // Color helpers
 // ============================================================
-const STATUS_COLORS: Record<JobStatus, { label: string; color: 'success' | 'primary' | 'error' | 'warning' | 'default' }> = {
+const STATUS_COLORS: Record<JobStatus, { label: string; color: 'success' | 'primary' | 'info' | 'error' | 'warning' | 'default' }> = {
   completed: { label: 'Completed', color: 'success' },
-  running: { label: 'Running', color: 'primary' },
+  running: { label: 'Running', color: 'info' },
   failed: { label: 'Failed', color: 'error' },
   paused: { label: 'Paused', color: 'warning' },
   pending: { label: 'Pending', color: 'default' },
@@ -29,10 +29,10 @@ const RECO_STYLE: Record<
   RecommendationType,
   { bg: string; text: string }
 > = {
-  'STRONG BUY': { bg: '#10B981', text: '#fff' },
-  BUY: { bg: '#3B82F6', text: '#fff' },
-  HOLD: { bg: '#F59E0B', text: '#000' },
-  PASS: { bg: '#EF4444', text: '#fff' },
+  'STRONG BUY': { bg: '#10B981', text: '#06120D' },
+  BUY: { bg: '#0E7C5A', text: '#fff' },
+  HOLD: { bg: '#F5A623', text: '#06120D' },
+  PASS: { bg: '#E5484D', text: '#fff' },
   'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
 };
 
