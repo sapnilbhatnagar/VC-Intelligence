@@ -29,6 +29,11 @@ export const apiClient = axios.create({
   },
 });
 
+// Auth calls get a longer ceiling: a free-tier backend can be spun down and
+// needs ~50s+ to cold-start on the first request, which would otherwise blow
+// past the default 30s timeout and fail the sign-in.
+const AUTH_TIMEOUT = 90000;
+
 // ============================================================
 // Auth header injection interceptor
 // Reads token lazily from localStorage on every request so it
@@ -136,12 +141,16 @@ export async function register(
   username?: string,
   name?: string,
 ): Promise<AuthLoginResponse> {
-  const { data } = await apiClient.post<AuthLoginResponse>('/auth/register', {
-    email,
-    password,
-    ...(username ? { username } : {}),
-    ...(name ? { name } : {}),
-  });
+  const { data } = await apiClient.post<AuthLoginResponse>(
+    '/auth/register',
+    {
+      email,
+      password,
+      ...(username ? { username } : {}),
+      ...(name ? { name } : {}),
+    },
+    { timeout: AUTH_TIMEOUT },
+  );
   return data;
 }
 
@@ -150,11 +159,21 @@ export async function loginApi(
   identifier: string,
   password: string,
 ): Promise<AuthLoginResponse> {
-  const { data } = await apiClient.post<AuthLoginResponse>('/auth/login', {
-    identifier,
-    password,
-  });
+  const { data } = await apiClient.post<AuthLoginResponse>(
+    '/auth/login',
+    { identifier, password },
+    { timeout: AUTH_TIMEOUT },
+  );
   return data;
+}
+
+/**
+ * Wake a possibly spun-down backend. Fire-and-forget on public auth surfaces so
+ * the cold start happens while the visitor is reading / typing, not after they
+ * submit. Resolves to false on any error (including timeout); never throws.
+ */
+export async function warmBackend(): Promise<boolean> {
+  return checkHealth();
 }
 
 /** Fetch the currently authenticated user's profile */
@@ -241,7 +260,11 @@ export async function deleteAnalysis(jobId: string): Promise<void> {
 
 /** Google OAuth — exchange Google ID token for app JWT */
 export async function googleAuth(credential: string): Promise<AuthLoginResponse> {
-  const { data } = await apiClient.post<AuthLoginResponse>('/auth/google', { credential });
+  const { data } = await apiClient.post<AuthLoginResponse>(
+    '/auth/google',
+    { credential },
+    { timeout: AUTH_TIMEOUT },
+  );
   return data;
 }
 

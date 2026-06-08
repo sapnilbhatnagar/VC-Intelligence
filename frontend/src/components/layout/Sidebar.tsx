@@ -10,21 +10,15 @@ import {
   Button,
   Tooltip,
   FormControlLabel,
-  ToggleButtonGroup,
-  ToggleButton,
   alpha,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContrastIcon from '@mui/icons-material/Contrast';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { checkHealth } from '../../api/client';
 import { useJobStore } from '../../store/jobStore';
-import type { ThemeMode } from '../../types';
 
 // ============================================================
 // Constants
@@ -54,7 +48,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { accessibilitySettings, updateAccessibility, apiHealthy, setApiHealthy, themeMode, setThemeMode } =
+  const { accessibilitySettings, updateAccessibility, apiHealthy, setApiHealthy } =
     useJobStore();
 
   const [healthChecking, setHealthChecking] = useState(false);
@@ -110,41 +104,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         {/* ── Display ────────────────────────────────────────── */}
         <Box>
           <SectionLabel>Display</SectionLabel>
-
-          {/* Three-way theme selector */}
-          <Box sx={{ mb: 1.5 }}>
-            <Typography variant="body2" sx={{ mb: 1, color: 'text.primary' }}>
-              Theme
-            </Typography>
-            {/*
-              ToggleButtonGroup with exclusive mode acts like a radio group.
-              Each button represents one ThemeMode value.
-            */}
-            <ToggleButtonGroup
-              exclusive
-              value={themeMode}
-              onChange={(_e, val: ThemeMode | null) => {
-                // val is null when the user clicks the already-selected option — ignore
-                if (val !== null) setThemeMode(val);
-              }}
-              size="small"
-              fullWidth
-              aria-label="Select theme"
-            >
-              <ToggleButton value="dark" aria-label="Dark theme">
-                <DarkModeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Dark
-              </ToggleButton>
-              <ToggleButton value="light" aria-label="Light theme">
-                <LightModeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Light
-              </ToggleButton>
-              <ToggleButton value="advanced" aria-label="Advanced theme">
-                <AutoAwesomeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Advanced
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
 
           {/* High contrast */}
           <Box

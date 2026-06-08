@@ -8,22 +8,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { mdComponents } from '../../../utils/markdownComponents';
 import DataSourceTooltip from '../DataSourceTooltip';
+import { riskColor as riskColorFn, riskLabel as riskLabelFn, SEVERITY_COLORS } from '../../../theme';
 
 // ============================================================
 // Helpers
 // ============================================================
-function getRiskColor(score: number): string {
-  if (score <= 3) return '#10B981';
-  if (score <= 6) return '#F59E0B';
-  return '#EF4444';
-}
-
-function getRiskLabel(score: number): string {
-  if (score <= 3) return 'Low Risk';
-  if (score <= 6) return 'Medium Risk';
-  return 'High Risk';
-}
-
 /**
  * Priority 1: Extract the "Top 3 Deal-Killer Risks" section from structured output.
  * Priority 2: Extract **RiskName** — Severity: X | Likelihood: X% lines.
@@ -121,7 +110,7 @@ function DonutRing({ score, color, label }: DonutRingProps) {
           cy={center}
           r={RADIUS}
           fill="none"
-          stroke="rgba(255,255,255,0.07)"
+          stroke="rgba(28,26,23,0.08)"
           strokeWidth={STROKE_WIDTH}
         />
         <circle
@@ -187,13 +176,6 @@ function parseRiskCategories(text: string): RiskCategory[] {
   return categories;
 }
 
-const SEVERITY_COLOR: Record<string, string> = {
-  Low: '#10B981',
-  Medium: '#F59E0B',
-  High: '#EF4444',
-  Critical: '#7F1D1D',
-};
-
 // ============================================================
 // Props
 // ============================================================
@@ -209,8 +191,8 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [fullExpanded, setFullExpanded] = useState(false);
 
-  const riskColor = getRiskColor(riskScore);
-  const riskLabel = getRiskLabel(riskScore);
+  const riskColor = riskColorFn(riskScore);
+  const riskLabel = `${riskLabelFn(riskScore)} Risk`;
 
   const bullets = useMemo(() => extractRiskFactors(text, 6), [text]);
   const categories = useMemo(() => parseRiskCategories(text), [text]);
@@ -228,7 +210,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
       sx={{
         height: '100%',
         borderColor: 'divider',
-        backgroundColor: alpha('#ffffff', 0.03),
+        backgroundColor: 'background.paper',
       }}
       role="region"
       aria-label="Risk assessment"
@@ -269,7 +251,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
                   (band === 'Low' && riskScore <= 3) ||
                   (band === 'Med' && riskScore > 3 && riskScore <= 6) ||
                   (band === 'High' && riskScore > 6);
-                const bandColor = band === 'Low' ? '#10B981' : band === 'Med' ? '#F59E0B' : '#EF4444';
+                const bandColor = band === 'Low' ? SEVERITY_COLORS.Low : band === 'Med' ? SEVERITY_COLORS.Medium : SEVERITY_COLORS.High;
                 return (
                   <Box
                     key={band}
@@ -277,7 +259,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
                       px: 0.75,
                       py: 0.25,
                       borderRadius: 0.75,
-                      backgroundColor: active ? alpha(bandColor, 0.15) : alpha('#ffffff', 0.04),
+                      backgroundColor: active ? alpha(bandColor, 0.15) : alpha('#1C1A17', 0.04),
                       border: '1px solid',
                       borderColor: active ? bandColor : 'transparent',
                     }}
@@ -318,7 +300,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
               {categories.map((cat, i) => {
-                const catColor = cat.overall ? (SEVERITY_COLOR[cat.overall] ?? riskColor) : riskColor;
+                const catColor = cat.overall ? (SEVERITY_COLORS[cat.overall] ?? riskColor) : riskColor;
                 return (
                   <Box
                     key={i}
@@ -465,7 +447,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
                 borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
-                backgroundColor: alpha('#ffffff', 0.02),
+                backgroundColor: alpha('#1C1A17', 0.02),
                 maxHeight: 400,
                 overflow: 'auto',
               }}

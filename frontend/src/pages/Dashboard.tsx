@@ -33,19 +33,12 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AnalysisForm from '../components/analysis/AnalysisForm';
 import { getHistory } from '../api/client';
 import { useAuthStore } from '../store/authStore';
-import type { HistoryItem, RecommendationType } from '../types';
+import { RECOMMENDATION_COLORS, riskColor, TOKENS } from '../theme';
+import type { HistoryItem } from '../types';
 
 // ============================================================
 // Constants
 // ============================================================
-const RECO_STYLE: Record<RecommendationType, { bg: string; text: string }> = {
-  'STRONG BUY': { bg: '#10B981', text: '#06120D' },
-  BUY: { bg: '#0E7C5A', text: '#fff' },
-  HOLD: { bg: '#F5A623', text: '#06120D' },
-  PASS: { bg: '#E5484D', text: '#fff' },
-  'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
-};
-
 const PIPELINE_STAGES = [
   { icon: <SearchIcon sx={{ fontSize: 14 }} />, name: 'Execute Company Research', desc: 'Web research & data extraction' },
   { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Perform Market Analysis', desc: 'TAM/SAM/SOM + trends' },
@@ -278,23 +271,23 @@ function PlatformCard() {
         flexDirection: 'column',
       }}
     >
-      {/* Gradient header */}
+      {/* Header — soft brand-tinted, light */}
       <Box
         sx={{
           p: 2,
-          background: 'linear-gradient(135deg, #0E2A20 0%, #0B1410 100%)',
+          backgroundColor: (t) => alpha(t.palette.primary.main, 0.06),
           borderBottom: '1px solid',
-          borderColor: (t) => alpha(t.palette.primary.main, 0.25),
+          borderColor: 'divider',
           flexShrink: 0,
         }}
       >
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 700, color: '#ECFDF5', letterSpacing: '0.02em' }}
+          sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: '0.01em' }}
         >
           8-Stage AI Pipeline
         </Typography>
-        <Typography variant="caption" sx={{ color: alpha('#ECFDF5', 0.6), fontSize: '0.7rem' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
           Full institutional-grade due diligence
         </Typography>
       </Box>
@@ -452,7 +445,7 @@ function RecentAnalysesTable({ items, loading }: RecentTableProps) {
                 </TableRow>
               ))
             : recent.map((item) => {
-                const recoStyle = item.recommendation ? RECO_STYLE[item.recommendation] : null;
+                const recoStyle = item.recommendation ? RECOMMENDATION_COLORS[item.recommendation] : null;
                 return (
                   <TableRow
                     key={item.job_id}
@@ -523,12 +516,7 @@ function RecentAnalysesTable({ items, loading }: RecentTableProps) {
                           sx={{
                             fontFamily: 'monospace',
                             fontWeight: 700,
-                            color:
-                              item.risk_score <= 3
-                                ? 'success.main'
-                                : item.risk_score <= 6
-                                ? 'warning.main'
-                                : 'error.main',
+                            color: riskColor(item.risk_score),
                           }}
                         >
                           {item.risk_score.toFixed(1)}
@@ -642,19 +630,19 @@ export default function Dashboard() {
             icon: <StorageIcon fontSize="small" />,
             label: 'Total Analyses',
             value: totalCount,
-            accentColor: '#5B9DF9',
+            accentColor: TOKENS.brand,
           },
           {
             icon: <CheckCircleOutlineIcon fontSize="small" />,
             label: 'Completed',
             value: completedCount,
-            accentColor: '#10B981',
+            accentColor: TOKENS.success,
           },
           {
             icon: <AutorenewIcon fontSize="small" />,
             label: 'Running Now',
             value: runningCount,
-            accentColor: '#F5A623',
+            accentColor: TOKENS.warning,
             pulse: runningCount > 0,
           },
           {
@@ -671,13 +659,13 @@ export default function Dashboard() {
                   sx={{
                     fontSize: '1rem',
                     fontWeight: 700,
-                    color: topPick.includes('BUY') ? '#10B981' : topPick === 'HOLD' ? '#F5A623' : '#E5484D',
+                    color: RECOMMENDATION_COLORS[topPick]?.bg ?? TOKENS.textPrimary,
                   }}
                 >
                   {topPick}
                 </Typography>
               ),
-            accentColor: '#98A4A0',
+            accentColor: TOKENS.info,
           },
         ].map((card) => (
           <Grid key={card.label} item xs={6} lg={3}>

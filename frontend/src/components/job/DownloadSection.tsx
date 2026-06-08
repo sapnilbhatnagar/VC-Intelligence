@@ -148,8 +148,8 @@ export default function DownloadSection({ jobId, isCompleted }: DownloadSectionP
                     ? {
                         animation: 'subtlePulse 3s ease-in-out infinite',
                         '@keyframes subtlePulse': {
-                          '0%, 100%': { boxShadow: '0 2px 8px rgba(59,130,246,0.3)' },
-                          '50%': { boxShadow: '0 4px 20px rgba(59,130,246,0.55)' },
+                          '0%, 100%': { boxShadow: '0 2px 8px rgba(250,112,0,0.25)' },
+                          '50%': { boxShadow: '0 4px 20px rgba(250,112,0,0.45)' },
                         },
                       }
                     : {}),

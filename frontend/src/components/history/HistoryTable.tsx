@@ -13,6 +13,7 @@ import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-dat
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DeleteIcon from '@mui/icons-material/Delete';
 import type { HistoryItem, JobStatus, RecommendationType } from '../../types';
+import { RECOMMENDATION_COLORS, riskColor } from '../../theme';
 
 // ============================================================
 // Color helpers
@@ -23,17 +24,6 @@ const STATUS_COLORS: Record<JobStatus, { label: string; color: 'success' | 'prim
   failed: { label: 'Failed', color: 'error' },
   paused: { label: 'Paused', color: 'warning' },
   pending: { label: 'Pending', color: 'default' },
-};
-
-const RECO_STYLE: Record<
-  RecommendationType,
-  { bg: string; text: string }
-> = {
-  'STRONG BUY': { bg: '#10B981', text: '#06120D' },
-  BUY: { bg: '#0E7C5A', text: '#fff' },
-  HOLD: { bg: '#F5A623', text: '#06120D' },
-  PASS: { bg: '#E5484D', text: '#fff' },
-  'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
 };
 
 // ============================================================
@@ -131,7 +121,7 @@ function useColumns(
         if (!params.value) {
           return <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>;
         }
-        const style = RECO_STYLE[params.value];
+        const style = RECOMMENDATION_COLORS[params.value];
         return (
           <Chip
             label={params.value}
@@ -157,7 +147,7 @@ function useColumns(
         if (score == null) {
           return <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>;
         }
-        const color = score <= 3 ? '#10B981' : score <= 6 ? '#F59E0B' : '#EF4444';
+        const color = riskColor(score);
         return (
           <Typography
             variant="caption"

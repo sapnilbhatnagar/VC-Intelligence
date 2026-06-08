@@ -35,5 +35,8 @@ never say "revolutionary" or "powered by cutting-edge AI."
 - Show the deliverable. The strongest selling point is the memo itself, so put a
   specimen of the output on screen rather than describing it.
 - Typography and layout carry the design; color stays restrained.
-- The one accent color is emerald, the product's own STRONG BUY signal, used
-  sparingly for the live signal and the primary action only.
+- The one accent color is a warm orange (#FA7000), used sparingly for primary
+  actions and active state only. The BUY / HOLD / PASS verdicts keep their own
+  semantic data scale (green / amber / red), independent of the brand accent.
+- One light theme only. Warm-neutral "paper" surfaces, graphite ink, Apple-style
+  tiles (white surface, hairline border, soft shadow).

@@ -81,7 +81,7 @@ function PackageCard({ pkg, onPurchaseClick, purchasing }: PackageCardProps) {
         border: '2px solid',
         borderColor: pkg.popular ? 'primary.main' : 'divider',
         boxShadow: pkg.popular
-          ? (t) => `0 0 0 1px ${alpha(t.palette.primary.main, 0.25)}, 0 8px 24px ${alpha('#000', 0.25)}`
+          ? (t) => `0 0 0 1px ${alpha(t.palette.primary.main, 0.25)}, 0 8px 24px rgba(28,26,23,0.10)`
           : undefined,
         transition: 'border-color 0.2s, box-shadow 0.2s',
         '&:hover': {
@@ -108,8 +108,8 @@ function PackageCard({ pkg, onPurchaseClick, purchasing }: PackageCardProps) {
               fontSize: '0.65rem',
               fontWeight: 700,
               letterSpacing: '0.06em',
-              background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 100%)',
-              color: '#fff',
+              backgroundColor: 'primary.main',
+              color: 'primary.contrastText',
               boxShadow: (t) => `0 2px 8px ${alpha(t.palette.primary.main, 0.4)}`,
             }}
           />

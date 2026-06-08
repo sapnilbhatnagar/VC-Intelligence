@@ -31,25 +31,15 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { getMyAnalyses, updateProfile } from '../api/client';
 import { useAuthStore } from '../store/authStore';
-import type { HistoryItem, RecommendationType } from '../types';
-
-// ============================================================
-// Recommendation colors
-// ============================================================
-const RECO_COLOR: Record<RecommendationType, { bg: string; text: string }> = {
-  'STRONG BUY': { bg: '#10B981', text: '#fff' },
-  BUY: { bg: '#5B9DF9', text: '#fff' },
-  HOLD: { bg: '#F59E0B', text: '#000' },
-  PASS: { bg: '#EF4444', text: '#fff' },
-  'STRONG PASS': { bg: '#7F1D1D', text: '#fff' },
-};
+import type { HistoryItem } from '../types';
+import { RECOMMENDATION_COLORS } from '../theme';
 
 // ============================================================
 // Analysis row (clickable)
 // ============================================================
 function AnalysisRow({ item }: { item: HistoryItem }) {
   const navigate = useNavigate();
-  const recoColor = item.recommendation ? RECO_COLOR[item.recommendation] : null;
+  const recoColor = item.recommendation ? RECOMMENDATION_COLORS[item.recommendation] : null;
 
   return (
     <TableRow
@@ -187,7 +177,7 @@ export default function ProfilePage() {
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #10B981 0%, #0E7C5A 100%)',
+                backgroundColor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -195,7 +185,7 @@ export default function ProfilePage() {
               }}
               aria-hidden="true"
             >
-              <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.25rem' }}>
+              <Typography sx={{ color: 'primary.contrastText', fontWeight: 700, fontSize: '1.25rem' }}>
                 {displayName.charAt(0).toUpperCase()}
               </Typography>
             </Box>
@@ -256,7 +246,7 @@ export default function ProfilePage() {
                         fontWeight: 700,
                         backgroundColor: (t) =>
                           user?.role === 'admin'
-                            ? alpha(t.palette.info.main ?? '#0288d1', 0.15)
+                            ? alpha(t.palette.info.main, 0.15)
                             : alpha(t.palette.text.primary, 0.08),
                         color: user?.role === 'admin' ? 'info.main' : 'text.secondary',
                       }}

@@ -118,23 +118,12 @@ function StageCard({ number, name, status, reducedMotion }: StageCardProps) {
         transform: isActive ? 'scale(1.04)' : 'scale(1)',
         zIndex: isActive ? 1 : 0,
         animation:
-          isActive && !reducedMotion ? 'stageGlow 2s ease-in-out infinite' : 'none',
+          isActive && !reducedMotion ? 'stageGlow 2.2s ease-in-out infinite' : 'none',
         '@keyframes stageGlow': {
-          '0%, 100%': {
-            boxShadow: (t: { palette: { primary: { main: string } } }) =>
-              `0 0 5px ${alpha(t.palette.primary.main, 0.3)}`,
-          },
-          '50%': {
-            boxShadow: (t: { palette: { primary: { main: string } } }) =>
-              `0 0 20px ${alpha(t.palette.primary.main, 0.7)}, 0 0 40px ${alpha(
-                t.palette.primary.main,
-                0.3
-              )}`,
-          },
+          '0%, 100%': { boxShadow: '0 0 0 1px rgba(250,112,0,0.18)' },
+          '50%': { boxShadow: '0 0 0 3px rgba(250,112,0,0.16), 0 4px 14px rgba(250,112,0,0.20)' },
         },
-        ...(isActive && !reducedMotion
-          ? { boxShadow: '0 0 12px rgba(59, 130, 246, 0.45)' }
-          : {}),
+        ...(isActive && reducedMotion ? { boxShadow: '0 0 0 2px rgba(250,112,0,0.25)' } : {}),
       }}
     >
       {/* Stage number badge — gradient for completed */}
@@ -146,24 +135,32 @@ function StageCard({ number, name, status, reducedMotion }: StageCardProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: isSkipped
+          backgroundColor: isSkipped
             ? 'transparent'
             : isCompleted
-            ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+            ? 'success.main'
             : isActive
-            ? (t) => t.palette.primary.main
+            ? 'primary.main'
             : isFailed
-            ? (t) => t.palette.error.main
+            ? 'error.main'
             : isPaused
-            ? (t) => t.palette.warning.main
-            : (t) => t.palette.divider,
+            ? 'warning.main'
+            : 'divider',
           border: isSkipped ? '1px dashed' : 'none',
           borderColor: 'divider',
           flexShrink: 0,
         }}
         aria-hidden="true"
       >
-        <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, color: isSkipped ? 'text.disabled' : '#fff', lineHeight: 1 }}>
+        <Typography
+          sx={{
+            fontSize: '0.6rem',
+            fontWeight: 700,
+            // Ink on the lighter orange/amber fills, white on green/red.
+            color: isSkipped ? 'text.disabled' : isActive || isPaused ? '#1C1A17' : '#fff',
+            lineHeight: 1,
+          }}
+        >
           {number}
         </Typography>
       </Box>

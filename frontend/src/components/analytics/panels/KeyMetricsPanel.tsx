@@ -1,30 +1,8 @@
 import { memo, useRef, useEffect, useState } from 'react';
 import { Box, Typography, Chip, alpha, Grow } from '@mui/material';
-import type { ResultsResponse, RecommendationType } from '../../../types';
+import type { ResultsResponse } from '../../../types';
 import DataSourceTooltip from '../DataSourceTooltip';
-
-// ============================================================
-// Constants
-// ============================================================
-const RECO_STYLE: Record<RecommendationType, { bg: string; text: string; glow: string }> = {
-  'STRONG BUY': { bg: '#10B981', text: '#fff', glow: 'rgba(16, 185, 129, 0.25)' },
-  BUY:          { bg: '#5B9DF9', text: '#fff', glow: 'rgba(59, 130, 246, 0.25)' },
-  HOLD:         { bg: '#F59E0B', text: '#000', glow: 'rgba(245, 158, 11, 0.2)' },
-  PASS:         { bg: '#EF4444', text: '#fff', glow: 'rgba(239, 68, 68, 0.25)' },
-  'STRONG PASS':{ bg: '#7F1D1D', text: '#fff', glow: 'rgba(127, 29, 29, 0.3)' },
-};
-
-function getRiskColor(score: number): string {
-  if (score <= 3) return '#10B981';
-  if (score <= 6) return '#F59E0B';
-  return '#EF4444';
-}
-
-function getRiskLabel(score: number): string {
-  if (score <= 3) return 'Low';
-  if (score <= 6) return 'Medium';
-  return 'High';
-}
+import { RECOMMENDATION_COLORS, riskColor, riskLabel, TOKENS } from '../../../theme';
 
 // ============================================================
 // Animated risk ring (compact)
@@ -50,7 +28,7 @@ function MiniRiskRing({ score, color }: { score: number; color: string }) {
   return (
     <Box sx={{ position: 'relative', width: RING_SIZE, height: RING_SIZE, flexShrink: 0 }}>
       <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} style={{ display: 'block' }}>
-        <circle cx={c} cy={c} r={RADIUS} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={STROKE} />
+        <circle cx={c} cy={c} r={RADIUS} fill="none" stroke="rgba(28,26,23,0.08)" strokeWidth={STROKE} />
         <circle
           cx={c} cy={c} r={RADIUS} fill="none" stroke={color} strokeWidth={STROKE}
           strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={offset}
@@ -85,8 +63,8 @@ function MetricTile({ label, children, accentColor, flex = 1 }: TileProps) {
         p: 1.75,
         borderRadius: 2,
         border: '1px solid',
-        borderColor: accentColor ? alpha(accentColor, 0.2) : 'divider',
-        backgroundColor: accentColor ? alpha(accentColor, 0.04) : alpha('#ffffff', 0.02),
+        borderColor: accentColor ? alpha(accentColor, 0.25) : 'divider',
+        backgroundColor: accentColor ? alpha(accentColor, 0.05) : 'background.paper',
         display: 'flex',
         flexDirection: 'column',
         gap: 0.75,
@@ -129,9 +107,9 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
   }, []);
 
   const reco = resultsData.recommendation;
-  const recoStyle = reco ? RECO_STYLE[reco] : null;
+  const recoStyle = reco ? RECOMMENDATION_COLORS[reco] : null;
   const riskScore = resultsData.risk_score ?? 0;
-  const riskColor = getRiskColor(riskScore);
+  const riskScoreColor = riskColor(riskScore);
   const hasRisk = resultsData.risk_score !== null;
 
   // Extract financial metrics if available
@@ -175,7 +153,7 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
                     color: recoStyle.text,
                     px: 0.75,
                     letterSpacing: '0.03em',
-                    boxShadow: `0 2px 8px ${recoStyle.glow}`,
+                    boxShadow: `0 2px 8px ${alpha(recoStyle.bg, 0.25)}`,
                   }}
                 />
                 <DataSourceTooltip
@@ -189,12 +167,12 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
 
           {/* Tile 2: Risk Score */}
           {hasRisk && (
-            <MetricTile label="Risk Score" accentColor={riskColor}>
+            <MetricTile label="Risk Score" accentColor={riskScoreColor}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                <MiniRiskRing score={riskScore} color={riskColor} />
+                <MiniRiskRing score={riskScore} color={riskScoreColor} />
                 <Box>
-                  <Typography sx={{ fontWeight: 700, color: riskColor, fontSize: '0.85rem', lineHeight: 1.2 }}>
-                    {getRiskLabel(riskScore)} Risk
+                  <Typography sx={{ fontWeight: 700, color: riskScoreColor, fontSize: '0.85rem', lineHeight: 1.2 }}>
+                    {riskLabel(riskScore)} Risk
                   </Typography>
                   <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled', mt: 0.25 }}>
                     {riskScore.toFixed(1)} / 10
@@ -211,9 +189,9 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
 
           {/* Tile 3: Current ARR (if available) */}
           {currentArr !== null && (
-            <MetricTile label="Current ARR" accentColor="#5B9DF9">
+            <MetricTile label="Current ARR" accentColor={TOKENS.info}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#5B9DF9', fontSize: '1.1rem' }}>
+                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: TOKENS.info, fontSize: '1.1rem' }}>
                   {formatCurr(currentArr)}
                 </Typography>
                 <DataSourceTooltip
@@ -227,9 +205,9 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
 
           {/* Tile 4: Est. MOIC */}
           {moic !== null && (
-            <MetricTile label="Est. 5Y MOIC" accentColor="#F59E0B">
+            <MetricTile label="Est. 5Y MOIC" accentColor={TOKENS.warning}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#F59E0B', fontSize: '1.1rem' }}>
+                <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: TOKENS.warning, fontSize: '1.1rem' }}>
                   {moic}x
                 </Typography>
                 <DataSourceTooltip
@@ -252,8 +230,8 @@ function KeyMetricsPanel({ resultsData, stageCount, totalStages }: KeyMetricsPan
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   fontFamily: 'monospace',
-                  backgroundColor: alpha('#5B9DF9', 0.12),
-                  color: '#5B9DF9',
+                  backgroundColor: alpha(TOKENS.info, 0.12),
+                  color: TOKENS.info,
                 }}
               />
               {resultsData.total_tokens !== null && (

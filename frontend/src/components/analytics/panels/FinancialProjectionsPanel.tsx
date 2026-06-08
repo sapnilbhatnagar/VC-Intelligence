@@ -11,6 +11,7 @@ import {
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import DataSourceTooltip from '../DataSourceTooltip';
+import { CHART_COLORS, TOKENS } from '../../../theme';
 
 // ============================================================
 // Helpers
@@ -156,7 +157,7 @@ function ProjectionChart({ lines }: ProjectionChartProps) {
                 y1={y}
                 x2={PAD.left + PLOT_W}
                 y2={y}
-                stroke="rgba(255,255,255,0.07)"
+                stroke={CHART_COLORS.grid}
                 strokeWidth={1}
               />
               <text
@@ -164,7 +165,7 @@ function ProjectionChart({ lines }: ProjectionChartProps) {
                 y={y + 4}
                 textAnchor="end"
                 fontSize={9}
-                fill="rgba(255,255,255,0.35)"
+                fill={CHART_COLORS.axis}
               >
                 {formatCurrency(t * maxVal)}
               </text>
@@ -182,7 +183,7 @@ function ProjectionChart({ lines }: ProjectionChartProps) {
               y={PAD.top + PLOT_H + 18}
               textAnchor="middle"
               fontSize={10}
-              fill="rgba(255,255,255,0.4)"
+              fill={CHART_COLORS.axis}
             >
               {yr}
             </text>
@@ -193,7 +194,7 @@ function ProjectionChart({ lines }: ProjectionChartProps) {
         {bear && bull && bear.values.length === 5 && bull.values.length === 5 && (
           <path
             d={buildShadeArea(bear.values, bull.values, maxVal)}
-            fill="rgba(99,102,241,0.08)"
+            fill={CHART_COLORS.band}
           />
         )}
 
@@ -274,7 +275,7 @@ function MetricTile({ label, value, color }: MetricTileProps) {
         borderRadius: 1.5,
         border: '1px solid',
         borderColor: 'divider',
-        backgroundColor: alpha('#ffffff', 0.02),
+        backgroundColor: 'background.paper',
         flex: 1,
         minWidth: 90,
       }}
@@ -380,21 +381,21 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
       if (Array.isArray(bearRates) && bearRates.length > 0) {
         builtLines.push({
           label: 'Bear',
-          color: '#EF4444',
+          color: CHART_COLORS.bear,
           values: computeRevenuesFromRates(currentArr!, bearRates as number[]),
         });
       }
       if (Array.isArray(baseRates) && baseRates.length > 0) {
         builtLines.push({
           label: 'Base',
-          color: '#5B9DF9',
+          color: CHART_COLORS.base,
           values: computeRevenuesFromRates(currentArr!, baseRates as number[]),
         });
       }
       if (Array.isArray(bullRates) && bullRates.length > 0) {
         builtLines.push({
           label: 'Bull',
-          color: '#10B981',
+          color: CHART_COLORS.bull,
           values: computeRevenuesFromRates(currentArr!, bullRates as number[]),
         });
       }
@@ -438,9 +439,9 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
     const bullVals = ensureFivePoints(getRevenueArrayLegacy(bullObj));
 
     const legacyLines: LineData[] = [];
-    if (bearVals.length > 0) legacyLines.push({ label: 'Bear', color: '#EF4444', values: bearVals });
-    if (baseVals.length > 0) legacyLines.push({ label: 'Base', color: '#5B9DF9', values: baseVals });
-    if (bullVals.length > 0) legacyLines.push({ label: 'Bull', color: '#10B981', values: bullVals });
+    if (bearVals.length > 0) legacyLines.push({ label: 'Bear', color: CHART_COLORS.bear, values: bearVals });
+    if (baseVals.length > 0) legacyLines.push({ label: 'Base', color: CHART_COLORS.base, values: baseVals });
+    if (bullVals.length > 0) legacyLines.push({ label: 'Bull', color: CHART_COLORS.bull, values: bullVals });
 
     if (legacyLines.length === 0) return empty;
 
@@ -472,7 +473,7 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
       sx={{
         height: '100%',
         borderColor: 'divider',
-        backgroundColor: alpha('#ffffff', 0.03),
+        backgroundColor: 'background.paper',
       }}
       role="region"
       aria-label="Financial modelling and projections"
@@ -480,7 +481,7 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         {/* ── Header ── */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-          <TrendingUpIcon fontSize="small" sx={{ color: '#10B981' }} aria-hidden="true" />
+          <TrendingUpIcon fontSize="small" sx={{ color: 'primary.main' }} aria-hidden="true" />
           <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               Financial Modelling
@@ -502,8 +503,8 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
                 height: 20,
                 fontSize: '0.62rem',
                 fontWeight: 600,
-                backgroundColor: alpha('#10B981', 0.1),
-                color: '#10B981',
+                backgroundColor: alpha(TOKENS.brand, 0.1),
+                color: TOKENS.brand,
               }}
             />
           )}
@@ -536,17 +537,17 @@ function FinancialProjectionsPanel({ projections }: FinancialProjectionsPanelPro
               <MetricTile
                 label="Current ARR"
                 value={formatCurrency(currentArrRaw)}
-                color="#5B9DF9"
+                color={CHART_COLORS.base}
               />
               <MetricTile
                 label="Year 5 Base"
                 value={formatCurrency(year5Base)}
-                color="#10B981"
+                color={CHART_COLORS.bull}
               />
               <MetricTile
                 label="Est. MOIC"
                 value={moicEstimate != null ? `${moicEstimate}x` : 'N/A'}
-                color="#F59E0B"
+                color={TOKENS.warning}
               />
             </Box>
           </>

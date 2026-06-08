@@ -1,58 +1,74 @@
 # DESIGN.md
 
-Design tokens for marketing/auth surfaces. The in-app product theme lives in
-`frontend/src/theme.ts` (dark / light / advanced MUI themes); this file governs
-the landing page and the auth brand panel, which deliberately read more
-editorial than the app chrome while staying tonally coherent (same near-black
-base, same emerald signal).
+One light theme, used everywhere. The MUI source of truth is
+`frontend/src/theme.ts` (tokens, recommendation/risk/chart helpers, component
+overrides). The landing page and the auth brand panel reuse the same palette
+with a few local constants so they read as one product.
+
+## Strategy
+
+Restrained. Warm-neutral "paper" surfaces, graphite ink, one orange accent kept
+under ~10% of any viewport. Apple-style tiles: white surface, 1px hairline
+border, soft low-spread shadow, generous radius (12–14px). Never pure #000/#fff.
 
 ## Color
 
-Strategy: Restrained. Warm-tinted near-black neutrals + one emerald accent.
-Never pure #000 or #fff.
+Brand (the single accent):
+- brand:        #FA7000  (orange — primary actions, active state, brand mark, focus)
+- brand-hover:  #FF8A2E  (lift on hover)
+- brand-text:   #B5530E  (AA-safe orange for links / inline emphasis on light)
+- on-brand:     #1C1A17  (ink that sits on an orange fill, ≥6:1)
 
-- ink (base bg):        #0A0E17  (near-black, faint blue-graphite tint)
-- ink-raised:          #11161F  (panels, the specimen card)
-- ink-line:            #1E2530  (hairline borders)
-- paper (text hi):     #F4F6F8
-- paper-dim (text mid):#9BA6B4
-- paper-faint (muted): #5B6675
-- signal (accent):     #10B981  (emerald — the STRONG BUY signal; CTA + live dot only)
-- signal-deep:         #0E7C5A  (pressed / gradient floor for the CTA)
-- caution:             #F59E0B  (HOLD, used only inside specimen)
-- risk:                #EF4444  (PASS, used only inside specimen)
+Warm neutral surfaces:
+- canvas (app bg):   #F7F6F2
+- surface (tiles):   #FFFFFF
+- surface-alt:       #FBFAF7  (second neutral layer: sidebars, toolbars)
+- border:            #EBE7DF  (hairline)
+- border-strong:     #DBD5C9  (inputs, stronger dividers)
 
-Emerald stays under ~10% of any viewport. If it is spreading, pull it back.
+Graphite ink:
+- text-primary:   #1C1A17
+- text-secondary: #6B645B   (≥4.5:1 on white)
+- text-disabled:  #A39B90   (decorative / non-essential only)
+
+Semantic data vocabulary (verdicts, risk, status — NOT the brand):
+- success / BUY:  #2E7D5B
+- caution / HOLD: #B7791F
+- danger / PASS:  #C0413E
+- info (neutral): #566270  (deliberately not blue)
+
+Recommendation chips ship as accessible bg + text pairs (see RECOMMENDATION_COLORS;
+all ≥4.5:1). Risk score maps to success/caution/danger via riskColor(); financial
+scenarios use CHART_COLORS (bear red / base deep-orange / bull green, no blue).
 
 ## Typography
 
-- Display (landing + auth headline): "Fraunces", Georgia, serif. Optical size
-  high, weight 500–600, tight tracking (-0.02em). This is the editorial voice.
-- UI / body: "Inter", system-ui (already the app font).
-- Data / labels / specimen figures: "JetBrains Mono" (already loaded). Used for
-  stage indices, risk score, recommendation tag, eyebrows.
-
-Scale (display): clamp-driven. Hero ~ clamp(2.5rem, 6vw, 4.5rem). Step ratio ≥ 1.25.
-Body capped at ~68ch.
+- UI + display: "Geist", falling back to "Inter", system-ui. One family carries
+  headings, labels, body, and buttons (product register: one well-tuned sans).
+  No serif display face.
+- Data / figures: "Geist Mono", falling back to "JetBrains Mono". Risk score,
+  ARR, credits, stage indices, eyebrows.
+- Fixed rem scale (not fluid in-app); landing headings use clamp(). Tight
+  grotesk tracking on headings (-0.02em). Body capped ~65–75ch.
 
 ## Layout
 
-- Asymmetric and editorial. No centered hero. Left-weighted headline, the output
-  specimen sits to the right / below.
-- The 8 stages render as a numbered table-of-contents index (mono numerals), not
-  as a card grid.
-- Generous, varied vertical rhythm between sections (not uniform padding).
-- Max content width ~1200px, but let the hero break wider than the body.
+- App shell: top bar + left sidebar nav, content on the warm canvas with white
+  tiles. Responsive behavior is structural (collapsing sidebar, wrapping grids),
+  not fluid type.
+- Research outputs are small, self-contained tiles, each with one clearly
+  defined outcome.
+- Landing: asymmetric hero with a product specimen as the imagery; the 8 stages
+  render as a responsive grid of small outcome tiles (auto-fit, minmax 230px).
 
 ## Motion
 
-- Entrance: short, ease-out (cubic-bezier(0.16, 1, 0.3, 1)), 400–600ms, small
-  translate + fade. No bounce. Respect prefers-reduced-motion.
-- The live signal dot pulses slowly (emerald), nothing else loops.
+- Product motion 150–250ms, conveys state (hover, focus, active, loading,
+  reveal), never decoration. The running pipeline stage gets a soft pulse.
+- Every animation respects `prefers-reduced-motion`.
 
-## Components
+## Bans (carried from impeccable)
 
-- Specimen card: ink-raised panel, 1px ink-line border, generous padding, mono
-  figures. Shows company, recommendation tag, risk score, a few metric rows.
-- Primary CTA: solid emerald, dark ink text, subtle lift on hover.
-- Secondary CTA: ghost, paper-dim text, ink-line border.
+No emerald or electric-blue brand color, no gradient text, no side-stripe accent
+borders, no decorative glassmorphism, no Fraunces / editorial-serif display, no
+rainbow accent cycling on list items.

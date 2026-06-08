@@ -15,8 +15,6 @@ export interface JobResponse {
 
 export type JobStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed';
 
-export type ThemeMode = 'dark' | 'light' | 'advanced';
-
 export interface StatusResponse {
   job_id: string;
   status: JobStatus;
@@ -153,7 +151,6 @@ export interface AdminAnalysis {
 // ============================================================
 
 export interface AccessibilitySettings {
-  darkMode: boolean;
   highContrast: boolean;
   fontSize: number; // 80–140 (percentage)
   reducedMotion: boolean;

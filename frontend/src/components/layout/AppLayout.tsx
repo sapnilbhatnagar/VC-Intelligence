@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import GridViewIcon from '@mui/icons-material/GridView';
 import HistoryIcon from '@mui/icons-material/History';
 import TuneIcon from '@mui/icons-material/Tune';
 import BoltIcon from '@mui/icons-material/Bolt';
@@ -31,6 +32,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { checkHealth } from '../../api/client';
 import { useJobStore } from '../../store/jobStore';
 import { useAuthStore } from '../../store/authStore';
+import { MONO } from '../../theme';
 import Sidebar from './Sidebar';
 
 // ============================================================
@@ -39,7 +41,7 @@ import Sidebar from './Sidebar';
 const DRAWER_WIDTH = 240;
 
 const NAV_ITEMS = [
-  { label: 'New Analysis', icon: <AddCircleOutlineIcon fontSize="small" />, path: '/' },
+  { label: 'Dashboard', icon: <GridViewIcon fontSize="small" />, path: '/' },
   { label: 'History', icon: <HistoryIcon fontSize="small" />, path: '/history' },
 ];
 
@@ -130,22 +132,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
             }}
             onClick={() => navigate(currentJobId ? `/job/${currentJobId}` : '/')}
           >
-            {/* Brand mark */}
+            {/* Brand mark — filled orange tile, ink glyph (AA contrast) */}
             <Box
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '7px',
-                border: '1px solid',
-                borderColor: 'primary.main',
+                width: 30,
+                height: 30,
+                borderRadius: '8px',
+                backgroundColor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
+                boxShadow: '0 1px 3px rgba(250,112,0,0.35)',
               }}
               aria-hidden="true"
             >
-              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main', fontFamily: '"JetBrains Mono", monospace' }}>
+              <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'primary.contrastText', fontFamily: MONO, letterSpacing: '-0.02em' }}>
                 VC
               </Typography>
             </Box>
@@ -325,11 +327,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         fontSize: '0.6rem',
                         fontWeight: 700,
                         letterSpacing: '0.04em',
-                        backgroundColor: (t) => alpha(t.palette.info.main ?? '#0288d1', 0.15),
+                        backgroundColor: (t) => alpha(t.palette.info.main, 0.15),
                         color: 'info.main',
                         '& .MuiChip-icon': { color: 'info.main' },
                         border: '1px solid',
-                        borderColor: (t) => alpha(t.palette.info.main ?? '#0288d1', 0.3),
+                        borderColor: (t) => alpha(t.palette.info.main, 0.3),
                       }}
                     />
                   )}
@@ -395,12 +397,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
         aria-label="Navigation sidebar"
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', py: 1 }}>
+          {/* Primary action — start a new analysis */}
+          <Box sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon fontSize="small" />}
+              onClick={() => handleNavClick('/')}
+              sx={{ justifyContent: 'flex-start', py: 1, fontWeight: 600 }}
+            >
+              New analysis
+            </Button>
+          </Box>
+
           {/* Nav items */}
           <List dense disablePadding>
             <ListItem disablePadding sx={{ px: 0 }}>
               <Typography
                 variant="overline"
-                sx={{ px: 2, pt: 1.5, pb: 0.5, display: 'block', color: 'text.disabled' }}
+                sx={{ px: 2, pt: 0.5, pb: 0.5, display: 'block', color: 'text.disabled' }}
               >
                 Navigation
               </Typography>

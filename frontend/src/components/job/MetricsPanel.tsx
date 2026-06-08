@@ -7,22 +7,9 @@ import {
   alpha,
   Divider,
 } from '@mui/material';
-import type { StatusResponse, ResultsResponse, RecommendationType } from '../../types';
+import type { StatusResponse, ResultsResponse } from '../../types';
 import { useCreditsConversion } from '../../hooks/useCreditsConversion';
-
-// ============================================================
-// Recommendation chip color map
-// ============================================================
-const RECO_COLOR: Record<
-  RecommendationType,
-  { bg: string; text: string; label: string }
-> = {
-  'STRONG BUY': { bg: '#10B981', text: '#fff', label: 'STRONG BUY' },
-  BUY: { bg: '#5B9DF9', text: '#fff', label: 'BUY' },
-  HOLD: { bg: '#F59E0B', text: '#000', label: 'HOLD' },
-  PASS: { bg: '#EF4444', text: '#fff', label: 'PASS' },
-  'STRONG PASS': { bg: '#7F1D1D', text: '#fff', label: 'STRONG PASS' },
-};
+import { RECOMMENDATION_COLORS, riskColor } from '../../theme';
 
 // ============================================================
 // Animated counter hook
@@ -142,19 +129,12 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
   const animatedTokens = useCountUp(resultsData?.total_tokens ?? null);
 
   const recommendation = resultsData?.recommendation ?? null;
-  const recoConfig = recommendation ? RECO_COLOR[recommendation] : null;
+  const recoConfig = recommendation ? RECOMMENDATION_COLORS[recommendation] : null;
 
   const creditsUsed = useCreditsConversion(resultsData?.total_tokens);
 
   const riskScore = resultsData?.risk_score ?? null;
-  const riskColor =
-    riskScore === null
-      ? 'text.disabled'
-      : riskScore <= 3
-      ? 'success.main'
-      : riskScore <= 6
-      ? 'warning.main'
-      : 'error.main';
+  const riskScoreColor = riskScore === null ? 'text.disabled' : riskColor(riskScore);
 
   return (
     <Box
@@ -261,7 +241,7 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
       <MetricCard label="Recommendation" accent={!!recoConfig}>
         {recoConfig ? (
           <Chip
-            label={recoConfig.label}
+            label={recommendation}
             size="medium"
             sx={{
               backgroundColor: recoConfig.bg,
@@ -272,7 +252,7 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
               animation: 'fadeIn 0.5s ease',
               '@keyframes fadeIn': { from: { opacity: 0, transform: 'scale(0.9)' }, to: { opacity: 1, transform: 'scale(1)' } },
             }}
-            aria-label={`Recommendation: ${recoConfig.label}`}
+            aria-label={`Recommendation: ${recommendation}`}
           />
         ) : (
           <Typography variant="body2" sx={{ color: 'text.disabled' }}>
@@ -290,7 +270,7 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
               sx={{
                 fontFamily: 'monospace',
                 fontWeight: 700,
-                color: riskColor,
+                color: riskScoreColor,
                 fontSize: '1.75rem',
                 lineHeight: 1,
                 animation: 'fadeIn 0.5s ease',

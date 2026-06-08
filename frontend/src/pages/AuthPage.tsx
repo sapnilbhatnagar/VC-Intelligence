@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -26,19 +26,18 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import BoltIcon from '@mui/icons-material/Bolt';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { GoogleLogin } from '@react-oauth/google';
-import { loginApi, register, googleAuth } from '../api/client';
+import { loginApi, register, googleAuth, warmBackend } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { AuthUser } from '../types';
 
-// ── Editorial tokens for the left brand panel (always dark, matches /) ────────
-const AUTH_INK = '#0A0E17';
-const AUTH_LINE = '#1E2530';
-const AUTH_PAPER = '#F4F6F8';
-const AUTH_PAPER_DIM = '#9BA6B4';
-const AUTH_PAPER_FAINT = '#5B6675';
-const AUTH_SIGNAL = '#10B981';
-const AUTH_DISPLAY = '"Fraunces", Georgia, serif';
-const AUTH_MONO = '"JetBrains Mono", ui-monospace, monospace';
+// ── Tokens for the left brand panel — light, warm, orange accent (matches /) ──
+const PANEL_BG = '#F1EFE9';
+const PANEL_LINE = '#E3DED4';
+const TXT = '#1C1A17';
+const TXT_DIM = '#6B645B';
+const TXT_FAINT = '#9A9388';
+const ACCENT = '#FA7000';
+const AUTH_MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, monospace";
 const AUTH_POINTS: [string, string][] = [
   ['01', 'Company research, market sizing, and a five-year financial model'],
   ['02', 'A scored risk assessment and comparable-deal benchmarking'],
@@ -79,6 +78,25 @@ export default function AuthPage() {
 
   // Admin mode — pre-fills identifier with "Admin"
   const [adminMode, setAdminMode] = useState(false);
+
+  // Warm a possibly spun-down (free-tier) backend the moment the auth page
+  // loads, so the cold start overlaps with the user typing rather than their
+  // sign-in request. Fire-and-forget; never throws.
+  useEffect(() => {
+    warmBackend();
+  }, []);
+
+  // After a few seconds of a pending request, reassure the user that a slow
+  // first sign-in is the server waking up, not a failure.
+  const [slowHint, setSlowHint] = useState(false);
+  useEffect(() => {
+    if (!loading) {
+      setSlowHint(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSlowHint(true), 4000);
+    return () => window.clearTimeout(id);
+  }, [loading]);
 
   // Prevents onBlur from setting touched=true while the tab is being switched,
   // avoiding a brief flash of validation errors on tab click.
@@ -202,9 +220,9 @@ export default function AuthPage() {
           width: '44%',
           maxWidth: 560,
           p: 6,
-          color: AUTH_PAPER,
-          backgroundColor: AUTH_INK,
-          borderRight: `1px solid ${AUTH_LINE}`,
+          color: TXT,
+          backgroundColor: PANEL_BG,
+          borderRight: `1px solid ${PANEL_LINE}`,
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -214,7 +232,7 @@ export default function AuthPage() {
           sx={{
             position: 'absolute',
             inset: 0,
-            background: `radial-gradient(50% 40% at 80% 8%, ${AUTH_SIGNAL}1a 0%, transparent 70%)`,
+            background: 'radial-gradient(50% 40% at 82% 6%, rgba(250,112,0,0.12) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -229,28 +247,27 @@ export default function AuthPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `1px solid ${AUTH_SIGNAL}`,
-              color: AUTH_SIGNAL,
+              backgroundColor: ACCENT,
+              color: TXT,
               fontFamily: AUTH_MONO,
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '0.82rem',
             }}
             aria-hidden="true"
           >
             VC
           </Box>
-          <Typography sx={{ fontWeight: 600, fontSize: '0.98rem' }}>VC Intelligence</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.98rem' }}>VC Intelligence</Typography>
         </Box>
 
         {/* headline + capability list */}
         <Box sx={{ position: 'relative' }}>
           <Typography
             sx={{
-              fontFamily: AUTH_DISPLAY,
-              fontWeight: 500,
-              fontSize: 'clamp(2rem, 3vw, 2.7rem)',
-              lineHeight: 1.08,
-              letterSpacing: '-0.02em',
+              fontWeight: 700,
+              fontSize: 'clamp(1.9rem, 3vw, 2.6rem)',
+              lineHeight: 1.1,
+              letterSpacing: '-0.025em',
               mb: 3.5,
             }}
           >
@@ -259,10 +276,10 @@ export default function AuthPage() {
           <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {AUTH_POINTS.map(([n, label]) => (
               <Box component="li" key={n} sx={{ display: 'flex', gap: 2, alignItems: 'baseline' }}>
-                <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.78rem', color: AUTH_SIGNAL, minWidth: 24 }}>
+                <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.78rem', fontWeight: 600, color: ACCENT, minWidth: 24 }}>
                   {n}
                 </Typography>
-                <Typography sx={{ fontSize: '0.95rem', color: AUTH_PAPER_DIM, lineHeight: 1.5 }}>{label}</Typography>
+                <Typography sx={{ fontSize: '0.95rem', color: TXT_DIM, lineHeight: 1.5 }}>{label}</Typography>
               </Box>
             ))}
           </Box>
@@ -276,25 +293,25 @@ export default function AuthPage() {
             alignItems: 'center',
             gap: 1.5,
             pt: 2.5,
-            borderTop: `1px solid ${AUTH_LINE}`,
+            borderTop: `1px solid ${PANEL_LINE}`,
           }}
         >
           <Box
             sx={{
               fontFamily: AUTH_MONO,
               fontSize: '0.66rem',
-              fontWeight: 600,
-              letterSpacing: '0.08em',
-              color: AUTH_INK,
-              backgroundColor: AUTH_SIGNAL,
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              color: '#FFFFFF',
+              backgroundColor: '#1F6B4A',
               px: 1,
               py: 0.4,
-              borderRadius: '5px',
+              borderRadius: '6px',
             }}
           >
             STRONG BUY
           </Box>
-          <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.72rem', color: AUTH_PAPER_FAINT }}>
+          <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.72rem', color: TXT_FAINT }}>
             Sample memo · risk 3.2 / 10 · 8 / 8 stages
           </Typography>
         </Box>
@@ -347,23 +364,9 @@ export default function AuthPage() {
           maxWidth: 460,
           position: 'relative',
           overflow: 'visible',
-          boxShadow: `0 24px 48px ${alpha('#000', 0.45)}`,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: -1,
-            borderRadius: 'inherit',
-            padding: 1,
-            background: adminMode
-              ? 'linear-gradient(135deg, #F5A623 0%, #E5484D 100%)'
-              : 'linear-gradient(135deg, #10B981 0%, #0E7C5A 50%, transparent 100%)',
-            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-            WebkitMaskComposite: 'xor',
-            maskComposite: 'exclude',
-            opacity: adminMode ? 0.8 : 0.6,
-            pointerEvents: 'none',
-            transition: 'all 0.3s ease',
-          },
+          boxShadow: '0 16px 48px rgba(28,26,23,0.12), 0 4px 12px rgba(28,26,23,0.06)',
+          borderColor: adminMode ? (t) => alpha(t.palette.warning.main, 0.5) : 'divider',
+          borderTop: adminMode ? (t) => `3px solid ${t.palette.warning.main}` : undefined,
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -619,6 +622,16 @@ export default function AuthPage() {
                   ? 'Sign in as Administrator'
                   : 'Sign In'}
               </Button>
+
+              {slowHint && loading && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', textAlign: 'center', display: 'block' }}
+                  role="status"
+                >
+                  Waking the server. The first sign-in after a period of inactivity can take up to a minute.
+                </Typography>
+              )}
             </Box>
           </Box>
 
@@ -651,7 +664,7 @@ export default function AuthPage() {
                   width="100%"
                   text={isRegister ? 'signup_with' : 'signin_with'}
                   shape="rectangular"
-                  theme="filled_blue"
+                  theme="outline"
                   useOneTap={false}
                   context={isRegister ? 'signup' : 'signin'}
                 />

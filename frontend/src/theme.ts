@@ -2,513 +2,354 @@ import { createTheme, alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 
 // ============================================================
-// Theme mode type (also exported from types/index.ts — keep in sync)
+// VC Intelligence — single light theme.
+//
+// One theme only. Warm "amber/honey" graphite-neutral surfaces,
+// a single signature orange accent (#FA7000), Apple-style tiles
+// (white surface, hairline border, soft shadow, generous radius).
+// Color stays restrained: the accent marks action + active state,
+// and the BUY / HOLD / PASS data vocabulary lives in its own scale.
+//
+// All token values are verified for WCAG AA contrast (see theme.test.ts).
 // ============================================================
-export type ThemeMode = 'dark' | 'light' | 'advanced';
 
-// ============================================================
-// Design token sets per theme
-// ============================================================
-interface ThemeTokens {
-  bg: string;
-  surface: string;
-  surfaceHover: string;
-  border: string;
-  borderHover: string;
-  accent: string;       // emerald signal — brand, CTAs, links, active state
-  accentDim: string;
-  accentText: string;   // text/icon colour that sits on top of `accent`
-  info: string;         // cool tone for in-progress / secondary data series
-  success: string;
-  warning: string;
-  error: string;
-  textPrimary: string;
-  textSecondary: string;
-  textDisabled: string;
-  fontFamily: string;
-  displayFamily: string; // editorial serif for page headings
-  borderRadius: number;
-  muiMode: 'dark' | 'light';
-}
+// ── Type families ────────────────────────────────────────────
+// Geist is the signature face; it degrades gracefully to Inter and
+// the system stack if the webfont has not loaded. Mono is for figures.
+export const SANS =
+  "'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+export const MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', monospace";
 
-const INTER = '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-const FRAUNCES = '"Fraunces", Georgia, "Times New Roman", serif';
+// ── Design tokens ────────────────────────────────────────────
+export const TOKENS = {
+  // Signature orange — fills, active state, focus, brand mark, key accents.
+  brand: '#FA7000',
+  brandHover: '#FF8A2E', // lighter lift on hover (ink text contrast only improves)
+  brandPressed: '#E26500',
+  brandText: '#B5530E', // AA-safe orange for links / inline emphasis on light
+  onBrand: '#1C1A17', // ink that sits on a brand fill (≥6:1)
+  brandSoft: 'rgba(250,112,0,0.10)', // tint for selected rows, soft chips
+  brandSoftBorder: 'rgba(250,112,0,0.28)',
 
-const TOKENS: Record<ThemeMode, ThemeTokens> = {
-  // ── Dark: the editorial "research desk" — warm ink + emerald signal ──────────
-  dark: {
-    bg: '#0A0E14',
-    surface: '#0F141C',
-    surfaceHover: '#161D27',
-    border: '#1E2630',
-    borderHover: '#2C3640',
-    accent: '#10B981',
-    accentDim: '#0E7C5A',
-    accentText: '#06120D',
-    info: '#5B9DF9',
-    success: '#10B981',
-    warning: '#F5A623',
-    error: '#F0686A',
-    textPrimary: '#F2F5F4',
-    textSecondary: '#98A4A0',
-    textDisabled: '#5A655F',
-    fontFamily: INTER,
-    displayFamily: FRAUNCES,
-    borderRadius: 10,
-    muiMode: 'dark',
-  },
-  // ── Light: warm paper, the colour of a printed memo ─────────────────────────
-  light: {
-    bg: '#F6F5F1',
-    surface: '#FFFFFF',
-    surfaceHover: '#F0EEE8',
-    border: '#E5E2DA',
-    borderHover: '#D3CFC4',
-    accent: '#0E7C5A',
-    accentDim: '#0B5E45',
-    accentText: '#FFFFFF',
-    info: '#2D6FE0',
-    success: '#0E7C5A',
-    warning: '#B5790C',
-    error: '#D4504F',
-    textPrimary: '#16201B',
-    textSecondary: '#5C665F',
-    textDisabled: '#9AA39D',
-    fontFamily: INTER,
-    displayFamily: FRAUNCES,
-    borderRadius: 10,
-    muiMode: 'light',
-  },
-  // ── Advanced: a deeper, higher-contrast green-black "focus" mode ────────────
-  advanced: {
-    bg: '#07100C',
-    surface: '#0D1A14',
-    surfaceHover: '#12241B',
-    border: '#1C3328',
-    borderHover: '#2A4A39',
-    accent: '#2BE0A0',
-    accentDim: '#12A874',
-    accentText: '#04130C',
-    info: '#5BC8FF',
-    success: '#2BE0A0',
-    warning: '#FBBF24',
-    error: '#FB7185',
-    textPrimary: '#E8F5EE',
-    textSecondary: '#8FB3A2',
-    textDisabled: '#4A6657',
-    fontFamily: INTER,
-    displayFamily: FRAUNCES,
-    borderRadius: 14,
-    muiMode: 'dark',
-  },
+  // Warm neutral surfaces (the "paper" of the product).
+  canvas: '#F7F6F2', // app background
+  canvasSubtle: '#F1EFE9', // alternating sections / wells
+  surface: '#FFFFFF', // tiles, cards
+  surfaceAlt: '#FBFAF7', // second neutral layer: sidebars, toolbars
+  surfaceHover: '#F3F1EB',
+  border: '#EBE7DF', // hairline
+  borderStrong: '#DBD5C9', // inputs, stronger dividers
+
+  // Graphite ink.
+  textPrimary: '#1C1A17',
+  textSecondary: '#6B645B',
+  textDisabled: '#A39B90',
+
+  // Semantic data vocabulary (recommendation, risk, status).
+  success: '#2E7D5B',
+  warning: '#B7791F',
+  error: '#C0413E',
+  info: '#566270', // neutral slate (deliberately not blue)
+
+  radius: 12,
+} as const;
+
+// ── Recommendation chips: accessible bg + text pairs (≥4.5:1) ──
+export const RECOMMENDATION_COLORS: Record<string, { bg: string; text: string }> = {
+  'STRONG BUY': { bg: '#1F6B4A', text: '#FFFFFF' },
+  BUY: { bg: '#2E7D5B', text: '#FFFFFF' },
+  HOLD: { bg: '#B7791F', text: '#1C1A17' },
+  PASS: { bg: '#C0413E', text: '#FFFFFF' },
+  'STRONG PASS': { bg: '#8C2F2C', text: '#FFFFFF' },
 };
 
-// Export tokens so components can reference them directly when needed
-export const THEME_TOKENS = TOKENS;
+// ── Financial scenario chart series (no electric blue) ────────
+export const CHART_COLORS = {
+  bear: '#C0413E', // red
+  base: '#B5530E', // deep brand orange — ties to identity, distinct from bear/bull
+  bull: '#2E7D5B', // green
+  grid: 'rgba(28,26,23,0.08)', // light-theme gridlines
+  axis: '#A39B90',
+  band: 'rgba(250,112,0,0.08)', // brand-tinted confidence band
+} as const;
+
+// ── Risk score (1–10) → semantic color + label ───────────────
+export function riskColor(score: number): string {
+  if (score <= 3.5) return TOKENS.success;
+  if (score <= 6.5) return TOKENS.warning;
+  return TOKENS.error;
+}
+
+export function riskLabel(score: number): string {
+  if (score <= 3.5) return 'Low';
+  if (score <= 6.5) return 'Medium';
+  return 'High';
+}
+
+// Severity word (Low/Medium/High/Critical) → color, for parsed LLM output.
+export const SEVERITY_COLORS: Record<string, string> = {
+  Low: TOKENS.success,
+  Medium: TOKENS.warning,
+  High: TOKENS.error,
+  Critical: '#8C2F2C',
+};
 
 // ============================================================
-// Theme factory
+// Theme factory — kept as a function for call-site compatibility,
+// but there is only one theme.
 // ============================================================
-export function createAppTheme(mode: ThemeMode): Theme {
-  const C = TOKENS[mode];
-  const isAdvanced = mode === 'advanced';
-  const isDark = mode === 'dark';
+export function createAppTheme(): Theme {
+  const C = TOKENS;
 
-  // Shadows: advanced uses glass-like card shadows; dark uses deep shadows; light is in between
-  const buildShadows = (): Theme['shadows'] => {
-    if (isAdvanced) {
-      const subtle = `0 1px 3px ${alpha('#000', 0.4)}, 0 0 1px ${alpha(C.accent, 0.1)}`;
-      const mid = `0 4px 16px ${alpha('#000', 0.5)}, 0 0 8px ${alpha(C.accent, 0.08)}`;
-      const large = `0 8px 32px ${alpha('#000', 0.6)}, 0 0 16px ${alpha(C.accent, 0.12)}`;
-      return [
-        'none', subtle, subtle, mid, mid, large, large, large, large, large,
-        large, large, large, large, large, large, large, large, large, large,
-        large, large, large, large, large,
-      ] as Theme['shadows'];
-    }
-    if (isDark) {
-      return [
-        'none',
-        `0 1px 2px ${alpha(C.accent, 0.05)}`,
-        `0 1px 3px ${alpha('#000', 0.3)}, 0 1px 2px ${alpha('#000', 0.2)}`,
-        `0 4px 6px ${alpha('#000', 0.3)}, 0 2px 4px ${alpha('#000', 0.2)}`,
-        `0 10px 15px ${alpha('#000', 0.35)}, 0 4px 6px ${alpha('#000', 0.2)}`,
-        `0 20px 25px ${alpha('#000', 0.4)}, 0 10px 10px ${alpha('#000', 0.1)}`,
-        ...Array(19).fill(`0 25px 50px ${alpha('#000', 0.5)}`),
-      ] as Theme['shadows'];
-    }
-    // light
-    return [
-      'none',
-      '0 1px 2px rgba(0,0,0,0.05)',
-      '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)',
-      '0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04)',
-      '0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04)',
-      '0 20px 25px rgba(0,0,0,0.08), 0 10px 10px rgba(0,0,0,0.04)',
-      ...Array(19).fill('0 25px 50px rgba(0,0,0,0.12)'),
-    ] as Theme['shadows'];
-  };
+  // Apple-style soft shadows: low-spread, layered, warm-black tint.
+  const s1 = '0 1px 2px rgba(28,26,23,0.04), 0 1px 3px rgba(28,26,23,0.05)';
+  const s2 = '0 2px 4px rgba(28,26,23,0.04), 0 4px 12px rgba(28,26,23,0.06)';
+  const s3 = '0 8px 24px rgba(28,26,23,0.08), 0 2px 6px rgba(28,26,23,0.05)';
+  const s4 = '0 16px 48px rgba(28,26,23,0.12), 0 4px 12px rgba(28,26,23,0.06)';
+  const shadows = [
+    'none', s1, s1, s2, s2, s2, s3, s3, s3, s3,
+    s3, s3, s4, s4, s4, s4, s4, s4, s4, s4,
+    s4, s4, s4, s4, s4,
+  ] as Theme['shadows'];
 
   return createTheme({
     palette: {
-      mode: C.muiMode,
-      primary: {
-        main: C.accent,
-        dark: C.accentDim,
-        contrastText: C.accentText,
-      },
-      secondary: {
-        main: C.info,
-      },
-      info: { main: C.info },
-      success: { main: C.success },
-      warning: { main: C.warning },
-      error: { main: C.error },
-      background: {
-        default: C.bg,
-        paper: C.surface,
-      },
-      text: {
-        primary: C.textPrimary,
-        secondary: C.textSecondary,
-        disabled: C.textDisabled,
-      },
+      mode: 'light',
+      primary: { main: C.brand, dark: C.brandPressed, light: C.brandHover, contrastText: C.onBrand },
+      secondary: { main: C.brandText, contrastText: '#FFFFFF' },
+      info: { main: C.info, contrastText: '#FFFFFF' },
+      success: { main: C.success, contrastText: '#FFFFFF' },
+      warning: { main: C.warning, contrastText: '#1C1A17' },
+      error: { main: C.error, contrastText: '#FFFFFF' },
+      background: { default: C.canvas, paper: C.surface },
+      text: { primary: C.textPrimary, secondary: C.textSecondary, disabled: C.textDisabled },
       divider: C.border,
     },
 
     typography: {
-      fontFamily: C.fontFamily,
-      fontWeightLight: 300,
-      fontWeightRegular: 400,
-      fontWeightMedium: 500,
-      fontWeightBold: 600,
-      h1: {
-        fontFamily: C.displayFamily,
-        fontSize: '2.05rem',
-        fontWeight: 600,
-        letterSpacing: '-0.02em',
-        color: C.textPrimary,
-      },
-      h2: {
-        fontFamily: C.displayFamily,
-        fontSize: '1.55rem',
-        fontWeight: 600,
-        letterSpacing: '-0.015em',
-      },
-      h3: { fontSize: '1.25rem', fontWeight: 600 },
-      h4: { fontSize: '1.125rem', fontWeight: 600 },
-      h5: { fontSize: '1rem', fontWeight: 600 },
-      h6: {
-        fontSize: '0.875rem',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        color: C.textSecondary,
-      },
+      fontFamily: SANS,
+      fontWeightLight: 400,
+      fontWeightRegular: 450,
+      fontWeightMedium: 550,
+      fontWeightBold: 650,
+      // Fixed rem scale (product register), tight grotesk tracking on headings.
+      h1: { fontSize: '1.875rem', fontWeight: 680, letterSpacing: '-0.02em', lineHeight: 1.15, color: C.textPrimary },
+      h2: { fontSize: '1.5rem', fontWeight: 660, letterSpacing: '-0.018em', lineHeight: 1.2, color: C.textPrimary },
+      h3: { fontSize: '1.25rem', fontWeight: 640, letterSpacing: '-0.014em', lineHeight: 1.25 },
+      h4: { fontSize: '1.0625rem', fontWeight: 620, letterSpacing: '-0.01em' },
+      h5: { fontSize: '0.9375rem', fontWeight: 600 },
+      h6: { fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.02em', color: C.textSecondary },
       body1: { fontSize: '0.9375rem', lineHeight: 1.6 },
-      body2: {
-        fontSize: '0.8125rem',
-        lineHeight: 1.5,
-        color: C.textSecondary,
-      },
-      caption: {
-        fontSize: '0.75rem',
-        color: C.textSecondary,
-        letterSpacing: '0.04em',
-      },
+      body2: { fontSize: '0.8125rem', lineHeight: 1.55, color: C.textSecondary },
+      caption: { fontSize: '0.75rem', color: C.textSecondary, letterSpacing: '0.005em' },
       overline: {
         fontSize: '0.6875rem',
         fontWeight: 600,
-        letterSpacing: '0.1em',
+        letterSpacing: '0.08em',
         textTransform: 'uppercase',
+        color: C.textSecondary,
       },
-      button: {
-        fontWeight: 600,
-        letterSpacing: '0.025em',
-        textTransform: 'none',
-      },
+      button: { fontWeight: 600, letterSpacing: '0.005em', textTransform: 'none' },
     },
 
-    shape: { borderRadius: C.borderRadius },
-
-    shadows: buildShadows(),
+    shape: { borderRadius: C.radius },
+    shadows,
 
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          '*': {
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${C.border} transparent`,
-          },
-          '*::-webkit-scrollbar': { width: '6px', height: '6px' },
+          body: { backgroundColor: C.canvas, color: C.textPrimary },
+          '*': { scrollbarWidth: 'thin', scrollbarColor: `${C.borderStrong} transparent` },
+          '*::-webkit-scrollbar': { width: '10px', height: '10px' },
           '*::-webkit-scrollbar-track': { background: 'transparent' },
           '*::-webkit-scrollbar-thumb': {
-            background: C.border,
-            borderRadius: '3px',
+            background: C.borderStrong,
+            borderRadius: '6px',
+            border: '2px solid transparent',
+            backgroundClip: 'padding-box',
           },
-          '*::-webkit-scrollbar-thumb:hover': { background: C.borderHover },
+          '*::-webkit-scrollbar-thumb:hover': { background: '#C9C2B5' },
         },
       },
 
       MuiButton: {
+        defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: C.borderRadius,
-            padding: '8px 20px',
+            borderRadius: 10,
+            padding: '8px 16px',
             fontSize: '0.875rem',
             fontWeight: 600,
-            transition: 'all 0.2s ease',
+            transition: 'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
           },
-          // Solid emerald CTA with ink text — editorial, quiet, no decorative glow
-          contained: {
-            backgroundColor: C.accent,
-            color: C.accentText,
+          containedPrimary: {
+            backgroundColor: C.brand,
+            color: C.onBrand,
             boxShadow: 'none',
             '&:hover': {
-              backgroundColor: C.accent,
-              filter: 'brightness(1.08)',
-              boxShadow: `0 4px 16px ${alpha(C.accent, 0.28)}`,
+              backgroundColor: C.brandHover,
+              boxShadow: '0 4px 14px rgba(250,112,0,0.30)',
               transform: 'translateY(-1px)',
             },
-            '&:active': { transform: 'translateY(0)' },
+            '&:active': { backgroundColor: C.brandPressed, transform: 'translateY(0)' },
           },
           outlined: {
-            borderColor: C.border,
-            '&:hover': {
-              borderColor: C.accent,
-              backgroundColor: alpha(C.accent, 0.06),
-            },
+            borderColor: C.borderStrong,
+            color: C.textPrimary,
+            '&:hover': { borderColor: C.brand, backgroundColor: C.brandSoft },
           },
+          text: { '&:hover': { backgroundColor: alpha(C.textPrimary, 0.04) } },
         },
       },
 
       MuiCard: {
+        defaultProps: { elevation: 0 },
         styleOverrides: {
-          root: isAdvanced
-            ? {
-                // Advanced: glass-morphism with violet border glow on hover
-                backgroundColor: C.surface,
-                backgroundImage: 'none',
-                border: `1px solid ${C.border}`,
-                borderRadius: 16,
-                boxShadow: `0 2px 8px ${alpha('#000', 0.4)}, inset 0 1px 0 ${alpha(C.accent, 0.05)}`,
-                backdropFilter: 'blur(12px)',
-                transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
-                '&:hover': {
-                  borderColor: alpha(C.accent, 0.4),
-                  boxShadow: `0 4px 24px ${alpha('#000', 0.5)}, 0 0 0 1px ${alpha(C.accent, 0.2)}, inset 0 1px 0 ${alpha(C.accent, 0.08)}`,
-                },
-              }
-            : {
-                backgroundColor: C.surface,
-                backgroundImage: 'none',
-                border: `1px solid ${C.border}`,
-                borderRadius: 12,
-                boxShadow: 'none',
-                transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-              },
+          root: {
+            backgroundColor: C.surface,
+            backgroundImage: 'none',
+            border: `1px solid ${C.border}`,
+            borderRadius: 14,
+            boxShadow: s1,
+            transition: 'border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
+          },
         },
       },
 
       MuiPaper: {
         styleOverrides: {
           root: { backgroundImage: 'none' },
+          outlined: { borderColor: C.border },
         },
       },
 
-      MuiTextField: {
+      MuiTextField: { defaultProps: { variant: 'outlined' } },
+
+      MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: alpha(C.textPrimary, 0.03),
-              borderRadius: C.borderRadius,
-              '& fieldset': { borderColor: C.border },
-              '&:hover fieldset': { borderColor: C.borderHover },
-              '&.Mui-focused fieldset': {
-                borderColor: C.accent,
-              },
-            },
+            backgroundColor: C.surface,
+            borderRadius: 10,
+            '& fieldset': { borderColor: C.borderStrong },
+            '&:hover fieldset': { borderColor: '#C9C2B5' },
+            '&.Mui-focused fieldset': { borderColor: C.brand, borderWidth: 1.5 },
           },
-        },
-      },
-
-      MuiSelect: {
-        styleOverrides: {
-          outlined: { backgroundColor: alpha(C.textPrimary, 0.03) },
         },
       },
 
       MuiChip: {
         styleOverrides: {
-          root: {
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            letterSpacing: '0.03em',
-            borderRadius: isAdvanced ? 10 : 4,
-          },
+          root: { fontWeight: 600, fontSize: '0.72rem', letterSpacing: '0.01em', borderRadius: 7 },
+          outlined: { borderColor: C.borderStrong },
         },
       },
 
       MuiDrawer: {
         styleOverrides: {
-          paper: isAdvanced
-            ? {
-                backgroundColor: C.surface,
-                borderColor: C.border,
-                backgroundImage: 'none',
-                backdropFilter: 'blur(16px)',
-              }
-            : {
-                backgroundColor: C.surface,
-                borderColor: C.border,
-                backgroundImage: 'none',
-              },
+          paper: { backgroundColor: C.surfaceAlt, borderColor: C.border, backgroundImage: 'none' },
         },
       },
 
       MuiAppBar: {
+        defaultProps: { elevation: 0, color: 'inherit' },
         styleOverrides: {
-          root: isAdvanced
-            ? {
-                // Advanced: deep green-black with blur
-                backgroundColor: alpha('#091410', 0.92),
-                backgroundImage: 'none',
-                borderBottom: `1px solid ${C.border}`,
-                backdropFilter: 'blur(20px)',
-                boxShadow: `0 1px 0 ${alpha(C.accent, 0.1)}`,
-              }
-            : {
-                backgroundColor: alpha(C.surface, 0.95),
-                backgroundImage: 'none',
-                borderBottom: `1px solid ${C.border}`,
-                backdropFilter: 'blur(12px)',
-                boxShadow: 'none',
-              },
+          root: {
+            backgroundColor: alpha(C.surface, 0.85),
+            backgroundImage: 'none',
+            color: C.textPrimary,
+            borderBottom: `1px solid ${C.border}`,
+            backdropFilter: 'blur(12px)',
+            boxShadow: 'none',
+          },
         },
       },
 
       MuiLinearProgress: {
         styleOverrides: {
-          root: {
-            borderRadius: 4,
-            backgroundColor: C.border,
-          },
-          bar: {
-            borderRadius: 4,
-            background: `linear-gradient(90deg, ${C.accentDim} 0%, ${C.accent} 100%)`,
-          },
+          root: { borderRadius: 4, backgroundColor: C.border, height: 6 },
+          bar: { borderRadius: 4, backgroundColor: C.brand },
         },
       },
 
-      MuiCircularProgress: {
-        styleOverrides: {
-          root: { color: C.accent },
-        },
-      },
+      MuiCircularProgress: { styleOverrides: { root: { color: C.brand } } },
 
       MuiTab: {
         styleOverrides: {
           root: {
             fontWeight: 600,
             fontSize: '0.8125rem',
-            letterSpacing: '0.02em',
+            letterSpacing: '0.005em',
             textTransform: 'none',
             minHeight: 44,
-            '&.Mui-selected': { color: C.accent },
+            color: C.textSecondary,
+            '&.Mui-selected': { color: C.textPrimary },
           },
         },
       },
+      MuiTabs: { styleOverrides: { indicator: { backgroundColor: C.brand, height: 2, borderRadius: 2 } } },
 
-      MuiTabs: {
-        styleOverrides: {
-          indicator: { backgroundColor: C.accent, height: 2 },
-        },
-      },
-
-      MuiDivider: {
-        styleOverrides: {
-          root: { borderColor: C.border },
-        },
-      },
+      MuiDivider: { styleOverrides: { root: { borderColor: C.border } } },
 
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            borderRadius: C.borderRadius,
-            margin: '2px 8px',
-            padding: '8px 12px',
-            transition: 'all 0.15s ease',
+            borderRadius: 9,
+            margin: '1px 8px',
+            padding: '7px 10px',
+            transition: 'background-color 0.15s ease, color 0.15s ease',
             '&.Mui-selected': {
-              backgroundColor: alpha(C.accent, 0.12),
-              color: C.accent,
-              '&:hover': { backgroundColor: alpha(C.accent, 0.18) },
-              '& .MuiListItemIcon-root': { color: C.accent },
+              backgroundColor: C.brandSoft,
+              color: C.brandText,
+              fontWeight: 600,
+              '&:hover': { backgroundColor: 'rgba(250,112,0,0.16)' },
+              '& .MuiListItemIcon-root': { color: C.brandText },
             },
-            '&:hover': { backgroundColor: alpha(C.textPrimary, 0.04) },
+            '&:hover': { backgroundColor: alpha(C.textPrimary, 0.035) },
           },
         },
       },
-
-      MuiListItemIcon: {
-        styleOverrides: {
-          root: { minWidth: 36, color: C.textSecondary },
-        },
-      },
+      MuiListItemIcon: { styleOverrides: { root: { minWidth: 34, color: C.textSecondary } } },
 
       MuiTooltip: {
         styleOverrides: {
           tooltip: {
-            backgroundColor: C.surface,
-            border: `1px solid ${C.border}`,
-            color: C.textPrimary,
-            fontSize: '0.75rem',
+            backgroundColor: C.textPrimary,
+            color: '#FFFFFF',
+            fontSize: '0.72rem',
             fontWeight: 500,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            boxShadow: s2,
           },
-          arrow: { color: C.surface },
+          arrow: { color: C.textPrimary },
         },
       },
 
       MuiAlert: {
         styleOverrides: {
-          root: {
-            borderRadius: C.borderRadius,
-            border: '1px solid',
-          },
-          standardError: {
-            borderColor: alpha(C.error, 0.3),
-            backgroundColor: alpha(C.error, 0.08),
-          },
-          standardSuccess: {
-            borderColor: alpha(C.success, 0.3),
-            backgroundColor: alpha(C.success, 0.08),
-          },
-          standardWarning: {
-            borderColor: alpha(C.warning, 0.3),
-            backgroundColor: alpha(C.warning, 0.08),
-          },
-          standardInfo: {
-            borderColor: alpha(C.accent, 0.3),
-            backgroundColor: alpha(C.accent, 0.08),
-          },
+          root: { borderRadius: 10, border: '1px solid', fontSize: '0.8125rem' },
+          standardError: { borderColor: alpha(C.error, 0.3), backgroundColor: alpha(C.error, 0.07), color: '#7C2A28' },
+          standardSuccess: { borderColor: alpha(C.success, 0.3), backgroundColor: alpha(C.success, 0.07), color: '#1C5740' },
+          standardWarning: { borderColor: alpha(C.warning, 0.3), backgroundColor: alpha(C.warning, 0.08), color: '#7A5210' },
+          standardInfo: { borderColor: alpha(C.info, 0.3), backgroundColor: alpha(C.info, 0.08), color: '#3C4651' },
         },
       },
 
       MuiToggleButton: {
         styleOverrides: {
           root: {
-            borderColor: C.border,
+            borderColor: C.borderStrong,
             color: C.textSecondary,
             fontWeight: 600,
             fontSize: '0.75rem',
             textTransform: 'none',
             '&.Mui-selected': {
-              backgroundColor: alpha(C.accent, 0.12),
-              color: C.accent,
-              borderColor: alpha(C.accent, 0.4),
-              '&:hover': { backgroundColor: alpha(C.accent, 0.18) },
+              backgroundColor: C.brandSoft,
+              color: C.brandText,
+              borderColor: C.brandSoftBorder,
+              '&:hover': { backgroundColor: 'rgba(250,112,0,0.16)' },
             },
-            '&:hover': { backgroundColor: alpha(C.textPrimary, 0.04) },
+            '&:hover': { backgroundColor: alpha(C.textPrimary, 0.035) },
           },
         },
       },
@@ -517,10 +358,7 @@ export function createAppTheme(mode: ThemeMode): Theme {
 }
 
 // ============================================================
-// Default export — dark theme for backward compatibility
+// Single exported theme.
 // ============================================================
-export const theme = createAppTheme('dark');
+export const theme = createAppTheme();
 export default theme;
-
-// Legacy named export so existing imports work
-export { TOKENS as COLOR };

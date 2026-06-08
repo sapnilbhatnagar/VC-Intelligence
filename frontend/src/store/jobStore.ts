@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, devtools } from 'zustand/middleware';
-import type { StatusResponse, ResultsResponse, AccessibilitySettings, ThemeMode } from '../types';
+import type { StatusResponse, ResultsResponse, AccessibilitySettings } from '../types';
 
 // ============================================================
 // State Shape
@@ -16,9 +16,6 @@ interface JobState {
 
   // Accessibility / display preferences
   accessibilitySettings: AccessibilitySettings;
-
-  // Theme
-  themeMode: ThemeMode;
 
   // App-level UI state
   sidebarOpen: boolean;
@@ -41,7 +38,6 @@ interface JobState {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setApiHealthy: (healthy: boolean | null) => void;
-  setThemeMode: (mode: ThemeMode) => void;
   setStopInProgress: (v: boolean) => void;
   setResumeInProgress: (v: boolean) => void;
   setCompleteInProgress: (v: boolean) => void;
@@ -61,13 +57,11 @@ export const useJobStore = create<JobState>()(
         pendingAnalysis: null,
 
         accessibilitySettings: {
-          darkMode: true,
           highContrast: false,
           fontSize: 100,
           reducedMotion: false,
         },
 
-        themeMode: 'dark',
         sidebarOpen: true,
         apiHealthy: null,
         stopInProgress: false,
@@ -112,9 +106,6 @@ export const useJobStore = create<JobState>()(
         setApiHealthy: (healthy) =>
           set({ apiHealthy: healthy }, false, 'setApiHealthy'),
 
-        setThemeMode: (mode) =>
-          set({ themeMode: mode }, false, 'setThemeMode'),
-
         setStopInProgress: (v) =>
           set({ stopInProgress: v }, false, 'setStopInProgress'),
 
@@ -131,7 +122,6 @@ export const useJobStore = create<JobState>()(
         partialize: (state) => ({
           accessibilitySettings: state.accessibilitySettings,
           sidebarOpen: state.sidebarOpen,
-          themeMode: state.themeMode,
           currentJobId: state.currentJobId,
         }),
       }

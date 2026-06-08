@@ -17,6 +17,7 @@ import {
   grantUserCredits, adminUpdateUser, adminCreateUser, adminDeleteUser, deleteAnalysis,
 } from '../api/client';
 import type { AdminUser, AdminAnalysis, CreditTransaction, AdminStats } from '../types';
+import { TOKENS, RECOMMENDATION_COLORS } from '../theme';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -41,18 +42,21 @@ function fmtDate(iso: string | null | undefined): string {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: '#10B981', running: '#5B9DF9', paused: '#F59E0B',
-  failed: '#EF4444', pending: '#6B7280',
+  completed: TOKENS.success, running: TOKENS.info, paused: TOKENS.warning,
+  failed: TOKENS.error, pending: '#9A9388',
 };
 
 const REC_COLORS: Record<string, string> = {
-  'STRONG BUY': '#10B981', 'BUY': '#5B9DF9', 'HOLD': '#F59E0B',
-  'PASS': '#EF4444', 'STRONG PASS': '#7F1D1D',
+  'STRONG BUY': RECOMMENDATION_COLORS['STRONG BUY'].bg,
+  'BUY': RECOMMENDATION_COLORS.BUY.bg,
+  'HOLD': RECOMMENDATION_COLORS.HOLD.bg,
+  'PASS': RECOMMENDATION_COLORS.PASS.bg,
+  'STRONG PASS': RECOMMENDATION_COLORS['STRONG PASS'].bg,
 };
 
 const TX_COLORS: Record<string, string> = {
-  purchase: '#10B981', admin_grant: '#5B9DF9', admin_set: '#8B5CF6',
-  usage: '#EF4444', signup_bonus: '#F59E0B',
+  purchase: TOKENS.success, admin_grant: TOKENS.info, admin_set: TOKENS.brand,
+  usage: TOKENS.error, signup_bonus: TOKENS.warning,
 };
 
 // ── Stat Card ──────────────────────────────────────────────────────────────
@@ -308,7 +312,7 @@ function OverviewTab({
             label="Total Users"
             value={stats?.total_users ?? 0}
             icon={<People fontSize="small" />}
-            color="#5B9DF9"
+            color={TOKENS.info}
             loading={statsLoading}
           />
         </Grid>
@@ -317,7 +321,7 @@ function OverviewTab({
             label="New Today"
             value={stats?.new_users_today ?? 0}
             icon={<PersonAdd fontSize="small" />}
-            color="#10B981"
+            color={TOKENS.success}
             loading={statsLoading}
           />
         </Grid>
@@ -326,7 +330,7 @@ function OverviewTab({
             label="Total Analyses"
             value={stats?.total_analyses ?? 0}
             icon={<BarChart fontSize="small" />}
-            color="#8B5CF6"
+            color={TOKENS.brand}
             loading={statsLoading}
           />
         </Grid>
@@ -335,7 +339,7 @@ function OverviewTab({
             label="Completed"
             value={stats?.completed_analyses ?? 0}
             icon={<CheckCircle fontSize="small" />}
-            color="#10B981"
+            color={TOKENS.success}
             loading={statsLoading}
           />
         </Grid>
@@ -344,7 +348,7 @@ function OverviewTab({
             label="Credits in Use"
             value={stats?.total_credits_in_circulation ?? 0}
             icon={<CreditCard fontSize="small" />}
-            color="#F59E0B"
+            color={TOKENS.warning}
             loading={statsLoading}
           />
         </Grid>
@@ -353,7 +357,7 @@ function OverviewTab({
             label="Low Credit Users"
             value={stats?.users_low_credits ?? 0}
             icon={<Warning fontSize="small" />}
-            color="#EF4444"
+            color={TOKENS.error}
             loading={statsLoading}
             subtitle="2 credits or fewer"
           />
@@ -367,7 +371,7 @@ function OverviewTab({
             label="Running Now"
             value={stats?.running_analyses ?? 0}
             icon={<Timeline fontSize="small" />}
-            color="#5B9DF9"
+            color={TOKENS.info}
             loading={statsLoading}
           />
         </Grid>
@@ -376,7 +380,7 @@ function OverviewTab({
             label="Paused"
             value={stats?.paused_analyses ?? 0}
             icon={<Pause fontSize="small" />}
-            color="#F59E0B"
+            color={TOKENS.warning}
             loading={statsLoading}
           />
         </Grid>
@@ -385,7 +389,7 @@ function OverviewTab({
             label="Failed"
             value={stats?.failed_analyses ?? 0}
             icon={<Error fontSize="small" />}
-            color="#EF4444"
+            color={TOKENS.error}
             loading={statsLoading}
           />
         </Grid>
@@ -394,7 +398,7 @@ function OverviewTab({
             label="Analyses Today"
             value={stats?.analyses_today ?? 0}
             icon={<TrendingUp fontSize="small" />}
-            color="#8B5CF6"
+            color={TOKENS.brand}
             loading={statsLoading}
           />
         </Grid>
@@ -604,8 +608,8 @@ function UsersTab({
                       <Avatar
                         sx={{
                           width: 32, height: 32,
-                          bgcolor: user.role === 'admin' ? '#8B5CF620' : '#5B9DF920',
-                          color: user.role === 'admin' ? '#8B5CF6' : '#5B9DF9',
+                          bgcolor: user.role === 'admin' ? `${TOKENS.info}20` : `${TOKENS.textSecondary}20`,
+                          color: user.role === 'admin' ? TOKENS.info : TOKENS.textSecondary,
                           fontSize: '0.75rem', fontWeight: 700,
                         }}
                       >
@@ -631,8 +635,8 @@ function UsersTab({
                           : undefined
                       }
                       sx={{
-                        bgcolor: user.role === 'admin' ? '#8B5CF620' : '#5B9DF920',
-                        color: user.role === 'admin' ? '#8B5CF6' : '#5B9DF9',
+                        bgcolor: user.role === 'admin' ? `${TOKENS.info}20` : `${TOKENS.textSecondary}20`,
+                        color: user.role === 'admin' ? TOKENS.info : TOKENS.textSecondary,
                         fontWeight: 600,
                       }}
                     />
@@ -906,7 +910,7 @@ function CreditActivityTab({
             label="Total Transactions"
             value={transactions.length}
             icon={<Timeline fontSize="small" />}
-            color="#8B5CF6"
+            color={TOKENS.brand}
           />
         </Grid>
         <Grid item xs={6} sm={3}>
@@ -914,7 +918,7 @@ function CreditActivityTab({
             label="Credits Issued"
             value={totalGranted}
             icon={<Add fontSize="small" />}
-            color="#10B981"
+            color={TOKENS.success}
           />
         </Grid>
         <Grid item xs={6} sm={3}>
@@ -922,7 +926,7 @@ function CreditActivityTab({
             label="Credits Used"
             value={totalUsed}
             icon={<TrendingUp fontSize="small" />}
-            color="#EF4444"
+            color={TOKENS.error}
           />
         </Grid>
         <Grid item xs={6} sm={3}>
@@ -930,7 +934,7 @@ function CreditActivityTab({
             label="Purchases"
             value={purchases.length}
             icon={<MonetizationOn fontSize="small" />}
-            color="#F59E0B"
+            color={TOKENS.warning}
           />
         </Grid>
       </Grid>
@@ -1059,7 +1063,7 @@ export default function AdminDashboard() {
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: 'auto' }}>
       {/* Header */}
       <Box display="flex" alignItems="center" gap={2} mb={3}>
-        <Avatar sx={{ bgcolor: '#8B5CF620', color: '#8B5CF6', width: 48, height: 48 }}>
+        <Avatar sx={{ bgcolor: `${TOKENS.info}20`, color: TOKENS.info, width: 48, height: 48 }}>
           <AdminPanelSettings />
         </Avatar>
         <Box>

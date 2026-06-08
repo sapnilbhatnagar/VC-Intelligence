@@ -405,12 +405,8 @@ function PreviewState({
               animation: 'previewPulse 2s ease-in-out infinite',
             },
             '@keyframes previewPulse': {
-              '0%, 100%': {
-                boxShadow: `0 0 0 0 ${alpha('#10B981', 0.5)}`,
-              },
-              '50%': {
-                boxShadow: '0 0 0 8px rgba(16, 185, 129, 0)',
-              },
+              '0%, 100%': { boxShadow: '0 0 0 0 rgba(46,125,91,0.45)' },
+              '50%': { boxShadow: '0 0 0 8px rgba(46,125,91,0)' },
             },
             '&:hover': {
               backgroundColor: 'success.dark',

@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { mdComponents } from '../../../utils/markdownComponents';
 import DataSourceTooltip from '../DataSourceTooltip';
+import { TOKENS } from '../../../theme';
 
 // ============================================================
 // Types
@@ -101,7 +102,7 @@ interface DealCardProps {
   index: number;
 }
 
-const ACCENT = '#8B93F8';
+const ACCENT = TOKENS.brand;
 
 function DealCard({ deal, index }: DealCardProps) {
   return (
@@ -224,7 +225,7 @@ function ComparableDealsPanel({ text }: ComparableDealsPanelProps) {
       sx={{
         height: '100%',
         borderColor: 'divider',
-        backgroundColor: alpha('#ffffff', 0.03),
+        backgroundColor: 'background.paper',
       }}
       role="region"
       aria-label="Comparable deals and market benchmarks"

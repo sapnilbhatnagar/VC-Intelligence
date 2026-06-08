@@ -15,18 +15,7 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DataSourceTooltip from '../DataSourceTooltip';
 
-// ============================================================
-// Accent palette cycling through multiple colors
-// ============================================================
-const ACCENT_COLORS = [
-  '#8B93F8', // indigo
-  '#10B981', // emerald
-  '#5B9DF9', // blue
-  '#F59E0B', // amber
-  '#EC4899', // pink
-];
-
-// Icon pool — cycles with accent colors
+// Icon pool — cycles to give each highlight row its own glyph
 const ICONS = [
   LightbulbOutlinedIcon,
   TrendingUpIcon,
@@ -107,11 +96,9 @@ function HighlightSkeleton() {
             display: 'flex',
             gap: 1.5,
             p: 1.5,
-            borderRadius: 1.5,
+            borderRadius: 2,
             border: '1px solid',
             borderColor: 'divider',
-            borderLeft: '4px solid',
-            borderLeftColor: alpha('#8B93F8', 0.3),
           }}
         >
           <Skeleton variant="circular" width={24} height={24} sx={{ flexShrink: 0 }} />
@@ -148,7 +135,7 @@ function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps)
       sx={{
         height: '100%',
         borderColor: 'divider',
-        backgroundColor: alpha('#ffffff', 0.03),
+        backgroundColor: 'background.paper',
       }}
       role="region"
       aria-label="Investment highlights"
@@ -156,7 +143,7 @@ function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps)
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 2 }}>
-          <StarBorderIcon fontSize="small" sx={{ color: '#F59E0B' }} aria-hidden="true" />
+          <StarBorderIcon fontSize="small" sx={{ color: 'primary.main' }} aria-hidden="true" />
           <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>
             Key Investment Highlights
           </Typography>
@@ -181,7 +168,6 @@ function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps)
             aria-label="Investment highlights list"
           >
             {highlights.map((item, i) => {
-              const accent = ACCENT_COLORS[i % ACCENT_COLORS.length];
               const IconComp = ICONS[i % ICONS.length];
 
               return (
@@ -192,14 +178,14 @@ function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps)
                       display: 'flex',
                       gap: 1.5,
                       p: 1.5,
-                      borderRadius: 1.5,
+                      borderRadius: 2,
                       border: '1px solid',
                       borderColor: 'divider',
-                      borderLeft: `4px solid ${accent}`,
-                      backgroundColor: alpha(accent, 0.04),
-                      transition: 'background-color 0.2s',
+                      backgroundColor: 'background.paper',
+                      transition: 'background-color 0.18s, border-color 0.18s',
                       '&:hover': {
-                        backgroundColor: alpha(accent, 0.08),
+                        backgroundColor: (t) => alpha(t.palette.primary.main, 0.04),
+                        borderColor: (t) => alpha(t.palette.primary.main, 0.3),
                       },
                     }}
                   >
@@ -208,17 +194,18 @@ function InvestmentHighlightsPanel({ memoText }: InvestmentHighlightsPanelProps)
                       sx={{
                         width: 32,
                         height: 32,
-                        borderRadius: 1,
+                        borderRadius: 1.5,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: alpha(accent, 0.12),
+                        backgroundColor: (t) => alpha(t.palette.primary.main, 0.1),
+                        color: 'primary.main',
                         flexShrink: 0,
                         mt: 0.25,
                       }}
                       aria-hidden="true"
                     >
-                      <IconComp sx={{ fontSize: 16, color: accent }} />
+                      <IconComp sx={{ fontSize: 16 }} />
                     </Box>
 
                     {/* Text */}
