@@ -78,6 +78,8 @@ class TokenResponse(BaseModel):
     name: Optional[str] = None
     role: str
     credits: int
+    has_api_key: bool = False
+    api_key_last4: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: str
@@ -88,6 +90,11 @@ class UserResponse(BaseModel):
     credits: int
     created_at: str
     last_login_at: Optional[str] = None
+    has_api_key: bool = False
+    api_key_last4: Optional[str] = None
+
+class SetApiKeyRequest(BaseModel):
+    api_key: str = Field(..., min_length=20)
 
 class AssignCreditsRequest(BaseModel):
     credits: int = Field(..., ge=0)

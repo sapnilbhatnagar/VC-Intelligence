@@ -4,9 +4,11 @@ import uuid
 from fastapi import APIRouter, HTTPException, Depends
 
 from app.auth import hash_password, verify_password, create_access_token, require_auth
+from app.crypto import encrypt_secret, decrypt_secret
 from app.schemas import (
     UserRegisterRequest, UserLoginRequest, TokenResponse,
     UserResponse, AddCreditsRequest, ChangePasswordRequest, GoogleAuthRequest,
+    SetApiKeyRequest,
 )
 from storage.database import (
     create_user, get_user_by_email, get_user_by_id, get_user_by_username,
@@ -15,6 +17,12 @@ from storage.database import (
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _api_key_meta(user: dict) -> tuple[bool, str | None]:
+    """(has_api_key, last4) for a user, without ever exposing the full key."""
+    dec = decrypt_secret(user.get("anthropic_api_key_enc"))
+    return (bool(dec), dec[-4:] if dec else None)
 
 
 @router.post("/register", response_model=TokenResponse)
@@ -46,11 +54,13 @@ async def login(req: UserLoginRequest):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
+    has_key, last4 = _api_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
+        has_api_key=has_key, api_key_last4=last4,
     )
 
 
@@ -59,6 +69,7 @@ async def get_me(current_user: dict = Depends(require_auth)):
     user = await get_user_by_id(current_user["id"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
+    has_key, last4 = _api_key_meta(user)
     return UserResponse(
         id=user["id"],
         email=user["email"],
@@ -67,12 +78,34 @@ async def get_me(current_user: dict = Depends(require_auth)):
         role=user["role"],
         credits=user["credits"],
         created_at=user["created_at"],
+        has_api_key=has_key,
+        api_key_last4=last4,
     )
 
 
 @router.get("/me/analyses")
 async def my_analyses(current_user: dict = Depends(require_auth)):
     return await list_analyses_by_user(current_user["id"])
+
+
+@router.put("/me/api-key")
+async def set_api_key(req: SetApiKeyRequest, current_user: dict = Depends(require_auth)):
+    """Store the user's own Claude API key (encrypted) for unlimited, self-billed runs."""
+    key = req.api_key.strip()
+    if not key.startswith("sk-ant-"):
+        raise HTTPException(
+            status_code=400,
+            detail="That does not look like a Claude API key (it should start with 'sk-ant-').",
+        )
+    await update_user(current_user["id"], {"anthropic_api_key_enc": encrypt_secret(key)})
+    return {"has_api_key": True, "api_key_last4": key[-4:]}
+
+
+@router.delete("/me/api-key")
+async def clear_api_key(current_user: dict = Depends(require_auth)):
+    """Remove the user's stored API key (revert to credit-based runs)."""
+    await update_user(current_user["id"], {"anthropic_api_key_enc": None})
+    return {"has_api_key": False, "api_key_last4": None}
 
 
 @router.post("/me/add-credits")
@@ -144,9 +177,11 @@ async def google_auth(req: GoogleAuthRequest):
 
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
+    has_key, last4 = _api_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
+        has_api_key=has_key, api_key_last4=last4,
     )

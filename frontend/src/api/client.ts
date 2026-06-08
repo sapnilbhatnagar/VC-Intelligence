@@ -11,6 +11,7 @@ import type {
   AdminUser,
   AdminAnalysis,
   CreditTransaction,
+  ApiKeyStatus,
 } from '../types';
 
 // ============================================================
@@ -204,6 +205,18 @@ export async function addCredits(
 /** Get the analyses belonging to the currently authenticated user */
 export async function getMyAnalyses(): Promise<HistoryItem[]> {
   const { data } = await apiClient.get<HistoryItem[]>('/auth/me/analyses');
+  return data;
+}
+
+/** Save the user's own Claude API key (enables unlimited, self-billed runs) */
+export async function saveApiKey(apiKey: string): Promise<ApiKeyStatus> {
+  const { data } = await apiClient.put<ApiKeyStatus>('/auth/me/api-key', { api_key: apiKey });
+  return data;
+}
+
+/** Remove the user's stored API key (revert to credit-based runs) */
+export async function deleteApiKey(): Promise<ApiKeyStatus> {
+  const { data } = await apiClient.delete<ApiKeyStatus>('/auth/me/api-key');
   return data;
 }
 

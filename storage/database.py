@@ -108,6 +108,12 @@ async def init_db():
         except Exception:
             pass
 
+        # Add encrypted Claude API key column to users (own-key / unlimited mode)
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN anthropic_api_key_enc TEXT")
+        except Exception:
+            pass
+
         # Credit transactions table
         await db.execute("""
             CREATE TABLE IF NOT EXISTS credit_transactions (
@@ -245,7 +251,7 @@ async def add_credits(user_id: str, amount: int):
 
 async def update_user(user_id: str, updates: dict):
     """Update arbitrary user fields (email, role, password_hash, username, name)."""
-    allowed = {"email", "role", "password_hash", "credits", "username", "name"}
+    allowed = {"email", "role", "password_hash", "credits", "username", "name", "anthropic_api_key_enc"}
     cols = {k: v for k, v in updates.items() if k in allowed}
     if not cols:
         return

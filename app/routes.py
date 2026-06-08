@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from app.schemas import AnalyzeRequest, CompleteRemainingRequest, JobResponse, StatusResponse
 from app.auth import get_current_user
+from app.crypto import decrypt_secret
 from storage.database import (
     create_analysis, get_analysis, list_analyses, list_analyses_by_user,
     update_analysis, get_user_by_id, deduct_credits, credit_cost, delete_analysis,
@@ -62,23 +63,25 @@ async def start_analysis(
     if current_user is None:
         raise HTTPException(status_code=401, detail="Authentication required.")
 
-    cost = credit_cost(request.selected_stages)
+    user = await get_user_by_id(current_user["id"])
+    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
+    uses_own_key = bool(own_key)
+    is_admin = bool(user and user["role"] == "admin")
 
-    if current_user:
-        user = await get_user_by_id(current_user["id"])
-        if user and user["role"] != "admin" and user["credits"] < cost:
-            raise HTTPException(
-                status_code=402,
-                detail=f"Insufficient credits. Need {cost}, have {user['credits']}.",
-            )
+    # Own key = unlimited (billed to the user); admin = unlimited; else credits.
+    cost = 0 if (uses_own_key or is_admin) else credit_cost(request.selected_stages)
+
+    if not uses_own_key and not is_admin and user and user["credits"] < cost:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Insufficient credits. Need {cost}, have {user['credits']}.",
+        )
 
     job_id = str(uuid.uuid4())
-    await create_analysis(job_id, request.company, user_id=current_user["id"] if current_user else None)
+    await create_analysis(job_id, request.company, user_id=current_user["id"])
 
-    if current_user:
-        user = await get_user_by_id(current_user["id"])
-        if user and user["role"] != "admin":
-            await deduct_credits(current_user["id"], cost)
+    if not uses_own_key and not is_admin and user:
+        await deduct_credits(current_user["id"], cost)
 
     await start_pipeline(
         job_id,
@@ -86,13 +89,15 @@ async def start_analysis(
         check_size_min=request.check_size_min,
         check_size_max=request.check_size_max,
         selected_stages=request.selected_stages,
+        api_key=own_key,
     )
 
-    return JobResponse(
-        job_id=job_id,
-        status="started",
-        message=f"Analysis started for '{request.company}'. {cost} credit(s) deducted." if current_user else f"Analysis started for '{request.company}'.",
+    message = (
+        f"Analysis started for '{request.company}' using your own API key (unlimited)."
+        if uses_own_key
+        else f"Analysis started for '{request.company}'. {cost} credit(s) deducted."
     )
+    return JobResponse(job_id=job_id, status="started", message=message)
 
 
 @router.post("/stop/{job_id}", response_model=JobResponse, summary="Pause a running analysis and preserve progress")
@@ -174,10 +179,14 @@ async def resume_analysis(job_id: str, current_user: Optional[dict] = Depends(ge
     if status not in ("paused", "failed"):
         raise HTTPException(status_code=409, detail=f"Cannot resume job with status '{status}'.")
 
+    # Resume on the job owner's own key when they have one (unlimited mode)
+    user = await get_user_by_id(current_user["id"]) if current_user else None
+    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
+
     # Mark running before launching task (prevents duplicate resume)
     await update_analysis(job_id, {"status": "running", "paused_at": None})
 
-    await resume_pipeline(job_id)
+    await resume_pipeline(job_id, api_key=own_key)
 
     return JobResponse(
         job_id=job_id,
@@ -223,24 +232,28 @@ async def complete_remaining_stages(
     new_cost = credit_cost(new_stages)
     delta_cost = max(0, new_cost - original_cost)
 
-    # Check and deduct credits
-    if delta_cost > 0 and current_user:
-        user = await get_user_by_id(current_user["id"])
-        if user and user["role"] != "admin":
-            if user["credits"] < delta_cost:
-                raise HTTPException(
-                    status_code=402,
-                    detail=f"Insufficient credits. Need {delta_cost} more, have {user['credits']}.",
-                )
-            await deduct_credits(current_user["id"], delta_cost)
+    # Own key = unlimited (billed to the user); admin = unlimited; else credits.
+    user = await get_user_by_id(current_user["id"]) if current_user else None
+    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
+    uses_own_key = bool(own_key)
+    is_admin = bool(user and user["role"] == "admin")
 
-    await complete_remaining_pipeline(job_id, new_stages)
+    if delta_cost > 0 and not uses_own_key and not is_admin and user:
+        if user["credits"] < delta_cost:
+            raise HTTPException(
+                status_code=402,
+                detail=f"Insufficient credits. Need {delta_cost} more, have {user['credits']}.",
+            )
+        await deduct_credits(current_user["id"], delta_cost)
 
-    return JobResponse(
-        job_id=job_id,
-        status="running",
-        message=f"Completing {len(delta_stages)} remaining stage(s). {delta_cost} additional credit(s) deducted.",
+    await complete_remaining_pipeline(job_id, new_stages, api_key=own_key)
+
+    message = (
+        f"Completing {len(delta_stages)} remaining stage(s) using your own API key (unlimited)."
+        if uses_own_key
+        else f"Completing {len(delta_stages)} remaining stage(s). {delta_cost} additional credit(s) deducted."
     )
+    return JobResponse(job_id=job_id, status="running", message=message)
 
 
 @router.get("/status/{job_id}", response_model=StatusResponse, summary="Get analysis pipeline status and stage progress")

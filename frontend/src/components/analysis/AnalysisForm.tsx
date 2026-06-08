@@ -142,6 +142,7 @@ export default function AnalysisForm() {
 
   const user = useAuthStore((s) => s.user);
   const isLoggedIn = useAuthStore((s) => s.token !== null);
+  const unlimited = !!user?.has_api_key || user?.role === 'admin';
 
   // Form state
   const [company, setCompany] = useState('');
@@ -376,11 +377,11 @@ export default function AnalysisForm() {
                   Estimated cost
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {stageCount} stage{stageCount !== 1 ? 's' : ''} will run
+                  {unlimited ? 'billed to your own API key' : `${stageCount} stage${stageCount !== 1 ? 's' : ''} will run`}
                 </Typography>
               </Box>
               <Typography sx={{ fontWeight: 700, color: 'primary.main', fontFamily: 'monospace', fontSize: '1rem' }}>
-                {creditLabel(selectedStages)}
+                {unlimited ? 'Unlimited' : creditLabel(selectedStages)}
               </Typography>
             </Box>
 
@@ -398,7 +399,14 @@ export default function AnalysisForm() {
             </Button>
 
             {/* Credit info row */}
-            {isLoggedIn ? (
+            {isLoggedIn && unlimited ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                <BoltIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {user?.role === 'admin' ? 'Admin · unlimited analysis' : 'Running on your own Claude API key · unlimited'}
+                </Typography>
+              </Box>
+            ) : isLoggedIn ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                 <BoltIcon sx={{ fontSize: 14, color: 'primary.main' }} />
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>

@@ -87,6 +87,8 @@ export interface AuthUser {
   role: 'admin' | 'user';
   credits: number;
   created_at?: string;
+  has_api_key?: boolean;
+  api_key_last4?: string | null;
 }
 
 export interface AuthLoginResponse {
@@ -98,6 +100,13 @@ export interface AuthLoginResponse {
   name?: string;
   role: 'admin' | 'user';
   credits: number;
+  has_api_key?: boolean;
+  api_key_last4?: string | null;
+}
+
+export interface ApiKeyStatus {
+  has_api_key: boolean;
+  api_key_last4: string | null;
 }
 
 export interface AdminStats {

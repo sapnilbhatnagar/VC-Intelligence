@@ -167,6 +167,8 @@ export default function AuthPage() {
         name: res.name,
         role: res.role,
         credits: res.credits,
+        has_api_key: res.has_api_key,
+        api_key_last4: res.api_key_last4,
       };
 
       setAuth(res.access_token, user);
@@ -194,6 +196,8 @@ export default function AuthPage() {
         name: res.name,
         role: res.role,
         credits: res.credits,
+        has_api_key: res.has_api_key,
+        api_key_last4: res.api_key_last4,
       };
       setAuth(res.access_token, user);
       navigate('/', { replace: true });

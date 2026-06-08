@@ -67,8 +67,10 @@ class BaseAgent:
     thinking_budget: int = 10_000   # tokens Claude may use for thinking
     max_output_tokens: int = 8_000
 
-    def __init__(self):
-        self.client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    def __init__(self, api_key: str | None = None):
+        # Use the caller's own Claude key when supplied (unlimited / own-billing
+        # mode), otherwise fall back to the server's key (credit-based runs).
+        self.client = anthropic.AsyncAnthropic(api_key=api_key or settings.anthropic_api_key)
 
     # ── Tool executor ──────────────────────────────────────────────────────────
     async def _execute_tool(self, tool_name: str, tool_input: dict) -> str:

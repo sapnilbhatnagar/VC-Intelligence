@@ -80,6 +80,7 @@ async def start_pipeline(
     check_size_min: float | None = None,
     check_size_max: float | None = None,
     selected_stages: list[int] | None = None,
+    api_key: str | None = None,
 ):
     """
     Create and launch the pipeline as an asyncio.Task.
@@ -112,7 +113,7 @@ async def start_pipeline(
         })
 
         try:
-            await _execute_stages(job_id, state, stages_to_run, start_from=1)
+            await _execute_stages(job_id, state, stages_to_run, start_from=1, api_key=api_key)
         finally:
             unregister_job(job_id)
 
@@ -120,7 +121,7 @@ async def start_pipeline(
     register_job(job_id, task)
 
 
-async def resume_pipeline(job_id: str):
+async def resume_pipeline(job_id: str, api_key: str | None = None):
     """
     Resume a paused or failed pipeline from the last completed stage.
     """
@@ -151,7 +152,7 @@ async def resume_pipeline(job_id: str):
 
     async def _run():
         try:
-            await _execute_stages(job_id, state, stages_to_run, start_from=start_from)
+            await _execute_stages(job_id, state, stages_to_run, start_from=start_from, api_key=api_key)
         finally:
             unregister_job(job_id)
 
@@ -159,7 +160,7 @@ async def resume_pipeline(job_id: str):
     register_job(job_id, task)
 
 
-async def complete_remaining_pipeline(job_id: str, new_stages: list[int]):
+async def complete_remaining_pipeline(job_id: str, new_stages: list[int], api_key: str | None = None):
     """
     Run only the stages that haven't been completed yet.
     Reuses existing outputs from previously completed stages.
@@ -192,7 +193,7 @@ async def complete_remaining_pipeline(job_id: str, new_stages: list[int]):
     async def _run():
         try:
             # Pass only the delta stages so already-completed ones are not re-run
-            await _execute_stages(job_id, state, stages_to_run, start_from=min(stages_to_run))
+            await _execute_stages(job_id, state, stages_to_run, start_from=min(stages_to_run), api_key=api_key)
         finally:
             unregister_job(job_id)
 
@@ -200,10 +201,14 @@ async def complete_remaining_pipeline(job_id: str, new_stages: list[int]):
     register_job(job_id, task)
 
 
-async def _execute_stages(job_id, state, stages_to_run, start_from=1):
+async def _execute_stages(job_id, state, stages_to_run, start_from=1, api_key=None):
     """
     Shared execution loop. Runs selected stages from start_from onward.
     Catches asyncio.CancelledError for immediate mid-stage cancellation.
+
+    api_key: optional per-run Claude key (the user's own key). When None, agents
+    fall back to the server's ANTHROPIC_API_KEY. It is intentionally passed as a
+    parameter (never stored on PipelineState) so it is not serialised into the DB.
     """
     total_selected = len(stages_to_run)
 
@@ -229,7 +234,7 @@ async def _execute_stages(job_id, state, stages_to_run, start_from=1):
         })
 
         try:
-            agent = AgentClass()
+            agent = AgentClass(api_key=api_key)
             state = await agent.run(state)
 
         except asyncio.CancelledError:

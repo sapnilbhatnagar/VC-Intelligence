@@ -29,7 +29,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import { getMyAnalyses, updateProfile } from '../api/client';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
+import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
+import { getMyAnalyses, updateProfile, saveApiKey, deleteApiKey } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { HistoryItem } from '../types';
 import { RECOMMENDATION_COLORS } from '../theme';
@@ -109,6 +111,40 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const updateUserStore = useAuthStore((s) => s.updateUser);
+
+  // Own Claude API key state
+  const [keyInput, setKeyInput] = useState('');
+  const [keySaving, setKeySaving] = useState(false);
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const isAdmin = user?.role === 'admin';
+  const hasOwnKey = !!user?.has_api_key;
+
+  const handleSaveKey = async () => {
+    setKeySaving(true);
+    setKeyError(null);
+    try {
+      const res = await saveApiKey(keyInput.trim());
+      updateUserStore({ has_api_key: res.has_api_key, api_key_last4: res.api_key_last4 });
+      setKeyInput('');
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : 'Could not save the key.');
+    } finally {
+      setKeySaving(false);
+    }
+  };
+
+  const handleRemoveKey = async () => {
+    setKeySaving(true);
+    setKeyError(null);
+    try {
+      const res = await deleteApiKey();
+      updateUserStore({ has_api_key: res.has_api_key, api_key_last4: res.api_key_last4 });
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : 'Could not remove the key.');
+    } finally {
+      setKeySaving(false);
+    }
+  };
 
   // Name edit state
   const [editingName, setEditingName] = useState(false);
@@ -282,19 +318,114 @@ export default function ProfilePage() {
               </Box>
             </Box>
 
-            {/* Buy credits CTA — not shown for admin (unlimited) */}
-            {user?.role !== 'admin' && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<BoltIcon />}
-                onClick={() => navigate('/credits')}
-                aria-label="Buy more credits"
-              >
-                Buy Credits
-              </Button>
-            )}
           </Box>
+        </CardContent>
+      </Card>
+
+      {/* ── Plan & billing (credits or your own API key) ──────── */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ textTransform: 'none', letterSpacing: 0 }}>
+            Plan &amp; billing
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Run on credits, or add your own Claude API key for unlimited analysis billed to your Anthropic account.
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+
+          {isAdmin ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AllInclusiveIcon sx={{ color: 'primary.main' }} />
+              <Typography variant="body2">Admin accounts have unlimited analysis.</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              {/* Credits tile */}
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 2.5,
+                  borderRadius: '18px',
+                  border: hasOwnKey ? '1px solid' : '1.5px solid',
+                  borderColor: hasOwnKey ? 'divider' : 'primary.main',
+                  backgroundColor: hasOwnKey ? 'background.paper' : (t) => alpha(t.palette.primary.main, 0.04),
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <BoltIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                  <Typography sx={{ fontWeight: 700 }}>Credits</Typography>
+                  {!hasOwnKey && (
+                    <Chip label="Active" size="small" color="primary" sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }} />
+                  )}
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
+                  {user?.credits ?? 0}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5 }}>
+                  credits remaining · Full 5 / Quick 1 per run
+                </Typography>
+                <Button variant="outlined" size="small" startIcon={<BoltIcon />} onClick={() => navigate('/credits')}>
+                  Buy credits
+                </Button>
+              </Box>
+
+              {/* Own API key tile */}
+              <Box
+                sx={{
+                  flex: 1,
+                  p: 2.5,
+                  borderRadius: '18px',
+                  border: hasOwnKey ? '1.5px solid' : '1px solid',
+                  borderColor: hasOwnKey ? 'primary.main' : 'divider',
+                  backgroundColor: hasOwnKey ? (t) => alpha(t.palette.primary.main, 0.04) : 'background.paper',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <VpnKeyOutlinedIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                  <Typography sx={{ fontWeight: 700 }}>Your Claude API key</Typography>
+                  {hasOwnKey && (
+                    <Chip label="Active · Unlimited" size="small" color="primary" sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }} />
+                  )}
+                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5 }}>
+                  Unlimited analyses, billed to your Anthropic account. No credits used. Stored encrypted and never shown again.
+                </Typography>
+                {hasOwnKey ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      icon={<CheckIcon sx={{ fontSize: '0.8rem !important' }} />}
+                      label={`Key saved ···· ${user?.api_key_last4 ?? ''}`}
+                      size="small"
+                      sx={{ fontWeight: 600 }}
+                    />
+                    <Button variant="text" size="small" color="error" onClick={handleRemoveKey} disabled={keySaving}>
+                      Remove
+                    </Button>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <TextField
+                      type="password"
+                      size="small"
+                      placeholder="sk-ant-..."
+                      value={keyInput}
+                      onChange={(e) => { setKeyInput(e.target.value); setKeyError(null); }}
+                      sx={{ flex: 1, minWidth: 180 }}
+                      inputProps={{ 'aria-label': 'Claude API key' }}
+                    />
+                    <Button variant="contained" size="small" onClick={handleSaveKey} disabled={keySaving || keyInput.trim().length < 20}>
+                      Save
+                    </Button>
+                  </Box>
+                )}
+                {keyError && (
+                  <Typography variant="caption" sx={{ color: 'error.main', display: 'block', mt: 1 }}>
+                    {keyError}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
