@@ -60,16 +60,18 @@ function ModeCard({ mode, selected, onClick }: ModeCardProps) {
       sx={{
         flex: '1 1 0',
         minWidth: 150,
+        minHeight: 128,
         cursor: 'pointer',
-        p: 1.75,
-        borderRadius: 2.5,
-        border: '1px solid',
+        p: 2,
+        borderRadius: '18px',
+        border: selected ? '1.5px solid' : '1px solid',
         borderColor: selected ? 'primary.main' : 'divider',
-        backgroundColor: selected ? (t) => alpha(t.palette.primary.main, 0.06) : 'background.paper',
-        boxShadow: selected ? '0 1px 3px rgba(250,112,0,0.18)' : 'none',
-        transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease',
+        backgroundColor: selected ? (t) => alpha(t.palette.primary.main, 0.05) : 'background.paper',
+        boxShadow: selected ? '0 8px 22px rgba(14,14,82,0.16)' : '0 1px 2px rgba(19,33,27,0.05)',
+        transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
         '&:hover': {
-          borderColor: selected ? 'primary.main' : (t) => alpha(t.palette.text.primary, 0.25),
+          borderColor: selected ? 'primary.main' : (t) => alpha(t.palette.text.primary, 0.22),
+          transform: 'translateY(-2px)',
         },
         '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
         display: 'flex',
@@ -78,7 +80,18 @@ function ModeCard({ mode, selected, onClick }: ModeCardProps) {
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ color: selected ? 'primary.main' : 'text.secondary', display: 'flex' }}>
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: selected ? (t) => alpha(t.palette.primary.main, 0.12) : (t) => alpha(t.palette.text.primary, 0.05),
+            color: selected ? 'primary.main' : 'text.secondary',
+          }}
+        >
           {MODE_ICONS[mode]}
         </Box>
         <Chip
@@ -102,7 +115,18 @@ function ModeCard({ mode, selected, onClick }: ModeCardProps) {
       >
         {preset.label}
       </Typography>
-      <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.35, fontSize: '0.72rem' }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: 'text.secondary',
+          lineHeight: 1.35,
+          fontSize: '0.72rem',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        } as React.CSSProperties}
+      >
         {preset.description}
       </Typography>
     </Box>
@@ -238,6 +262,22 @@ export default function AnalysisForm() {
                     selected={researchMode === mode}
                     onClick={() => setResearchMode(mode)}
                   />
+                ))}
+              </Box>
+
+              {/* Pipeline tips (moved here from the sidebar) */}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2, rowGap: 0.5, mt: 1.5 }}>
+                {[
+                  'Quick Screen costs 1 credit',
+                  'Stop anytime, progress is saved',
+                  'Custom runs only selected stages',
+                ].map((tip) => (
+                  <Box key={tip} sx={{ display: 'flex', alignItems: 'center', gap: 0.625 }}>
+                    <Box sx={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'primary.main', flexShrink: 0 }} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>
+                      {tip}
+                    </Typography>
+                  </Box>
                 ))}
               </Box>
             </Box>

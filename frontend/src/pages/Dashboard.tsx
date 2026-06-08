@@ -8,8 +8,6 @@ import {
   Skeleton,
   alpha,
   Grid,
-  Card,
-  CardContent,
   Table,
   TableBody,
   TableCell,
@@ -23,82 +21,95 @@ import StorageIcon from '@mui/icons-material/Storage';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import SearchIcon from '@mui/icons-material/Search';
-import CalculateIcon from '@mui/icons-material/Calculate';
-import ShieldIcon from '@mui/icons-material/Shield';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
-import DescriptionIcon from '@mui/icons-material/Description';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AnalysisForm from '../components/analysis/AnalysisForm';
 import { getHistory } from '../api/client';
 import { useAuthStore } from '../store/authStore';
-import { RECOMMENDATION_COLORS, riskColor, TOKENS } from '../theme';
+import { RECOMMENDATION_COLORS, riskColor, TOKENS, MONO } from '../theme';
 import type { HistoryItem } from '../types';
 
-// ============================================================
-// Constants
-// ============================================================
 const PIPELINE_STAGES = [
-  { icon: <SearchIcon sx={{ fontSize: 14 }} />, name: 'Execute Company Research', desc: 'Web research & data extraction' },
-  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Perform Market Analysis', desc: 'TAM/SAM/SOM + trends' },
-  { icon: <CalculateIcon sx={{ fontSize: 14 }} />, name: 'Build Financial Model', desc: 'Revenue projections & metrics' },
-  { icon: <ShieldIcon sx={{ fontSize: 14 }} />, name: 'Conduct Risk Assessment', desc: 'Risk scoring & mitigation' },
-  { icon: <CompareArrowsIcon sx={{ fontSize: 14 }} />, name: 'Research Comparable Deals', desc: 'Peer benchmarking & comps' },
-  { icon: <DescriptionIcon sx={{ fontSize: 14 }} />, name: 'Generate Investor Memo', desc: 'IC-ready investment thesis' },
-  { icon: <StorageIcon sx={{ fontSize: 14 }} />, name: 'Render Investor Report', desc: 'Formatted report document' },
-  { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, name: 'Create Visual Summary', desc: 'Executive one-pager' },
+  'Company research',
+  'Market analysis',
+  'Financial model',
+  'Risk assessment',
+  'Comparable deals',
+  'Investor memo',
+  'Investor report',
+  'Visual summary',
 ];
 
-// ============================================================
-// Greeting helper
-// ============================================================
 function getGreeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return 'Good Morning';
-  if (h < 17) return 'Good Afternoon';
-  return 'Good Evening';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 // ============================================================
-// Hero Stat Card
+// Apple-style stat tile (one can be a featured navy tile)
 // ============================================================
-interface StatCardProps {
+interface StatTileProps {
   icon: React.ReactElement;
   label: string;
   value: React.ReactNode;
-  accentColor: string;
+  color: string;
   loading: boolean;
+  featured?: boolean;
   pulse?: boolean;
 }
 
-function StatCard({ icon, label, value, accentColor, loading, pulse = false }: StatCardProps) {
+function StatTile({ icon, label, value, color, loading, featured = false, pulse = false }: StatTileProps) {
   return (
     <Box
       sx={{
         height: '100%',
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: '20px',
         border: '1px solid',
-        borderColor: 'divider',
-        backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
-        transition: 'border-color 0.2s ease',
-        '&:hover': { borderColor: alpha(accentColor, 0.4) },
+        borderColor: featured ? 'transparent' : 'divider',
+        background: featured
+          ? 'linear-gradient(150deg, #14146A 0%, #0E0E52 60%, #0B0B40 100%)'
+          : (t) => t.palette.background.paper,
+        color: featured ? '#FFFFFF' : 'inherit',
+        boxShadow: featured ? '0 16px 40px rgba(14,14,82,0.30)' : '0 1px 3px rgba(19,33,27,0.05)',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: featured ? '0 22px 52px rgba(14,14,82,0.36)' : '0 10px 26px rgba(19,33,27,0.10)' },
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Box
-        sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}
-      >
-        <Box sx={{ color: accentColor, display: 'flex' }} aria-hidden="true">
+      {featured && (
+        <Box
+          aria-hidden="true"
+          sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(60% 70% at 85% 10%, rgba(28,124,84,0.34) 0%, transparent 70%)', pointerEvents: 'none' }}
+        />
+      )}
+      <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box
+          sx={{
+            width: 30,
+            height: 30,
+            borderRadius: '9px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: featured ? 'rgba(255,255,255,0.14)' : alpha(color, 0.12),
+            color: featured ? '#FFFFFF' : color,
+          }}
+          aria-hidden="true"
+        >
           {icon}
         </Box>
         <Typography
           sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '0.66rem',
-            letterSpacing: '0.12em',
+            fontFamily: MONO,
+            fontSize: '0.64rem',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'text.secondary',
+            color: featured ? 'rgba(255,255,255,0.7)' : 'text.secondary',
           }}
         >
           {label}
@@ -109,29 +120,18 @@ function StatCard({ icon, label, value, accentColor, loading, pulse = false }: S
               width: 7,
               height: 7,
               borderRadius: '50%',
-              backgroundColor: accentColor,
+              backgroundColor: featured ? '#FFFFFF' : color,
               ml: 'auto',
               animation: 'statPulse 1.6s ease-in-out infinite',
-              '@keyframes statPulse': {
-                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-                '50%': { opacity: 0.4, transform: 'scale(0.8)' },
-              },
+              '@keyframes statPulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.4 } },
             }}
           />
         )}
       </Box>
       {loading ? (
-        <Skeleton width={48} height={32} />
+        <Skeleton width={56} height={36} sx={{ bgcolor: featured ? 'rgba(255,255,255,0.18)' : undefined }} />
       ) : (
-        <Typography
-          sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontWeight: 600,
-            color: 'text.primary',
-            fontSize: '1.9rem',
-            lineHeight: 1,
-          }}
-        >
+        <Typography sx={{ position: 'relative', fontFamily: MONO, fontWeight: 650, fontSize: '2rem', lineHeight: 1 }}>
           {value}
         </Typography>
       )}
@@ -140,294 +140,201 @@ function StatCard({ icon, label, value, accentColor, loading, pulse = false }: S
 }
 
 // ============================================================
-// Active Jobs Panel (right column)
+// Futuristic navy pipeline feature card
 // ============================================================
-interface ActiveJobsPanelProps {
-  items: HistoryItem[];
-  loading: boolean;
-}
-
-function ActiveJobsPanel({ items, loading }: ActiveJobsPanelProps) {
-  const navigate = useNavigate();
-  const activeItems = items.filter(
-    (i) => i.status === 'running' || i.status === 'paused' || i.status === 'pending',
-  );
-
+function FeaturePipelineCard() {
   return (
-    <Card
-      variant="outlined"
-      sx={{ borderColor: 'divider', backgroundColor: (t) => alpha(t.palette.background.paper, 0.6), flexShrink: 0 }}
-    >
-      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-          <AutorenewIcon fontSize="small" sx={{ color: 'primary.main' }} />
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Active Jobs
-          </Typography>
-          {activeItems.length > 0 && (
-            <Chip
-              label={activeItems.length}
-              size="small"
-              sx={{
-                ml: 'auto',
-                height: 18,
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                backgroundColor: (t) => alpha(t.palette.primary.main, 0.15),
-                color: 'primary.main',
-              }}
-            />
-          )}
-        </Box>
-
-        {loading ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {[0, 1].map((i) => (
-              <Skeleton key={i} variant="rounded" height={48} sx={{ borderRadius: 1.5 }} />
-            ))}
-          </Box>
-        ) : activeItems.length === 0 ? (
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', py: 2 }}
-          >
-            No active jobs
-          </Typography>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {activeItems.map((item) => (
-              <Box
-                key={item.job_id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  p: 1,
-                  borderRadius: 1.5,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  backgroundColor: (t) => alpha(t.palette.text.primary, 0.02),
-                }}
-              >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontWeight: 600,
-                      color: 'text.primary',
-                      display: 'block',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {item.company_input}
-                  </Typography>
-                  <Chip
-                    label={item.status}
-                    size="small"
-                    color={
-                      item.status === 'running'
-                        ? 'primary'
-                        : item.status === 'paused'
-                        ? 'warning'
-                        : 'default'
-                    }
-                    sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700, mt: 0.25 }}
-                  />
-                </Box>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  endIcon={<OpenInNewIcon sx={{ fontSize: '0.75rem !important' }} />}
-                  onClick={() => navigate(`/job/${item.job_id}`)}
-                  aria-label={`View job for ${item.company_input}`}
-                  sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0, flexShrink: 0 }}
-                >
-                  View
-                </Button>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// ============================================================
-// Platform Capabilities Card (right column)
-// ============================================================
-function PlatformCard() {
-  return (
-    <Card
-      variant="outlined"
+    <Box
       sx={{
-        borderColor: 'divider',
+        position: 'relative',
         overflow: 'hidden',
-        backgroundColor: (t) => alpha(t.palette.background.paper, 0.6),
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        borderRadius: '20px',
+        p: 3,
+        color: '#FFFFFF',
+        background: 'linear-gradient(160deg, #15156E 0%, #0E0E52 55%, #0B0B3E 100%)',
+        boxShadow: '0 18px 48px rgba(14,14,82,0.30)',
       }}
+      role="region"
+      aria-label="8-stage AI pipeline"
     >
-      {/* Header — soft brand-tinted, light */}
-      <Box
-        sx={{
-          p: 2,
-          backgroundColor: (t) => alpha(t.palette.primary.main, 0.06),
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 700, color: 'text.primary', letterSpacing: '0.01em' }}
-        >
-          8-Stage AI Pipeline
+      <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'radial-gradient(55% 50% at 90% 0%, rgba(28,124,84,0.34) 0%, transparent 65%)', pointerEvents: 'none' }} />
+      <Box sx={{ position: 'relative' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          <AutoAwesomeIcon sx={{ fontSize: 16, color: '#7CE0B0' }} />
+          <Typography sx={{ fontFamily: MONO, fontSize: '0.64rem', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.7)' }}>
+            8-STAGE AI PIPELINE
+          </Typography>
+        </Box>
+        <Typography sx={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: '-0.01em', mb: 2 }}>
+          Institutional diligence, automated.
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-          Full institutional-grade due diligence
-        </Typography>
-      </Box>
 
-      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box
-          component="ol"
-          sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}
-          aria-label="8-stage AI analysis pipeline"
-        >
-          {PIPELINE_STAGES.map((stage, idx) => (
-            <Box
-              key={stage.name}
-              component="li"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                p: 0.75,
-                borderRadius: 1,
-                '&:hover': {
-                  backgroundColor: (t) => alpha(t.palette.text.primary, 0.03),
-                },
-              }}
-            >
+        <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          {PIPELINE_STAGES.map((name, i) => (
+            <Box key={name} component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1.25, py: 0.4 }}>
               <Box
                 sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  backgroundColor: (t) => alpha(t.palette.primary.main, 0.12),
+                  width: 22,
+                  height: 22,
+                  borderRadius: '7px',
+                  flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0,
-                  color: 'primary.main',
+                  backgroundColor: 'rgba(255,255,255,0.10)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  fontFamily: MONO,
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
+                  color: '#9FE8C4',
                 }}
-                aria-hidden="true"
               >
-                <Typography sx={{ fontSize: '0.55rem', fontWeight: 700, color: 'inherit' }}>
-                  {idx + 1}
-                </Typography>
+                {String(i + 1).padStart(2, '0')}
               </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 600, color: 'text.primary', display: 'block', lineHeight: 1.2 }}
-                >
-                  {stage.name}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.disabled', fontSize: '0.65rem', lineHeight: 1.2 }}
-                >
-                  {stage.desc}
-                </Typography>
-              </Box>
+              <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.92)' }}>{name}</Typography>
             </Box>
           ))}
         </Box>
 
-      </CardContent>
-    </Card>
+        <Box sx={{ mt: 2, pt: 1.75, borderTop: '1px solid rgba(255,255,255,0.12)', display: 'flex', justifyContent: 'space-between' }}>
+          <Typography sx={{ fontFamily: MONO, fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)' }}>Full 5 cr</Typography>
+          <Typography sx={{ fontFamily: MONO, fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)' }}>Quick 1 cr</Typography>
+          <Typography sx={{ fontFamily: MONO, fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)' }}>Custom 1–4 cr</Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
 // ============================================================
-// Recent Analyses Table (left column)
+// Recommendation mix — stacked distribution bar
 // ============================================================
-interface RecentTableProps {
-  items: HistoryItem[];
-  loading: boolean;
+function RecommendationMix({ items, loading }: { items: HistoryItem[]; loading: boolean }) {
+  const order = ['STRONG BUY', 'BUY', 'HOLD', 'PASS', 'STRONG PASS'] as const;
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const it of items) {
+      if (it.status === 'completed' && it.recommendation) c[it.recommendation] = (c[it.recommendation] ?? 0) + 1;
+    }
+    return c;
+  }, [items]);
+  const total = order.reduce((s, k) => s + (counts[k] ?? 0), 0);
+
+  return (
+    <Box sx={{ p: 2.5, borderRadius: '20px', border: '1px solid', borderColor: 'divider', backgroundColor: 'background.paper' }}>
+      <Typography variant="overline" sx={{ display: 'block', mb: 1.5 }}>
+        Recommendation mix
+      </Typography>
+      {loading ? (
+        <Skeleton variant="rounded" height={14} sx={{ borderRadius: 7 }} />
+      ) : total === 0 ? (
+        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+          No completed verdicts yet.
+        </Typography>
+      ) : (
+        <>
+          <Box sx={{ display: 'flex', height: 14, borderRadius: 7, overflow: 'hidden', gap: '2px' }}>
+            {order.map((k) => {
+              const n = counts[k] ?? 0;
+              if (n === 0) return null;
+              return (
+                <Box
+                  key={k}
+                  sx={{ flex: n, backgroundColor: RECOMMENDATION_COLORS[k].bg }}
+                  aria-label={`${k}: ${n}`}
+                  title={`${k}: ${n}`}
+                />
+              );
+            })}
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
+            {order.filter((k) => (counts[k] ?? 0) > 0).map((k) => (
+              <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 9, height: 9, borderRadius: '3px', backgroundColor: RECOMMENDATION_COLORS[k].bg }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.68rem' }}>
+                  {k} · {counts[k]}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </>
+      )}
+    </Box>
+  );
 }
 
-function RecentAnalysesTable({ items, loading }: RecentTableProps) {
+// ============================================================
+// Active jobs panel
+// ============================================================
+function ActiveJobsPanel({ items, loading }: { items: HistoryItem[]; loading: boolean }) {
+  const navigate = useNavigate();
+  const active = items.filter((i) => i.status === 'running' || i.status === 'paused' || i.status === 'pending');
+
+  return (
+    <Box sx={{ p: 2.5, borderRadius: '20px', border: '1px solid', borderColor: 'divider', backgroundColor: 'background.paper' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <AutorenewIcon fontSize="small" sx={{ color: 'primary.main' }} />
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Active jobs</Typography>
+        {active.length > 0 && (
+          <Chip label={active.length} size="small" sx={{ ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700, backgroundColor: (t) => alpha(t.palette.primary.main, 0.12), color: 'primary.main' }} />
+        )}
+      </Box>
+      {loading ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {[0, 1].map((i) => <Skeleton key={i} variant="rounded" height={44} sx={{ borderRadius: 2.5 }} />)}
+        </Box>
+      ) : active.length === 0 ? (
+        <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', py: 2 }}>
+          No active jobs
+        </Typography>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {active.map((item) => (
+            <Box key={item.job_id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.25, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.company_input}
+                </Typography>
+                <Chip label={item.status} size="small" color={item.status === 'running' ? 'primary' : item.status === 'paused' ? 'warning' : 'default'} sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700, mt: 0.25 }} />
+              </Box>
+              <Button size="small" variant="outlined" endIcon={<OpenInNewIcon sx={{ fontSize: '0.75rem !important' }} />} onClick={() => navigate(`/job/${item.job_id}`)} sx={{ fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0, flexShrink: 0 }}>
+                View
+              </Button>
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ============================================================
+// Recent analyses table
+// ============================================================
+function RecentAnalysesTable({ items, loading }: { items: HistoryItem[]; loading: boolean }) {
   const navigate = useNavigate();
   const recent = useMemo(
-    () =>
-      [...items]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 5),
+    () => [...items].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 6),
     [items],
   );
 
-  const statusColor = (status: string) => {
-    if (status === 'completed') return 'success';
-    if (status === 'failed') return 'error';
-    if (status === 'running') return 'info';
-    if (status === 'paused') return 'warning';
-    return 'default';
-  };
+  const statusColor = (s: string) => (s === 'completed' ? 'success' : s === 'failed' ? 'error' : s === 'running' ? 'info' : s === 'paused' ? 'warning' : 'default');
 
   if (!loading && recent.length === 0) {
     return (
-      <Box
-        sx={{
-          py: 4,
-          textAlign: 'center',
-          border: '1px dashed',
-          borderColor: 'divider',
-          borderRadius: 2,
-          backgroundColor: (t) => alpha(t.palette.text.primary, 0.01),
-        }}
-      >
-        <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-          No analyses yet — start your first below
-        </Typography>
+      <Box sx={{ py: 4, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: '20px', backgroundColor: 'background.paper' }}>
+        <Typography variant="body2" sx={{ color: 'text.disabled' }}>No analyses yet — start your first above.</Typography>
       </Box>
     );
   }
 
   return (
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{
-        borderColor: 'divider',
-        backgroundColor: (t) => alpha(t.palette.background.paper, 0.5),
-        borderRadius: 2,
-      }}
-    >
+    <TableContainer component={Paper} variant="outlined" sx={{ borderColor: 'divider', backgroundColor: 'background.paper', borderRadius: '20px' }}>
       <Table size="small" aria-label="Recent analyses">
         <TableHead>
           <TableRow>
             {['Company', 'Status', 'Recommendation', 'Risk', 'Date', ''].map((col) => (
-              <TableCell
-                key={col}
-                sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  color: 'text.disabled',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  py: 1,
-                  px: 1.5,
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <TableCell key={col} sx={{ fontSize: '0.66rem', fontWeight: 700, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.06em', borderColor: 'divider', py: 1.25, px: 2, whiteSpace: 'nowrap' }}>
                 {col}
               </TableCell>
             ))}
@@ -435,115 +342,46 @@ function RecentAnalysesTable({ items, loading }: RecentTableProps) {
         </TableHead>
         <TableBody>
           {loading
-            ? [0, 1, 2, 3, 4].map((i) => (
+            ? [0, 1, 2, 3].map((i) => (
                 <TableRow key={i}>
-                  {[0, 1, 2, 3, 4, 5].map((j) => (
-                    <TableCell key={j} sx={{ py: 1, px: 1.5 }}>
-                      <Skeleton height={20} />
-                    </TableCell>
-                  ))}
+                  {[0, 1, 2, 3, 4, 5].map((j) => <TableCell key={j} sx={{ py: 1.25, px: 2 }}><Skeleton height={20} /></TableCell>)}
                 </TableRow>
               ))
             : recent.map((item) => {
                 const recoStyle = item.recommendation ? RECOMMENDATION_COLORS[item.recommendation] : null;
                 return (
-                  <TableRow
-                    key={item.job_id}
-                    hover
-                    onClick={() => navigate(`/job/${item.job_id}`)}
-                    sx={{
-                      cursor: 'pointer',
-                      '&:last-child td': { border: 0 },
-                      '&:hover': {
-                        backgroundColor: (t) => alpha(t.palette.primary.main, 0.04),
-                      },
-                    }}
-                    aria-label={`View analysis for ${item.company_input}`}
-                  >
-                    {/* Company */}
-                    <TableCell sx={{ py: 1, px: 1.5, maxWidth: 160 }}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 600,
-                          color: 'text.primary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          display: 'block',
-                        }}
-                      >
+                  <TableRow key={item.job_id} hover onClick={() => navigate(`/job/${item.job_id}`)} sx={{ cursor: 'pointer', '&:last-child td': { border: 0 }, '&:hover': { backgroundColor: (t) => alpha(t.palette.primary.main, 0.04) } }}>
+                    <TableCell sx={{ py: 1.25, px: 2, maxWidth: 180, borderColor: 'divider' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                         {item.company_input}
                       </Typography>
                     </TableCell>
-
-                    {/* Status */}
-                    <TableCell sx={{ py: 1, px: 1.5 }}>
-                      <Chip
-                        label={item.status}
-                        size="small"
-                        color={statusColor(item.status) as 'success' | 'error' | 'primary' | 'warning' | 'default'}
-                        sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }}
-                      />
+                    <TableCell sx={{ py: 1.25, px: 2, borderColor: 'divider' }}>
+                      <Chip label={item.status} size="small" color={statusColor(item.status) as 'success' | 'error' | 'info' | 'warning' | 'default'} sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }} />
                     </TableCell>
-
-                    {/* Recommendation */}
-                    <TableCell sx={{ py: 1, px: 1.5 }}>
+                    <TableCell sx={{ py: 1.25, px: 2, borderColor: 'divider' }}>
                       {recoStyle && item.recommendation ? (
-                        <Chip
-                          label={item.recommendation}
-                          size="small"
-                          sx={{
-                            height: 18,
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            backgroundColor: recoStyle.bg,
-                            color: recoStyle.text,
-                          }}
-                        />
+                        <Chip label={item.recommendation} size="small" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700, backgroundColor: recoStyle.bg, color: recoStyle.text }} />
                       ) : (
-                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                          —
-                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
                       )}
                     </TableCell>
-
-                    {/* Risk */}
-                    <TableCell sx={{ py: 1, px: 1.5 }}>
+                    <TableCell sx={{ py: 1.25, px: 2, borderColor: 'divider' }}>
                       {item.risk_score !== null ? (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            color: riskColor(item.risk_score),
-                          }}
-                        >
+                        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 700, color: riskColor(item.risk_score) }}>
                           {item.risk_score.toFixed(1)}
                         </Typography>
                       ) : (
-                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                          —
-                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.disabled' }}>—</Typography>
                       )}
                     </TableCell>
-
-                    {/* Date */}
-                    <TableCell sx={{ py: 1, px: 1.5, whiteSpace: 'nowrap' }}>
+                    <TableCell sx={{ py: 1.25, px: 2, whiteSpace: 'nowrap', borderColor: 'divider' }}>
                       <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
-                        {new Date(item.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                        {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </Typography>
                     </TableCell>
-
-                    {/* Action */}
-                    <TableCell sx={{ py: 1, px: 1.5 }}>
-                      <ArrowForwardIcon
-                        sx={{ fontSize: 14, color: 'text.disabled' }}
-                        aria-hidden="true"
-                      />
+                    <TableCell sx={{ py: 1.25, px: 2, borderColor: 'divider' }}>
+                      <ArrowForwardIcon sx={{ fontSize: 14, color: 'text.disabled' }} aria-hidden="true" />
                     </TableCell>
                   </TableRow>
                 );
@@ -561,13 +399,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
-  const { data: history = [], isLoading } = useQuery({
-    queryKey: ['history'],
-    queryFn: getHistory,
-    staleTime: 30_000,
-  });
+  const { data: history = [], isLoading } = useQuery({ queryKey: ['history'], queryFn: getHistory, staleTime: 30_000 });
 
-  // Derived stats
   const totalCount = history.length;
   const completedCount = history.filter((i) => i.status === 'completed').length;
   const runningCount = history.filter((i) => i.status === 'running').length;
@@ -576,171 +409,80 @@ export default function Dashboard() {
     const completed = history.filter((i) => i.status === 'completed' && i.recommendation);
     if (completed.length === 0) return 'None yet';
     const freq: Record<string, number> = {};
-    for (const item of completed) {
-      if (item.recommendation) {
-        freq[item.recommendation] = (freq[item.recommendation] ?? 0) + 1;
-      }
-    }
+    for (const item of completed) if (item.recommendation) freq[item.recommendation] = (freq[item.recommendation] ?? 0) + 1;
     return Object.entries(freq).sort(([, a], [, b]) => b - a)[0][0];
   }, [history]);
 
   const greeting = getGreeting();
-  // Prefer name > username > email prefix
   const userName = user?.name?.trim() || user?.username?.trim() || user?.email?.split('@')[0] || null;
 
   return (
-    <Box sx={{ maxWidth: 1300, mx: 'auto' }}>
-      {/* ── Welcome Header ─────────────────────────────────── */}
-      <Box sx={{ mb: 4 }} role="banner" aria-label="Dashboard welcome header">
-        <Typography
-          variant="overline"
-          sx={{ color: 'text.disabled', fontSize: '0.65rem', letterSpacing: '0.12em' }}
-        >
-          Dashboard
-        </Typography>
-        <Typography
-          variant="h1"
-          sx={{ fontSize: { xs: '1.75rem', md: '2.2rem' }, mb: 0.5, lineHeight: 1.15 }}
-        >
+    <Box sx={{ maxWidth: 1320, mx: 'auto' }}>
+      {/* Header */}
+      <Box sx={{ mb: 3.5 }}>
+        <Typography variant="overline" sx={{ color: 'text.disabled', letterSpacing: '0.12em' }}>Dashboard</Typography>
+        <Typography variant="h1" sx={{ fontSize: { xs: '1.75rem', md: '2.1rem' }, mb: 0.5 }}>
           {greeting}
-          {userName && (
-            <>
-              {', '}
-              <Box component="span" sx={{ color: 'primary.main' }}>
-                {userName}
-              </Box>
-            </>
-          )}
+          {userName && (<>, <Box component="span" sx={{ color: 'primary.main' }}>{userName}</Box></>)}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Your AI-powered venture capital due diligence platform
+          Turn a company name into an institutional-grade due-diligence package.
         </Typography>
       </Box>
 
-      {/* ── Hero Stat Cards ─────────────────────────────────── */}
-      <Grid
-        container
-        spacing={2}
-        sx={{ mb: 4 }}
-        role="region"
-        aria-label="Analysis statistics"
-      >
-        {[
-          {
-            icon: <StorageIcon fontSize="small" />,
-            label: 'Total Analyses',
-            value: totalCount,
-            accentColor: TOKENS.brand,
-          },
-          {
-            icon: <CheckCircleOutlineIcon fontSize="small" />,
-            label: 'Completed',
-            value: completedCount,
-            accentColor: TOKENS.success,
-          },
-          {
-            icon: <AutorenewIcon fontSize="small" />,
-            label: 'Running Now',
-            value: runningCount,
-            accentColor: TOKENS.warning,
-            pulse: runningCount > 0,
-          },
-          {
-            icon: <TrendingUpIcon fontSize="small" />,
-            label: 'Top Pick',
-            value:
-              topPick === 'None yet' ? (
-                <Typography component="span" sx={{ fontSize: '0.9rem', color: 'text.disabled', fontWeight: 500 }}>
-                  None yet
-                </Typography>
-              ) : (
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    color: RECOMMENDATION_COLORS[topPick]?.bg ?? TOKENS.textPrimary,
-                  }}
-                >
-                  {topPick}
-                </Typography>
-              ),
-            accentColor: TOKENS.info,
-          },
-        ].map((card) => (
-          <Grid key={card.label} item xs={6} lg={3}>
-            <StatCard
-              icon={card.icon}
-              label={card.label}
-              value={card.value}
-              accentColor={card.accentColor}
-              loading={isLoading}
-              pulse={card.pulse}
-            />
-          </Grid>
-        ))}
+      {/* Stat tiles */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={6} lg={3}>
+          <StatTile icon={<StorageIcon fontSize="small" />} label="Total analyses" value={totalCount} color={TOKENS.info} loading={isLoading} />
+        </Grid>
+        <Grid item xs={6} lg={3}>
+          <StatTile icon={<CheckCircleOutlineIcon fontSize="small" />} label="Completed" value={completedCount} color={TOKENS.success} loading={isLoading} />
+        </Grid>
+        <Grid item xs={6} lg={3}>
+          <StatTile icon={<AutorenewIcon fontSize="small" />} label="Running now" value={runningCount} color={TOKENS.warning} loading={isLoading} pulse={runningCount > 0} />
+        </Grid>
+        <Grid item xs={6} lg={3}>
+          <StatTile
+            icon={<TrendingUpIcon fontSize="small" />}
+            label="Top pick"
+            featured
+            color={TOKENS.brand}
+            loading={isLoading}
+            value={
+              topPick === 'None yet'
+                ? <Typography component="span" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', fontWeight: 500, fontFamily: MONO }}>None yet</Typography>
+                : <Typography component="span" sx={{ fontSize: '1.15rem', fontWeight: 700, fontFamily: MONO, color: '#9FE8C4' }}>{topPick}</Typography>
+            }
+          />
+        </Grid>
       </Grid>
 
-      {/* ── Two-Column Grid ─────────────────────────────────── */}
-      <Grid container spacing={3} alignItems="stretch">
-        {/* Left column: Form + Table */}
-        <Grid item xs={12} lg={8} sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography
-            variant="overline"
-            sx={{ color: 'text.disabled', fontSize: '0.65rem', letterSpacing: '0.12em', display: 'block', mb: 1.5 }}
-          >
-            New Analysis
-          </Typography>
-
-          {/* Analysis form — fills full column width */}
+      {/* Main grid */}
+      <Grid container spacing={2.5}>
+        <Grid item xs={12} lg={7}>
           <AnalysisForm />
-
-          {/* Recent Analyses */}
-          <Box sx={{ mt: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                mb: 1.5,
-              }}
-            >
-              <Typography variant="overline" sx={{ color: 'text.disabled', fontSize: '0.65rem', letterSpacing: '0.12em' }}>
-                Recent Analyses
-              </Typography>
-              {history.length > 5 && (
-                <Button
-                  size="small"
-                  endIcon={<ArrowForwardIcon fontSize="small" />}
-                  onClick={() => navigate('/history')}
-                  sx={{ fontSize: '0.75rem', fontWeight: 600 }}
-                >
-                  View All
-                </Button>
-              )}
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <RecentAnalysesTable items={history} loading={isLoading} />
-            </Box>
-          </Box>
         </Grid>
-
-        {/* Right column: Active Jobs + Platform card — stretches to match left */}
-        <Grid item xs={12} lg={4} sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography
-            variant="overline"
-            sx={{ color: 'text.disabled', fontSize: '0.65rem', letterSpacing: '0.12em', display: 'block', mb: 1.5 }}
-          >
-            Activity
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, flex: 1 }}>
+        <Grid item xs={12} lg={5}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <FeaturePipelineCard />
+            <RecommendationMix items={history} loading={isLoading} />
             <ActiveJobsPanel items={history} loading={isLoading} />
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <PlatformCard />
-            </Box>
           </Box>
         </Grid>
       </Grid>
+
+      {/* Recent analyses */}
+      <Box sx={{ mt: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+          <Typography variant="overline" sx={{ color: 'text.disabled', letterSpacing: '0.12em' }}>Recent analyses</Typography>
+          {history.length > 6 && (
+            <Button size="small" endIcon={<ArrowForwardIcon fontSize="small" />} onClick={() => navigate('/history')} sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+              View all
+            </Button>
+          )}
+        </Box>
+        <RecentAnalysesTable items={history} loading={isLoading} />
+      </Box>
     </Box>
   );
 }

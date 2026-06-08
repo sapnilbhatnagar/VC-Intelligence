@@ -120,10 +120,10 @@ function StageCard({ number, name, status, reducedMotion }: StageCardProps) {
         animation:
           isActive && !reducedMotion ? 'stageGlow 2.2s ease-in-out infinite' : 'none',
         '@keyframes stageGlow': {
-          '0%, 100%': { boxShadow: '0 0 0 1px rgba(250,112,0,0.18)' },
-          '50%': { boxShadow: '0 0 0 3px rgba(250,112,0,0.16), 0 4px 14px rgba(250,112,0,0.20)' },
+          '0%, 100%': { boxShadow: '0 0 0 1px rgba(14,14,82,0.18)' },
+          '50%': { boxShadow: '0 0 0 3px rgba(14,14,82,0.16), 0 4px 14px rgba(14,14,82,0.20)' },
         },
-        ...(isActive && reducedMotion ? { boxShadow: '0 0 0 2px rgba(250,112,0,0.25)' } : {}),
+        ...(isActive && reducedMotion ? { boxShadow: '0 0 0 2px rgba(14,14,82,0.25)' } : {}),
       }}
     >
       {/* Stage number badge — gradient for completed */}
@@ -156,8 +156,8 @@ function StageCard({ number, name, status, reducedMotion }: StageCardProps) {
           sx={{
             fontSize: '0.6rem',
             fontWeight: 700,
-            // Ink on the lighter orange/amber fills, white on green/red.
-            color: isSkipped ? 'text.disabled' : isActive || isPaused ? '#1C1A17' : '#fff',
+            // Ink on the amber paused fill; white on navy/green/red.
+            color: isSkipped ? 'text.disabled' : isPaused ? '#1C1A17' : '#fff',
             lineHeight: 1,
           }}
         >

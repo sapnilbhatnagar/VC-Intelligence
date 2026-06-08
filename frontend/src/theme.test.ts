@@ -37,11 +37,11 @@ describe('design system: single light theme', () => {
     expect(createAppTheme().palette.mode).toBe('light');
   });
 
-  it('uses the #FA7000 brand orange as the primary accent', () => {
-    expect(theme.palette.primary.main.toUpperCase()).toBe('#FA7000');
+  it('uses the #0E0E52 navy as the primary accent', () => {
+    expect(theme.palette.primary.main.toUpperCase()).toBe('#0E0E52');
   });
 
-  it('renders on a warm light canvas, not a dark background', () => {
+  it('renders on a light mint canvas, not a dark background', () => {
     // Light backgrounds have high luminance; the old dark theme was ~0.01.
     expect(relativeLuminance(theme.palette.background.default)).toBeGreaterThan(0.8);
     expect(theme.palette.background.paper.toUpperCase()).toBe('#FFFFFF');

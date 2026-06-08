@@ -22,14 +22,15 @@ import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 // for logged-out visitors. All CTAs route to /auth.
 // ============================================================
 
-const ORANGE = '#FA7000';
-const ORANGE_HOVER = '#FF8A2E';
-const INK = '#1C1A17';
-const MUTED = '#6B645B';
-const CANVAS = '#F7F6F2';
+const ORANGE = '#0E0E52'; // navy (kept the local name to minimize churn)
+const ORANGE_HOVER = '#1B1B73';
+const INK = '#13211B';
+const MUTED = '#566B60';
+const CANVAS = '#E8F7EE';
 const SURFACE = '#FFFFFF';
-const BORDER = '#EBE7DF';
-const BORDER_STRONG = '#DBD5C9';
+const BORDER = '#D2E9DB';
+const BORDER_STRONG = '#BBDCC8';
+const ON_BRAND = '#FFFFFF'; // text/icons that sit on a navy fill
 const MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, monospace";
 
 const STAGES: Array<[React.ReactNode, string, string]> = [
@@ -102,7 +103,7 @@ function Specimen() {
             fontWeight: 700,
             letterSpacing: '0.04em',
             color: '#FFFFFF',
-            backgroundColor: '#1F6B4A',
+            backgroundColor: '#13603F',
             px: 1.25,
             py: 0.5,
             borderRadius: '7px',
@@ -115,7 +116,7 @@ function Specimen() {
 
       <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1.5 }}>
         <Typography sx={{ fontFamily: MONO, fontSize: '0.66rem', letterSpacing: '0.1em', color: '#9A9388' }}>RISK</Typography>
-        <Typography sx={{ fontFamily: MONO, fontSize: '1.05rem', fontWeight: 700, color: '#2E7D5B' }}>3.2</Typography>
+        <Typography sx={{ fontFamily: MONO, fontSize: '1.05rem', fontWeight: 700, color: '#1C7C54' }}>3.2</Typography>
         <Typography sx={{ fontFamily: MONO, fontSize: '0.8rem', color: '#9A9388' }}>/ 10</Typography>
       </Box>
 
@@ -158,12 +159,12 @@ export default function LandingPage() {
 
   const primaryBtn = {
     backgroundColor: ORANGE,
-    color: INK,
+    color: ON_BRAND,
     fontWeight: 600,
     textTransform: 'none' as const,
     borderRadius: '10px',
     boxShadow: 'none',
-    '&:hover': { backgroundColor: ORANGE_HOVER, boxShadow: '0 6px 18px rgba(250,112,0,0.28)' },
+    '&:hover': { backgroundColor: ORANGE_HOVER, boxShadow: '0 6px 18px rgba(14,14,82,0.28)' },
   };
 
   return (
@@ -176,7 +177,7 @@ export default function LandingPage() {
           top: 0,
           zIndex: 10,
           backdropFilter: 'blur(12px)',
-          backgroundColor: 'rgba(247,246,242,0.82)',
+          backgroundColor: 'rgba(232,247,238,0.82)',
           borderBottom: `1px solid ${BORDER}`,
         }}
       >
@@ -201,7 +202,7 @@ export default function LandingPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: ORANGE,
-                color: INK,
+                color: ON_BRAND,
                 fontFamily: MONO,
                 fontWeight: 700,
                 fontSize: '0.78rem',
@@ -299,7 +300,7 @@ export default function LandingPage() {
               backgroundColor: SURFACE,
               mb: 2,
               transition: 'border-color 160ms ease, box-shadow 160ms ease',
-              '&:focus-within': { borderColor: ORANGE, boxShadow: '0 0 0 3px rgba(250,112,0,0.12)' },
+              '&:focus-within': { borderColor: ORANGE, boxShadow: '0 0 0 3px rgba(14,14,82,0.12)' },
             }}
           >
             <Box
@@ -340,7 +341,7 @@ export default function LandingPage() {
             sx={{
               position: 'absolute',
               inset: '-14% -10% -6% 8%',
-              background: 'radial-gradient(55% 55% at 70% 28%, rgba(250,112,0,0.14) 0%, transparent 72%)',
+              background: 'radial-gradient(55% 55% at 70% 28%, rgba(14,14,82,0.14) 0%, transparent 72%)',
               pointerEvents: 'none',
             }}
           />
@@ -389,7 +390,7 @@ export default function LandingPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: 'rgba(250,112,0,0.10)',
+                      backgroundColor: 'rgba(14,14,82,0.10)',
                       color: ORANGE,
                     }}
                     aria-hidden="true"
@@ -450,7 +451,7 @@ export default function LandingPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: ORANGE,
-                    color: INK,
+                    color: ON_BRAND,
                   }}
                   aria-hidden="true"
                 >

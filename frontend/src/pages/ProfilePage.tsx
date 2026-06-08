@@ -266,9 +266,9 @@ export default function ProfilePage() {
                   <BoltIcon sx={{ fontSize: '0.875rem', color: 'primary.main' }} />
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                      {user?.credits ?? 0}
+                      {user?.role === 'admin' ? 'Unlimited' : (user?.credits ?? 0)}
                     </Box>
-                    {' credits'}
+                    {user?.role === 'admin' ? ' credits (admin)' : ' credits'}
                   </Typography>
                 </Box>
                 {joinDate && (
@@ -282,16 +282,18 @@ export default function ProfilePage() {
               </Box>
             </Box>
 
-            {/* Buy credits CTA */}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<BoltIcon />}
-              onClick={() => navigate('/credits')}
-              aria-label="Buy more credits"
-            >
-              Buy Credits
-            </Button>
+            {/* Buy credits CTA — not shown for admin (unlimited) */}
+            {user?.role !== 'admin' && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<BoltIcon />}
+                onClick={() => navigate('/credits')}
+                aria-label="Buy more credits"
+              >
+                Buy Credits
+              </Button>
+            )}
           </Box>
         </CardContent>
       </Card>

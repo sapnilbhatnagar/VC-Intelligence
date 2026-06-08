@@ -13,7 +13,6 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
-  Divider,
   Button,
   Chip,
   useMediaQuery,
@@ -143,7 +142,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                boxShadow: '0 1px 3px rgba(250,112,0,0.35)',
+                boxShadow: '0 1px 3px rgba(14,14,82,0.35)',
               }}
               aria-hidden="true"
             >
@@ -269,30 +268,32 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {/* ── Auth section ───────────────────────────────── */}
           {isLoggedIn ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              {/* Credit balance chip */}
-              <Tooltip title="Buy more credits" arrow>
-                <Chip
-                  icon={<BoltIcon sx={{ fontSize: '0.875rem !important' }} />}
-                  label={`${user?.credits ?? 0} credits`}
-                  size="small"
-                  onClick={() => navigate('/credits')}
-                  sx={{
-                    height: 26,
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    color: 'primary.main',
-                    backgroundColor: (t) => alpha(t.palette.primary.main, 0.12),
-                    border: '1px solid',
-                    borderColor: (t) => alpha(t.palette.primary.main, 0.25),
-                    '& .MuiChip-icon': { color: 'primary.main' },
-                    '&:hover': {
-                      backgroundColor: (t) => alpha(t.palette.primary.main, 0.2),
-                    },
-                  }}
-                  aria-label={`Credit balance: ${user?.credits ?? 0} credits`}
-                />
-              </Tooltip>
+              {/* Credit balance chip — hidden for admin (unlimited) */}
+              {!isAdmin && (
+                <Tooltip title="Manage credits & API key" arrow>
+                  <Chip
+                    icon={<BoltIcon sx={{ fontSize: '0.875rem !important' }} />}
+                    label={`${user?.credits ?? 0} credits`}
+                    size="small"
+                    onClick={() => navigate('/profile')}
+                    sx={{
+                      height: 26,
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      color: 'primary.main',
+                      backgroundColor: (t) => alpha(t.palette.primary.main, 0.12),
+                      border: '1px solid',
+                      borderColor: (t) => alpha(t.palette.primary.main, 0.25),
+                      '& .MuiChip-icon': { color: 'primary.main' },
+                      '&:hover': {
+                        backgroundColor: (t) => alpha(t.palette.primary.main, 0.2),
+                      },
+                    }}
+                    aria-label={`Credit balance: ${user?.credits ?? 0} credits`}
+                  />
+                </Tooltip>
+              )}
 
               {/* User email + optional admin badge */}
               <Tooltip title="View profile" arrow>
@@ -449,50 +450,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
               );
             })}
 
-            {/* Authenticated-only nav items */}
+            {/* Authenticated-only: Profile (credits + API key live inside it) */}
             {isLoggedIn && (
-              <>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    selected={location.pathname === '/profile'}
-                    onClick={() => handleNavClick('/profile')}
-                    aria-current={location.pathname === '/profile' ? 'page' : undefined}
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={location.pathname === '/profile'}
+                  onClick={() => handleNavClick('/profile')}
+                  aria-current={location.pathname === '/profile' ? 'page' : undefined}
+                >
+                  <ListItemIcon
+                    sx={{ color: location.pathname === '/profile' ? 'primary.main' : 'text.secondary' }}
                   >
-                    <ListItemIcon
-                      sx={{ color: location.pathname === '/profile' ? 'primary.main' : 'text.secondary' }}
-                    >
-                      <PersonIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="My Profile"
-                      primaryTypographyProps={{
-                        fontSize: '0.875rem',
-                        fontWeight: location.pathname === '/profile' ? 600 : 400,
-                      }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-                <ListItem disablePadding>
-                  <ListItemButton
-                    selected={location.pathname === '/credits'}
-                    onClick={() => handleNavClick('/credits')}
-                    aria-current={location.pathname === '/credits' ? 'page' : undefined}
-                  >
-                    <ListItemIcon
-                      sx={{ color: location.pathname === '/credits' ? 'primary.main' : 'text.secondary' }}
-                    >
-                      <BoltIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Buy Credits"
-                      primaryTypographyProps={{
-                        fontSize: '0.875rem',
-                        fontWeight: location.pathname === '/credits' ? 600 : 400,
-                      }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Profile"
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: location.pathname === '/profile' ? 600 : 400,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             )}
 
             {/* Admin-only nav item */}
@@ -519,45 +498,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </ListItem>
             )}
           </List>
-
-          <Divider sx={{ my: 2 }} />
-
-          {/* Platform info footer */}
-          <Box sx={{ mt: 'auto', px: 2, pb: 2 }}>
-            <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block' }}>
-              8-Stage AI Pipeline
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.disabled',
-                display: 'block',
-                mt: 0.5,
-                fontSize: '0.65rem',
-              }}
-            >
-              Full analysis: 5 credits · Quick: 1 credit
-            </Typography>
-            <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.625 }}>
-              {[
-                'Quick Screen costs 1 credit',
-                'Stop anytime — progress is saved',
-                'Custom mode runs only selected stages',
-              ].map((tip) => (
-                <Box key={tip} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.625 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: 'primary.main', fontSize: '0.68rem', fontWeight: 700, flexShrink: 0, lineHeight: 1.5 }}
-                  >
-                    →
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.68rem', lineHeight: 1.45 }}>
-                    {tip}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </Box>
         </Box>
       </Drawer>
 

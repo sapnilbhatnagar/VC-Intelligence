@@ -31,11 +31,11 @@ import { useAuthStore } from '../store/authStore';
 import type { AuthUser } from '../types';
 
 // ── Tokens for the left brand panel — light, warm, orange accent (matches /) ──
-const PANEL_BG = '#F1EFE9';
-const PANEL_LINE = '#E3DED4';
-const TXT = '#1C1A17';
-const TXT_DIM = '#6B645B';
-const ACCENT = '#FA7000';
+const PANEL_BG = '#DDF0E5';
+const PANEL_LINE = '#CBE6D5';
+const TXT = '#13211B';
+const TXT_DIM = '#566B60';
+const ACCENT = '#0E0E52';
 const AUTH_MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, monospace";
 const AUTH_POINTS: [string, string][] = [
   ['01', 'Company research, market sizing, and a five-year financial model'],
@@ -231,7 +231,7 @@ export default function AuthPage() {
           sx={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(50% 40% at 82% 6%, rgba(250,112,0,0.12) 0%, transparent 70%)',
+            background: 'radial-gradient(50% 40% at 82% 6%, rgba(14,14,82,0.12) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -247,7 +247,7 @@ export default function AuthPage() {
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: ACCENT,
-              color: TXT,
+              color: '#FFFFFF',
               fontFamily: AUTH_MONO,
               fontWeight: 700,
               fontSize: '0.82rem',
