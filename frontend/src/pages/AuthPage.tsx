@@ -35,7 +35,6 @@ const PANEL_BG = '#F1EFE9';
 const PANEL_LINE = '#E3DED4';
 const TXT = '#1C1A17';
 const TXT_DIM = '#6B645B';
-const TXT_FAINT = '#9A9388';
 const ACCENT = '#FA7000';
 const AUTH_MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, monospace";
 const AUTH_POINTS: [string, string][] = [
@@ -283,37 +282,6 @@ export default function AuthPage() {
               </Box>
             ))}
           </Box>
-        </Box>
-
-        {/* specimen signal line */}
-        <Box
-          sx={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            pt: 2.5,
-            borderTop: `1px solid ${PANEL_LINE}`,
-          }}
-        >
-          <Box
-            sx={{
-              fontFamily: AUTH_MONO,
-              fontSize: '0.66rem',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              color: '#FFFFFF',
-              backgroundColor: '#1F6B4A',
-              px: 1,
-              py: 0.4,
-              borderRadius: '6px',
-            }}
-          >
-            STRONG BUY
-          </Box>
-          <Typography sx={{ fontFamily: AUTH_MONO, fontSize: '0.72rem', color: TXT_FAINT }}>
-            Sample memo · risk 3.2 / 10 · 8 / 8 stages
-          </Typography>
         </Box>
       </Box>
 
