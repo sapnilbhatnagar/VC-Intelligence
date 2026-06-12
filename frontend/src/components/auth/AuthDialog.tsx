@@ -14,7 +14,6 @@ import {
   IconButton,
   CircularProgress,
   alpha,
-  Divider,
   Collapse,
   Chip,
   useMediaQuery,
@@ -24,11 +23,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
+import KeyIcon from '@mui/icons-material/Key';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import { GoogleLogin } from '@react-oauth/google';
-import { loginApi, register, googleAuth } from '../../api/client';
+import { loginApi, register } from '../../api/client';
+import { MONO } from '../../theme';
 import { useAuthStore } from '../../store/authStore';
 import BrandMark from '../brand/BrandMark';
 import type { AuthUser } from '../../types';
@@ -69,6 +69,7 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
   const [regEmail, setRegEmail] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regName, setRegName] = useState('');
+  const [regApiKey, setRegApiKey] = useState('');
 
   // Shared
   const [password, setPassword] = useState('');
@@ -159,28 +160,17 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
       // bcrypt enforces a 72-byte limit; normalize here for consistency
       const pwd = password.slice(0, 72);
       const res = isRegister
-        ? await register(regEmail, pwd, regUsername.trim() || undefined, regName.trim() || undefined)
+        ? await register(
+            regEmail,
+            pwd,
+            regUsername.trim() || undefined,
+            regName.trim() || undefined,
+            regApiKey.trim() || undefined,
+          )
         : await loginApi(identifier.trim(), pwd);
       finishAuth(res);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
-    if (!credentialResponse.credential) {
-      setError('Google sign-in failed: no credential received.');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await googleAuth(credentialResponse.credential);
-      finishAuth(res);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -356,6 +346,24 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
                   }}
                   inputProps={{ 'aria-label': 'Username (optional)' }}
                 />
+                <TextField
+                  label="Claude API key (optional)"
+                  type="text"
+                  value={regApiKey}
+                  onChange={(e) => setRegApiKey(e.target.value)}
+                  fullWidth
+                  placeholder="sk-ant-..."
+                  autoComplete="off"
+                  helperText="Your key makes every analysis unlimited, self-billed, and is stored encrypted. Skip this and add it later from the side navigation."
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <KeyIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  inputProps={{ 'aria-label': 'Claude API key (optional)', style: { fontFamily: MONO, fontSize: '0.85rem' } }}
+                />
               </>
             )}
 
@@ -434,31 +442,6 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
             )}
           </Box>
         </Box>
-
-        {/* Google sign-in (not in admin mode) */}
-        {!adminMode && (
-          <>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 2.5 }}>
-              <Divider sx={{ flex: 1 }} />
-              <Typography variant="caption" sx={{ color: 'text.disabled', flexShrink: 0, fontSize: '0.7rem', letterSpacing: '0.08em' }}>
-                OR
-              </Typography>
-              <Divider sx={{ flex: 1 }} />
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center', '& > div': { width: '100%' }, '& iframe': { width: '100% !important' } }}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign-in failed. Please try another method.')}
-                width="100%"
-                text={isRegister ? 'signup_with' : 'signin_with'}
-                shape="rectangular"
-                theme="outline"
-                useOneTap={false}
-                context={isRegister ? 'signup' : 'signin'}
-              />
-            </Box>
-          </>
-        )}
 
         {/* Admin access toggle */}
         {!adminMode && !isRegister && (

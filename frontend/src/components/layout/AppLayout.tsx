@@ -25,6 +25,7 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import HistoryIcon from '@mui/icons-material/History';
 import TuneIcon from '@mui/icons-material/Tune';
 import BoltIcon from '@mui/icons-material/Bolt';
+import KeyIcon from '@mui/icons-material/Key';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -211,6 +212,66 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Typography>
             </Box>
           </Box>
+        )}
+
+        {/* Own API key: prompt to add one, or the stored-key state.
+            A stored key makes every run unlimited and self-billed. */}
+        {isLoggedIn && !isAdmin && (
+          user?.has_api_key ? (
+            <Box
+              onClick={() => handleNavClick('/profile')}
+              role="button"
+              aria-label={`Own API key ending ${user.api_key_last4 ?? ''} active. Manage in profile.`}
+              sx={{
+                p: 1.5,
+                borderRadius: '12px',
+                border: '1px solid',
+                borderColor: alpha(TOKENS.success, 0.3),
+                backgroundColor: alpha(TOKENS.success, 0.05),
+                cursor: 'pointer',
+                transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                '&:hover': { borderColor: alpha(TOKENS.success, 0.5), boxShadow: '0 4px 14px rgba(22,27,34,0.08)' },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                <KeyIcon sx={{ fontSize: 13, color: 'success.main' }} />
+                <Typography sx={{ fontFamily: MONO, fontSize: '0.6rem', letterSpacing: '0.1em', color: 'text.secondary' }}>
+                  OWN API KEY
+                </Typography>
+                <Typography sx={{ fontFamily: MONO, fontSize: '0.66rem', color: 'text.primary', ml: 'auto' }}>
+                  &middot;&middot;&middot;&middot;{user.api_key_last4}
+                </Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 650, fontSize: '0.7rem' }}>
+                Unlimited runs, billed to you
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              onClick={() => handleNavClick('/profile')}
+              role="button"
+              aria-label="Add your Claude API key to run unlimited analyses"
+              sx={{
+                p: 1.5,
+                borderRadius: '12px',
+                border: '1px dashed',
+                borderColor: TOKENS.borderStrong,
+                cursor: 'pointer',
+                transition: 'border-color 0.18s ease, background-color 0.18s ease',
+                '&:hover': { borderColor: 'primary.main', backgroundColor: TOKENS.brandSoft },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                <KeyIcon sx={{ fontSize: 13, color: 'primary.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 650, color: 'primary.main', fontSize: '0.74rem' }}>
+                  Add your API key
+                </Typography>
+              </Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.66rem', lineHeight: 1.4, display: 'block' }}>
+                Run unlimited analyses on your own Claude key, no credits needed.
+              </Typography>
+            </Box>
+          )
         )}
 
         {/* Connection state */}

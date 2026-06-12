@@ -25,22 +25,37 @@ def _api_key_meta(user: dict) -> tuple[bool, str | None]:
     return (bool(dec), dec[-4:] if dec else None)
 
 
+def _validate_api_key_format(key: str) -> None:
+    if not key.startswith("sk-ant-"):
+        raise HTTPException(
+            status_code=400,
+            detail="That does not look like a Claude API key (it should start with 'sk-ant-').",
+        )
+
+
 @router.post("/register", response_model=TokenResponse)
 async def register(req: UserRegisterRequest):
     if await get_user_by_email(req.email):
         raise HTTPException(status_code=409, detail="Email already registered.")
     if req.username and await get_user_by_username(req.username):
         raise HTTPException(status_code=409, detail="Username already taken.")
+    # Validate the optional onboarding API key before creating anything.
+    api_key = (req.api_key or "").strip()
+    if api_key:
+        _validate_api_key_format(api_key)
     user_id = str(uuid.uuid4())
     await create_user(
         user_id, req.email, hash_password(req.password),
         role="user", credits=5, username=req.username, name=req.name,
     )
+    if api_key:
+        await update_user(user_id, {"anthropic_api_key_enc": encrypt_secret(api_key)})
     await log_credit_transaction(user_id, 5, "signup_bonus", "Welcome credits on registration")
     return TokenResponse(
         access_token=create_access_token(user_id, req.email, "user"),
         user_id=user_id, email=req.email, username=req.username,
         name=req.name, role="user", credits=5,
+        has_api_key=bool(api_key), api_key_last4=api_key[-4:] if api_key else None,
     )
 
 
@@ -92,11 +107,7 @@ async def my_analyses(current_user: dict = Depends(require_auth)):
 async def set_api_key(req: SetApiKeyRequest, current_user: dict = Depends(require_auth)):
     """Store the user's own Claude API key (encrypted) for unlimited, self-billed runs."""
     key = req.api_key.strip()
-    if not key.startswith("sk-ant-"):
-        raise HTTPException(
-            status_code=400,
-            detail="That does not look like a Claude API key (it should start with 'sk-ant-').",
-        )
+    _validate_api_key_format(key)
     await update_user(current_user["id"], {"anthropic_api_key_enc": encrypt_secret(key)})
     return {"has_api_key": True, "api_key_last4": key[-4:]}
 

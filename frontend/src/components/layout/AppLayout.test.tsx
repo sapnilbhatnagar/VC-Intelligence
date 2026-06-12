@@ -50,6 +50,29 @@ describe('AppLayout (left-rail shell)', () => {
     expect(screen.getAllByText(/credits/i).length).toBeGreaterThan(0);
   });
 
+  it('prompts a user without an API key to add one from the rail', () => {
+    renderShell();
+    expect(screen.getByText(/add your api key/i)).toBeInTheDocument();
+  });
+
+  it('shows the stored key state instead of the prompt once a key exists', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'u1',
+        email: 'jane@fund.com',
+        name: 'Jane',
+        role: 'user',
+        credits: 12,
+        has_api_key: true,
+        api_key_last4: '1234',
+      },
+    });
+    renderShell();
+    expect(screen.queryByText(/add your api key/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/1234/)).toBeInTheDocument();
+    expect(screen.getByText(/unlimited runs/i)).toBeInTheDocument();
+  });
+
   it('offers the admin section only to admins', () => {
     renderShell();
     expect(screen.queryByText('Admin')).not.toBeInTheDocument();

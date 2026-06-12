@@ -14,11 +14,6 @@ vi.mock('../api/client', () => ({
   googleAuth: vi.fn(),
 }));
 
-// GoogleLogin renders an iframe against real Google endpoints; stub it.
-vi.mock('@react-oauth/google', () => ({
-  GoogleLogin: () => null,
-}));
-
 function renderLanding(initialEntries: string[] = ['/']) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>

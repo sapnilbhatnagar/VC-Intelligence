@@ -135,12 +135,14 @@ export async function completeRemaining(
 // Auth API Functions
 // ============================================================
 
-/** Register a new account — returns tokens + user info */
+/** Register a new account — returns tokens + user info.
+ *  An optional Claude API key enables unlimited, self-billed runs from day one. */
 export async function register(
   email: string,
   password: string,
   username?: string,
   name?: string,
+  apiKey?: string,
 ): Promise<AuthLoginResponse> {
   const { data } = await apiClient.post<AuthLoginResponse>(
     '/auth/register',
@@ -149,6 +151,7 @@ export async function register(
       password,
       ...(username ? { username } : {}),
       ...(name ? { name } : {}),
+      ...(apiKey ? { api_key: apiKey } : {}),
     },
     { timeout: AUTH_TIMEOUT },
   );

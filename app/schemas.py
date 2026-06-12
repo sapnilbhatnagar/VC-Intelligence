@@ -64,6 +64,7 @@ class UserRegisterRequest(BaseModel):
     password: str = Field(..., min_length=6)
     username: Optional[str] = None  # Optional display username
     name: Optional[str] = None      # Optional full name
+    api_key: Optional[str] = None   # Optional Claude API key for self-billed runs
 
 class UserLoginRequest(BaseModel):
     identifier: str  # Can be email OR username
