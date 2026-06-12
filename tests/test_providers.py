@@ -55,11 +55,12 @@ def test_key_format_validation_per_provider():
 
 
 def test_admin_phrase_matches_loosely():
-    assert is_admin_phrase("admin admin admin")
-    assert is_admin_phrase("Admin, Admin, Admin")
-    assert is_admin_phrase("  ADMIN  admin,admin ")
-    assert not is_admin_phrase("admin admin")
-    assert not is_admin_phrase("sk-ant-admin-admin-admin")
+    assert is_admin_phrase("Elephant")
+    assert is_admin_phrase("elephant")
+    assert is_admin_phrase("  ELEPHANT ")
+    assert not is_admin_phrase("admin admin admin")
+    assert not is_admin_phrase("elephants")
+    assert not is_admin_phrase("sk-ant-elephant-key-12345")
 
 
 def test_platform_key_lookup_uses_settings(monkeypatch):

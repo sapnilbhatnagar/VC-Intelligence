@@ -13,9 +13,9 @@ from app.config import settings
 
 EFFORT_LEVELS = ("low", "medium", "high", "max")
 
-# The exact phrase that routes a user's analyses to the platform's own key
-# (credits apply). Commas and extra whitespace are tolerated.
-_ADMIN_PHRASE = "admin admin admin"
+# The passphrase that routes a user's analyses to the platform's own key
+# (credits apply). Case-insensitive; commas and extra whitespace are tolerated.
+_ADMIN_PHRASE = "elephant"
 
 
 @dataclass(frozen=True)

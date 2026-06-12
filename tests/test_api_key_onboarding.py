@@ -66,7 +66,7 @@ def test_register_rejects_invalid_effort(client):
 
 
 def test_admin_phrase_routes_to_platform_key(client):
-    r = _register(client, provider="anthropic", api_key="admin, admin, admin")
+    r = _register(client, provider="anthropic", api_key="elephant")
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["uses_platform_key"] is True
@@ -90,7 +90,7 @@ def test_own_key_analysis_is_unlimited(client):
 
 
 def test_admin_phrase_analysis_consumes_credits(client):
-    r = _register(client, provider="anthropic", api_key="admin admin admin")
+    r = _register(client, provider="anthropic", api_key="Elephant")
     token = r.json()["access_token"]
 
     start = client.post(
@@ -106,7 +106,7 @@ def test_admin_phrase_analysis_consumes_credits(client):
 
 def test_admin_phrase_fails_when_platform_has_no_key_for_provider(client):
     # The hermetic test env has no OpenAI platform key configured.
-    r = _register(client, provider="openai", api_key="admin admin admin")
+    r = _register(client, provider="openai", api_key="Elephant")
     token = r.json()["access_token"]
 
     start = client.post(

@@ -53,7 +53,7 @@ tier to the right model for that provider (see `pipeline/providers.py`).
 | 7 | none | Python template only |
 | 8 | fast | Metric extraction + Python charts |
 
-Entering the passphrase `admin admin admin` as the API key routes runs to the
+Entering the passphrase `Elephant` as the API key routes runs to the
 platform's own key for the chosen provider (credits apply).
 
 ---
