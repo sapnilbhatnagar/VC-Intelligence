@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field("", env="OPENAI_API_KEY")
     deepseek_api_key: str = Field("", env="DEEPSEEK_API_KEY")
     glm_api_key: str = Field("", env="GLM_API_KEY")
+    nvidia_api_key: str = Field("", env="NVIDIA_API_KEY")
     tavily_api_key: str = Field(..., env="TAVILY_API_KEY")
 
     # Model selection

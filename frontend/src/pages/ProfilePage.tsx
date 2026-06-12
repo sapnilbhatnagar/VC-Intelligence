@@ -344,7 +344,7 @@ export default function ProfilePage() {
             Plan &amp; billing
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            Analyses run on your own provider key (Claude, OpenAI, DeepSeek, or GLM).
+            Analyses run on your own provider key (Claude, OpenAI, DeepSeek, GLM, or NVIDIA).
             Switch the provider, key, or analysis effort at any time.
           </Typography>
           <Divider sx={{ my: 2 }} />

@@ -62,6 +62,13 @@ PROVIDERS: dict[str, ProviderMeta] = {
         base_url="https://open.bigmodel.cn/api/paas/v4",
         api_style="openai-compatible",
     ),
+    "nvidia": ProviderMeta(
+        label="NVIDIA (API Catalog)",
+        key_prefix="nvapi-",
+        key_hint="starts with nvapi-",
+        base_url="https://integrate.api.nvidia.com/v1",
+        api_style="openai-compatible",
+    ),
 }
 
 # (fast, smart) per provider and effort. Fast carries the web-research stages;
@@ -91,6 +98,14 @@ _MODEL_MATRIX: dict[str, dict[str, ModelPair]] = {
         "medium": ModelPair("glm-4.5-air", "glm-4.6"),
         "high":   ModelPair("glm-4.6", "glm-4.6"),
         "max":    ModelPair("glm-4.6", "glm-4.6"),
+    },
+    "nvidia": {
+        # NVIDIA's API Catalog hosts open models (Llama for tool-driven
+        # research, DeepSeek for deep reasoning) behind one nvapi- key.
+        "low":    ModelPair("meta/llama-3.3-70b-instruct", "meta/llama-3.3-70b-instruct"),
+        "medium": ModelPair("meta/llama-3.3-70b-instruct", "deepseek-ai/deepseek-v3.1"),
+        "high":   ModelPair("meta/llama-3.3-70b-instruct", "deepseek-ai/deepseek-r1"),
+        "max":    ModelPair("meta/llama-3.3-70b-instruct", "deepseek-ai/deepseek-r1"),
     },
 }
 
@@ -132,6 +147,7 @@ def platform_key_for(provider: str) -> str:
         "openai": settings.openai_api_key,
         "deepseek": settings.deepseek_api_key,
         "glm": settings.glm_api_key,
+        "nvidia": settings.nvidia_api_key,
     }
     key = keys.get(provider, "")
     if not key:

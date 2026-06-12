@@ -287,7 +287,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Typography>
               </Box>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.66rem', lineHeight: 1.4, display: 'block' }}>
-                Analyses need a key from Claude, OpenAI, DeepSeek, or GLM.
+                Analyses need a key from Claude, OpenAI, DeepSeek, GLM, or NVIDIA.
               </Typography>
             </Box>
           )

@@ -10,6 +10,7 @@ VALID_KEYS = {
     "openai": "sk-proj-test-key-abcdefgh1234",
     "deepseek": "sk-test-key-abcdefgh1234567",
     "glm": "a1b2c3d4e5f6g7h8.i9j0k1l2",
+    "nvidia": "nvapi-test-key-abcdefgh1234",
 }
 
 

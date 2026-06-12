@@ -59,7 +59,7 @@ class StatusResponse(BaseModel):
 
 # ── Auth schemas ──────────────────────────────────────────────────────────────
 
-_PROVIDER_PATTERN = "^(anthropic|openai|deepseek|glm)$"
+_PROVIDER_PATTERN = "^(anthropic|openai|deepseek|glm|nvidia)$"
 _EFFORT_PATTERN = "^(low|medium|high|max)$"
 
 class UserRegisterRequest(BaseModel):

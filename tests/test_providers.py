@@ -13,7 +13,7 @@ from pipeline.providers import (
 
 
 def test_all_four_providers_are_registered():
-    assert set(PROVIDERS) == {"anthropic", "openai", "deepseek", "glm"}
+    assert set(PROVIDERS) == {"anthropic", "openai", "deepseek", "glm", "nvidia"}
     for meta in PROVIDERS.values():
         assert meta.label
         assert meta.key_hint
@@ -35,6 +35,7 @@ def test_higher_effort_never_downgrades_the_smart_model_family():
     assert resolve_models("openai", "low").smart == "gpt-5-mini"
     assert resolve_models("deepseek", "medium").smart == "deepseek-reasoner"
     assert resolve_models("glm", "high").smart == "glm-4.6"
+    assert resolve_models("nvidia", "max").smart == "deepseek-ai/deepseek-r1"
 
 
 def test_unknown_provider_or_effort_raises():
@@ -52,6 +53,8 @@ def test_key_format_validation_per_provider():
     assert validate_key_format("deepseek", "sk-abc123def456ghi789jkl")
     assert validate_key_format("glm", "a1b2c3d4e5f6.g7h8i9j0")
     assert not validate_key_format("glm", "short")
+    assert validate_key_format("nvidia", "nvapi-abc123def456ghi789")
+    assert not validate_key_format("nvidia", "sk-abc123def456ghi789")
 
 
 def test_admin_phrase_matches_loosely():

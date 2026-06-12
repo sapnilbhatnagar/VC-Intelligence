@@ -79,7 +79,7 @@ export interface HistoryItem {
 // LLM Providers & Effort Levels
 // ============================================================
 
-export type LlmProvider = 'anthropic' | 'openai' | 'deepseek' | 'glm';
+export type LlmProvider = 'anthropic' | 'openai' | 'deepseek' | 'glm' | 'nvidia';
 export type LlmEffort = 'low' | 'medium' | 'high' | 'max';
 
 export const LLM_PROVIDERS: { id: LlmProvider; label: string; keyHint: string }[] = [
@@ -87,6 +87,7 @@ export const LLM_PROVIDERS: { id: LlmProvider; label: string; keyHint: string }[
   { id: 'openai', label: 'OpenAI (GPT)', keyHint: 'sk-...' },
   { id: 'deepseek', label: 'DeepSeek', keyHint: 'sk-...' },
   { id: 'glm', label: 'GLM (Zhipu AI)', keyHint: 'key from open.bigmodel.cn' },
+  { id: 'nvidia', label: 'NVIDIA (API Catalog)', keyHint: 'nvapi-...' },
 ];
 
 export const EFFORT_LEVELS: { id: LlmEffort; label: string; description: string }[] = [

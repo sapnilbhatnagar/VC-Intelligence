@@ -41,7 +41,8 @@ Stage 8 — Create Visual Summary       → One-page visual executive summary
 **Provider-agnostic model routing:**
 
 Every analysis runs on the user's own API key from one of four providers:
-Claude (Anthropic), OpenAI (GPT), DeepSeek, or GLM (Zhipu AI). The user picks
+Claude (Anthropic), OpenAI (GPT), DeepSeek, GLM (Zhipu AI), or NVIDIA's API
+Catalog (free keys for open models such as DeepSeek and Llama). The user picks
 an effort level (low / medium / high / max) and the pipeline routes each stage
 tier to the right model for that provider (see `pipeline/providers.py`).
 

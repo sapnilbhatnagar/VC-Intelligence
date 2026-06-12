@@ -325,7 +325,7 @@ export default function LandingPage() {
               </Button>
             </Box>
             <Typography variant="caption" sx={{ display: 'block', mt: 2, color: 'text.disabled' }}>
-              Bring your own model API key: Claude, OpenAI, DeepSeek, or GLM.
+              Bring your own model API key: Claude, OpenAI, DeepSeek, GLM, or NVIDIA.
             </Typography>
           </Box>
 
@@ -354,8 +354,8 @@ export default function LandingPage() {
               <Typography sx={{ color: INK_DIM, lineHeight: 1.65, fontSize: '0.95rem', maxWidth: '46ch' }}>
                 Fast research agents gather the record; reasoning agents model the
                 financials, score the risk, and write the memo. Bring a key from
-                Claude, OpenAI, DeepSeek, or GLM and pick the effort level; the
-                pipeline routes each stage to the right model.
+                Claude, OpenAI, DeepSeek, GLM, or NVIDIA and pick the effort
+                level; the pipeline routes each stage to the right model.
               </Typography>
               <Box sx={{ mt: 3.5, display: 'flex', gap: 3 }}>
                 <Box>
@@ -555,7 +555,7 @@ export default function LandingPage() {
             </Typography>
             <Box component="dl" sx={{ m: 0, display: 'flex', flexDirection: 'column', maxWidth: 560 }}>
               {[
-                ['Your own API key', 'unlimited', 'Claude, OpenAI, DeepSeek, or GLM; encrypted at rest'],
+                ['Your own API key', 'unlimited', 'Claude, OpenAI, DeepSeek, GLM, or NVIDIA; encrypted at rest'],
                 ['Effort levels', 'low to max', 'route each run to lighter or deeper models'],
                 ['Platform key runs', 'credits', 'quick screen 1, full analysis 5'],
               ].map(([term, price, note]) => (
