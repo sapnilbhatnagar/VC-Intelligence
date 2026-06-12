@@ -58,12 +58,40 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Extract a human-readable message from an API error body.
+ *
+ * FastAPI returns `detail` as a plain string for explicit HTTPExceptions, but
+ * as an ARRAY of error objects for 422 validation failures. Passing that array
+ * into new Error() renders as "[object Object]"; this flattens every shape
+ * into readable text. Exported for tests.
+ */
+export function normalizeApiError(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const detail = (data as { detail?: unknown }).detail;
+  if (detail == null) return null;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail.map((d) => {
+      if (typeof d === 'string') return d;
+      const item = d as { loc?: unknown; msg?: unknown };
+      const loc = Array.isArray(item.loc)
+        ? item.loc.filter((seg) => seg !== 'body' && seg !== 'query').join('.')
+        : '';
+      const msg = typeof item.msg === 'string' ? item.msg : JSON.stringify(d);
+      return loc ? `${loc}: ${msg}` : msg;
+    });
+    return parts.join('; ');
+  }
+  return JSON.stringify(detail);
+}
+
 // Response interceptor — normalize errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const message =
-      (error.response?.data as { detail?: string })?.detail ||
+      normalizeApiError(error.response?.data) ||
       error.message ||
       'An unexpected error occurred';
     return Promise.reject(new Error(message));
