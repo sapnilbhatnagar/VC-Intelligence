@@ -12,7 +12,11 @@ interface JobState {
   currentResults: ResultsResponse | null;
 
   // Pending analysis (Get Ready preview flow)
-  pendingAnalysis: { company: string; selectedStages: number[] | null } | null;
+  pendingAnalysis: { company: string; selectedStages: number[] | null; apiKeyId?: string | null } | null;
+
+  // Which stored API key the user last chose for runs (session state)
+  preferredApiKeyId: string | null;
+  setPreferredApiKeyId: (id: string | null) => void;
 
   // Accessibility / display preferences
   accessibilitySettings: AccessibilitySettings;
@@ -32,7 +36,7 @@ interface JobState {
   setCurrentResults: (results: ResultsResponse | null) => void;
   clearCurrentJob: () => void;
 
-  setPendingAnalysis: (data: { company: string; selectedStages: number[] | null } | null) => void;
+  setPendingAnalysis: (data: { company: string; selectedStages: number[] | null; apiKeyId?: string | null } | null) => void;
 
   updateAccessibility: (patch: Partial<AccessibilitySettings>) => void;
   toggleSidebar: () => void;
@@ -55,6 +59,7 @@ export const useJobStore = create<JobState>()(
         currentJobStatus: null,
         currentResults: null,
         pendingAnalysis: null,
+        preferredApiKeyId: null,
 
         accessibilitySettings: {
           highContrast: false,
@@ -87,6 +92,9 @@ export const useJobStore = create<JobState>()(
 
         setPendingAnalysis: (data) =>
           set({ pendingAnalysis: data }, false, 'setPendingAnalysis'),
+
+        setPreferredApiKeyId: (id) =>
+          set({ preferredApiKeyId: id }, false, 'setPreferredApiKeyId'),
 
         updateAccessibility: (patch) =>
           set(
@@ -123,6 +131,7 @@ export const useJobStore = create<JobState>()(
           accessibilitySettings: state.accessibilitySettings,
           sidebarOpen: state.sidebarOpen,
           currentJobId: state.currentJobId,
+          preferredApiKeyId: state.preferredApiKeyId,
         }),
       }
     ),

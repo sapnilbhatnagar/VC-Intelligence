@@ -41,6 +41,7 @@ vi.mock('../api/client', () => ({
     },
   ] satisfies HistoryItem[]),
   startAnalysis: vi.fn(),
+  listApiKeys: vi.fn().mockResolvedValue([]),
 }));
 
 function renderDashboard() {

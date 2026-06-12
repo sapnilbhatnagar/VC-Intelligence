@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import MenuItem from '@mui/material/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,11 +24,11 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import SpeedIcon from '@mui/icons-material/Speed';
 import TuneIcon from '@mui/icons-material/Tune';
 import LockIcon from '@mui/icons-material/Lock';
-import { startAnalysis } from '../../api/client';
+import { startAnalysis, listApiKeys } from '../../api/client';
 import { useJobStore } from '../../store/jobStore';
 import { useAuthStore } from '../../store/authStore';
 import { creditLabel, toggleStage } from '../../lib/credits';
-import { RESEARCH_PRESETS, STAGE_INFO } from '../../types';
+import { RESEARCH_PRESETS, STAGE_INFO, providerLabel } from '../../types';
 import type { ResearchMode } from '../../types';
 
 // ============================================================
@@ -138,14 +140,32 @@ function ModeCard({ mode, selected, onClick }: ModeCardProps) {
 // ============================================================
 export default function AnalysisForm() {
   const navigate = useNavigate();
-  const { setCurrentJobId } = useJobStore();
+  const { setCurrentJobId, preferredApiKeyId, setPreferredApiKeyId } = useJobStore();
 
   const user = useAuthStore((s) => s.user);
   const isLoggedIn = useAuthStore((s) => s.token !== null);
-  // Platform-key (passphrase) runs still bill credits; only a real own key
-  // or an admin account runs unlimited.
-  const unlimited =
-    (!!user?.has_api_key && !user?.uses_platform_key) || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+
+  // The user's stored keys: the run executes on the one they pick here.
+  // The choice persists across the session (preferredApiKeyId).
+  const { data: apiKeys = [] } = useQuery({
+    queryKey: ['api-keys'],
+    queryFn: listApiKeys,
+    enabled: isLoggedIn && !isAdmin,
+    staleTime: 30_000,
+  });
+  const selectedKey = useMemo(() => {
+    if (apiKeys.length === 0) return null;
+    return (
+      apiKeys.find((k) => k.id === preferredApiKeyId) ??
+      apiKeys.find((k) => k.is_active) ??
+      apiKeys[0]
+    );
+  }, [apiKeys, preferredApiKeyId]);
+
+  // Platform-key (passphrase) runs still bill credits; a real own key or an
+  // admin account runs unlimited. Based on the key selected for THIS run.
+  const unlimited = isAdmin || (!!selectedKey && !selectedKey.uses_platform_key);
 
   // Form state
   const [company, setCompany] = useState('');
@@ -181,6 +201,7 @@ export default function AnalysisForm() {
       const result = await startAnalysis({
         company: company.trim(),
         selected_stages: getSelectedStages(),
+        api_key_id: selectedKey?.id ?? null,
       });
       setCurrentJobId(result.job_id);
       navigate(`/job/${result.job_id}`);
@@ -361,6 +382,28 @@ export default function AnalysisForm() {
               </Box>
             )}
 
+            {/* Run on which key (shown when the account holds several) */}
+            {isLoggedIn && !isAdmin && apiKeys.length > 1 && (
+              <TextField
+                select
+                size="small"
+                label="Run on"
+                value={selectedKey?.id ?? ''}
+                onChange={(e) => setPreferredApiKeyId(e.target.value)}
+                helperText="Which of your stored API keys executes this analysis"
+                inputProps={{ 'aria-label': 'Run on API key' }}
+              >
+                {apiKeys.map((k) => (
+                  <MenuItem key={k.id} value={k.id}>
+                    {k.label || providerLabel(k.llm_provider)}
+                    <Typography component="span" variant="caption" sx={{ color: 'text.secondary', ml: 1, fontFamily: 'monospace' }}>
+                      {k.uses_platform_key ? 'platform · credits' : `····${k.api_key_last4} · unlimited`}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+
             {/* Cost + stage summary */}
             <Box
               sx={{
@@ -406,7 +449,9 @@ export default function AnalysisForm() {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                 <BoltIcon sx={{ fontSize: 14, color: 'primary.main' }} />
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {user?.role === 'admin' ? 'Admin · unlimited analysis' : 'Running on your own Claude API key · unlimited'}
+                  {isAdmin
+                    ? 'Admin · unlimited analysis'
+                    : `Running on your ${providerLabel(selectedKey?.llm_provider)} key · unlimited`}
                 </Typography>
               </Box>
             ) : isLoggedIn ? (

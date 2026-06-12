@@ -9,25 +9,40 @@ from pipeline.providers import PROVIDERS, is_admin_phrase, validate_key_format
 from app.schemas import (
     UserRegisterRequest, UserLoginRequest, TokenResponse,
     UserResponse, AddCreditsRequest, ChangePasswordRequest, GoogleAuthRequest,
-    SetApiKeyRequest,
+    SetApiKeyRequest, AddApiKeyRequest,
 )
 from storage.database import (
     create_user, get_user_by_email, get_user_by_id, get_user_by_username,
     add_credits, list_analyses_by_user, update_user, update_last_login, log_credit_transaction,
+    add_user_api_key, list_user_api_keys, get_user_api_key, delete_user_api_key,
 )
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _api_key_meta(user: dict) -> tuple[bool, str | None, bool]:
-    """(has_api_key, last4, uses_platform_key) without ever exposing the key."""
-    dec = decrypt_secret(user.get("anthropic_api_key_enc"))
-    if not dec:
-        return (False, None, False)
-    if is_admin_phrase(dec):
-        return (True, None, True)
-    return (True, dec[-4:], False)
+def _key_row_meta(row: dict) -> dict:
+    """Public shape of one stored key, never exposing the key itself."""
+    dec = decrypt_secret(row.get("key_enc"))
+    uses_platform = bool(dec and is_admin_phrase(dec))
+    return {
+        "id": row["id"],
+        "llm_provider": row["llm_provider"],
+        "label": row.get("label"),
+        "api_key_last4": None if (uses_platform or not dec) else dec[-4:],
+        "uses_platform_key": uses_platform,
+        "created_at": row["created_at"],
+    }
+
+
+async def _active_key_meta(user: dict) -> tuple[bool, str | None, bool, str | None]:
+    """(has_api_key, last4, uses_platform_key, provider) from the active key."""
+    keys = await list_user_api_keys(user["id"])
+    if not keys:
+        return (False, None, False, user.get("llm_provider"))
+    active = next((k for k in keys if k["id"] == user.get("active_api_key_id")), keys[0])
+    meta = _key_row_meta(active)
+    return (True, meta["api_key_last4"], meta["uses_platform_key"], meta["llm_provider"])
 
 
 def _validate_api_key_format(provider: str, key: str) -> None:
@@ -57,8 +72,9 @@ async def register(req: UserRegisterRequest):
         user_id, req.email, hash_password(req.password),
         role="user", credits=5, username=req.username, name=req.name,
     )
+    key_id = await add_user_api_key(user_id, req.llm_provider, encrypt_secret(api_key))
     await update_user(user_id, {
-        "anthropic_api_key_enc": encrypt_secret(api_key),
+        "active_api_key_id": key_id,
         "llm_provider": req.llm_provider,
         "llm_effort": req.llm_effort,
     })
@@ -86,14 +102,14 @@ async def login(req: UserLoginRequest):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
-    has_key, last4, uses_platform = _api_key_meta(user)
+    has_key, last4, uses_platform, provider = await _active_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
         has_api_key=has_key, api_key_last4=last4,
-        llm_provider=user.get("llm_provider"), llm_effort=user.get("llm_effort"),
+        llm_provider=provider, llm_effort=user.get("llm_effort"),
         uses_platform_key=uses_platform,
     )
 
@@ -103,7 +119,7 @@ async def get_me(current_user: dict = Depends(require_auth)):
     user = await get_user_by_id(current_user["id"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
-    has_key, last4, uses_platform = _api_key_meta(user)
+    has_key, last4, uses_platform, provider = await _active_key_meta(user)
     return UserResponse(
         id=user["id"],
         email=user["email"],
@@ -114,7 +130,7 @@ async def get_me(current_user: dict = Depends(require_auth)):
         created_at=user["created_at"],
         has_api_key=has_key,
         api_key_last4=last4,
-        llm_provider=user.get("llm_provider"),
+        llm_provider=provider,
         llm_effort=user.get("llm_effort"),
         uses_platform_key=uses_platform,
     )
@@ -125,17 +141,77 @@ async def my_analyses(current_user: dict = Depends(require_auth)):
     return await list_analyses_by_user(current_user["id"])
 
 
+@router.get("/me/api-keys")
+async def my_api_keys(current_user: dict = Depends(require_auth)):
+    """All of the user's stored keys (masked), flagged with the active default."""
+    user = await get_user_by_id(current_user["id"])
+    keys = await list_user_api_keys(current_user["id"])
+    active_id = user.get("active_api_key_id") if user else None
+    if keys and active_id not in {k["id"] for k in keys}:
+        active_id = keys[0]["id"]
+    return [
+        {**_key_row_meta(k), "is_active": k["id"] == active_id}
+        for k in keys
+    ]
+
+
+@router.post("/me/api-keys")
+async def add_api_key(req: AddApiKeyRequest, current_user: dict = Depends(require_auth)):
+    """Add another API key. The first key a user adds becomes the active default."""
+    key = req.api_key.strip()
+    _validate_api_key_format(req.llm_provider, key)
+    existing = await list_user_api_keys(current_user["id"])
+    key_id = await add_user_api_key(
+        current_user["id"], req.llm_provider, encrypt_secret(key), req.label,
+    )
+    if not existing:
+        await update_user(current_user["id"], {"active_api_key_id": key_id, "llm_provider": req.llm_provider})
+    row = await get_user_api_key(key_id)
+    return {**_key_row_meta(row), "is_active": not existing}
+
+
+@router.put("/me/api-keys/{key_id}/activate")
+async def activate_api_key(key_id: str, current_user: dict = Depends(require_auth)):
+    """Make one of the user's keys the default for future runs."""
+    row = await get_user_api_key(key_id)
+    if not row or row["user_id"] != current_user["id"]:
+        raise HTTPException(status_code=404, detail="API key not found.")
+    await update_user(current_user["id"], {
+        "active_api_key_id": key_id,
+        "llm_provider": row["llm_provider"],
+    })
+    return {**_key_row_meta(row), "is_active": True}
+
+
+@router.delete("/me/api-keys/{key_id}")
+async def remove_api_key(key_id: str, current_user: dict = Depends(require_auth)):
+    """Delete a stored key. If it was the active one, fall back to another."""
+    row = await get_user_api_key(key_id)
+    if not row or row["user_id"] != current_user["id"]:
+        raise HTTPException(status_code=404, detail="API key not found.")
+    await delete_user_api_key(key_id)
+    user = await get_user_by_id(current_user["id"])
+    if user and user.get("active_api_key_id") == key_id:
+        remaining = await list_user_api_keys(current_user["id"])
+        new_active = remaining[0] if remaining else None
+        await update_user(current_user["id"], {
+            "active_api_key_id": new_active["id"] if new_active else None,
+            "llm_provider": new_active["llm_provider"] if new_active else user.get("llm_provider"),
+        })
+    return {"deleted": key_id}
+
+
+# ── Legacy single-key routes, reimplemented on the key store ─────────────────
+
 @router.put("/me/api-key")
 async def set_api_key(req: SetApiKeyRequest, current_user: dict = Depends(require_auth)):
-    """Store the user's API key (encrypted), and optionally switch provider/effort."""
+    """Legacy: add a key and make it the active default."""
     user = await get_user_by_id(current_user["id"])
     provider = req.llm_provider or (user.get("llm_provider") if user else None) or "anthropic"
     key = req.api_key.strip()
     _validate_api_key_format(provider, key)
-    updates: dict = {
-        "anthropic_api_key_enc": encrypt_secret(key),
-        "llm_provider": provider,
-    }
+    key_id = await add_user_api_key(current_user["id"], provider, encrypt_secret(key))
+    updates: dict = {"active_api_key_id": key_id, "llm_provider": provider}
     if req.llm_effort:
         updates["llm_effort"] = req.llm_effort
     await update_user(current_user["id"], updates)
@@ -151,8 +227,22 @@ async def set_api_key(req: SetApiKeyRequest, current_user: dict = Depends(requir
 
 @router.delete("/me/api-key")
 async def clear_api_key(current_user: dict = Depends(require_auth)):
-    """Remove the user's stored API key (revert to credit-based runs)."""
-    await update_user(current_user["id"], {"anthropic_api_key_enc": None})
+    """Legacy: remove the active key (falls back to another stored key)."""
+    user = await get_user_by_id(current_user["id"])
+    active_id = user.get("active_api_key_id") if user else None
+    if active_id:
+        row = await get_user_api_key(active_id)
+        if row and row["user_id"] == current_user["id"]:
+            await delete_user_api_key(active_id)
+        remaining = await list_user_api_keys(current_user["id"])
+        new_active = remaining[0] if remaining else None
+        await update_user(current_user["id"], {
+            "active_api_key_id": new_active["id"] if new_active else None,
+            "llm_provider": new_active["llm_provider"] if new_active else (user.get("llm_provider") if user else None),
+        })
+        if new_active:
+            meta = _key_row_meta(new_active)
+            return {"has_api_key": True, "api_key_last4": meta["api_key_last4"], "uses_platform_key": meta["uses_platform_key"]}
     return {"has_api_key": False, "api_key_last4": None, "uses_platform_key": False}
 
 
@@ -174,6 +264,8 @@ async def update_profile(
     allowed = {}
     if "name" in updates:
         allowed["name"] = updates["name"]
+    if updates.get("llm_effort") in ("low", "medium", "high", "max"):
+        allowed["llm_effort"] = updates["llm_effort"]
     if "username" in updates and updates["username"]:
         # Check uniqueness
         existing = await get_user_by_username(updates["username"])
@@ -225,13 +317,13 @@ async def google_auth(req: GoogleAuthRequest):
 
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
-    has_key, last4, uses_platform = _api_key_meta(user)
+    has_key, last4, uses_platform, provider = await _active_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
         has_api_key=has_key, api_key_last4=last4,
-        llm_provider=user.get("llm_provider"), llm_effort=user.get("llm_effort"),
+        llm_provider=provider, llm_effort=user.get("llm_effort"),
         uses_platform_key=uses_platform,
     )

@@ -181,8 +181,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Bottom block: credits, connection, user */}
       <Box sx={{ px: 2, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-        {/* Credits (admins run unlimited) */}
-        {isLoggedIn && !isAdmin && (
+        {/* Credits apply only to platform-key (passphrase) runs; own-key
+            accounts run unlimited, so no balance is shown for them. */}
+        {isLoggedIn && !isAdmin && user?.uses_platform_key && (
           <Box
             onClick={() => handleNavClick('/profile')}
             role="button"
@@ -397,7 +398,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Typography sx={{ fontWeight: 750, fontSize: '0.9rem' }}>VC Intelligence</Typography>
             </Box>
             <Box sx={{ flex: 1 }} />
-            {isLoggedIn && !isAdmin && (
+            {isLoggedIn && !isAdmin && user?.uses_platform_key && (
               <Chip
                 icon={<BoltIcon sx={{ fontSize: '0.8rem !important' }} />}
                 label={user?.credits ?? 0}

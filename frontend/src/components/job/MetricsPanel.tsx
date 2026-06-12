@@ -9,7 +9,8 @@ import {
 } from '@mui/material';
 import type { StatusResponse, ResultsResponse } from '../../types';
 import { useCreditsConversion } from '../../hooks/useCreditsConversion';
-import { RECOMMENDATION_COLORS, riskColor } from '../../theme';
+import { RECOMMENDATION_COLORS, riskColor, MONO } from '../../theme';
+import { useAuthStore } from '../../store/authStore';
 
 // ============================================================
 // Animated counter hook
@@ -51,15 +52,26 @@ function MetricCard({ label, children, accent }: MetricCardProps) {
     <Box
       sx={{
         p: 2,
-        borderRadius: 2,
-        backgroundColor: (t) =>
-          accent ? alpha(t.palette.primary.main, 0.06) : alpha(t.palette.text.primary, 0.03),
+        borderRadius: '14px',
+        backgroundColor: 'background.paper',
         border: '1px solid',
-        borderColor: (t) =>
-          accent ? alpha(t.palette.primary.main, 0.2) : 'divider',
+        borderColor: (t) => (accent ? alpha(t.palette.primary.main, 0.3) : 'divider'),
+        boxShadow: '0 1px 3px rgba(22,27,34,0.05)',
+        transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+        '&:hover': { boxShadow: '0 6px 18px rgba(22,27,34,0.07)' },
       }}
     >
-      <Typography variant="overline" sx={{ color: 'text.disabled', fontSize: '0.6rem', display: 'block', mb: 0.75 }}>
+      <Typography
+        sx={{
+          fontFamily: MONO,
+          color: 'text.secondary',
+          fontSize: '0.6rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          display: 'block',
+          mb: 0.75,
+        }}
+      >
         {label}
       </Typography>
       {children}
@@ -127,6 +139,7 @@ interface MetricsPanelProps {
 
 export default function MetricsPanel({ statusData, resultsData }: MetricsPanelProps) {
   const animatedTokens = useCountUp(resultsData?.total_tokens ?? null);
+  const usesPlatformKey = useAuthStore((s) => !!s.user?.uses_platform_key);
 
   const recommendation = resultsData?.recommendation ?? null;
   const recoConfig = recommendation ? RECOMMENDATION_COLORS[recommendation] : null;
@@ -219,21 +232,23 @@ export default function MetricsPanel({ statusData, resultsData }: MetricsPanelPr
         </Typography>
       </MetricCard>
 
-      {/* Credits Used */}
-      <MetricCard label="AI Credits Used">
-        <Typography
-          variant="h4"
-          sx={{
-            fontFamily: 'monospace',
-            fontWeight: 700,
-            color: resultsData ? 'success.main' : 'text.disabled',
-            fontSize: '1.25rem',
-          }}
-          aria-label={creditsUsed ? `Credits used: ${creditsUsed}` : 'Credits not yet available'}
-        >
-          {creditsUsed ?? '—'}
-        </Typography>
-      </MetricCard>
+      {/* Credits apply only to platform-key (passphrase) runs */}
+      {usesPlatformKey && (
+        <MetricCard label="AI Credits Used">
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              color: resultsData ? 'success.main' : 'text.disabled',
+              fontSize: '1.25rem',
+            }}
+            aria-label={creditsUsed ? `Credits used: ${creditsUsed}` : 'Credits not yet available'}
+          >
+            {creditsUsed ?? '—'}
+          </Typography>
+        </MetricCard>
+      )}
 
       <Divider />
 

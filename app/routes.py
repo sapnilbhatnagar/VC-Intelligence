@@ -12,7 +12,7 @@ from app.crypto import decrypt_secret
 from storage.database import (
     create_analysis, get_analysis, list_analyses, list_analyses_by_user,
     update_analysis, get_user_by_id, deduct_credits, credit_cost, delete_analysis,
-    get_completed_stages,
+    get_completed_stages, get_user_api_key, list_user_api_keys,
 )
 from pipeline.orchestrator import start_pipeline, resume_pipeline, complete_remaining_pipeline, get_last_completed_stage
 from pipeline.providers import is_admin_phrase, platform_key_for
@@ -55,28 +55,48 @@ async def health():
     return {"status": "ok"}
 
 
-def _resolve_llm_run(user: dict) -> tuple[str, str, str, bool]:
+async def _resolve_llm_run(user: dict, api_key_id: str | None = None) -> tuple[str, str, str, bool]:
     """Resolve how a run executes for this user.
 
-    Returns (api_key, provider, effort, billed). billed=True means the run
-    uses the platform's key and is charged in credits (the admin passphrase
-    path); the user's own key and admin accounts run unbilled.
+    The run uses the requested stored key (api_key_id) or the user's active
+    key. Returns (api_key, provider, effort, billed). billed=True means the
+    run uses the platform's key and is charged in credits (the passphrase
+    path); the user's own keys and admin accounts run unbilled.
     """
     is_admin = user.get("role") == "admin"
-    provider = user.get("llm_provider") or "anthropic"
     effort = user.get("llm_effort") or "medium"
-    stored = decrypt_secret(user.get("anthropic_api_key_enc"))
 
     if is_admin:
+        provider = user.get("llm_provider") or "anthropic"
         try:
             return platform_key_for(provider), provider, effort, False
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    if not stored:
+    # Pick the key row: the requested one (must belong to the caller) or the
+    # active default.
+    row = None
+    if api_key_id:
+        row = await get_user_api_key(api_key_id)
+        if not row or row["user_id"] != user["id"]:
+            raise HTTPException(status_code=403, detail="That API key does not belong to your account.")
+    else:
+        keys = await list_user_api_keys(user["id"])
+        if keys:
+            row = next((k for k in keys if k["id"] == user.get("active_api_key_id")), keys[0])
+
+    if not row:
         raise HTTPException(
             status_code=402,
-            detail="Add your API key in your profile before running an analysis.",
+            detail="Add an API key in your profile before running an analysis.",
+        )
+
+    provider = row["llm_provider"]
+    stored = decrypt_secret(row["key_enc"])
+    if not stored:
+        raise HTTPException(
+            status_code=400,
+            detail="The stored API key could not be read. Remove it and add it again in your profile.",
         )
 
     if is_admin_phrase(stored):
@@ -100,7 +120,7 @@ async def start_analysis(
     user = await get_user_by_id(current_user["id"])
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required.")
-    api_key, provider, effort, billed = _resolve_llm_run(user)
+    api_key, provider, effort, billed = await _resolve_llm_run(user, request.api_key_id)
 
     # Platform-key runs (the admin passphrase) cost credits; own-key runs
     # and admin accounts are unlimited.
@@ -220,7 +240,7 @@ async def resume_analysis(job_id: str, current_user: Optional[dict] = Depends(ge
     user = await get_user_by_id(current_user["id"]) if current_user else None
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required.")
-    api_key, provider, effort, _billed = _resolve_llm_run(user)
+    api_key, provider, effort, _billed = await _resolve_llm_run(user)
 
     # Mark running before launching task (prevents duplicate resume)
     await update_analysis(job_id, {"status": "running", "paused_at": None})
@@ -275,7 +295,7 @@ async def complete_remaining_stages(
     user = await get_user_by_id(current_user["id"]) if current_user else None
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required.")
-    api_key, provider, effort, billed = _resolve_llm_run(user)
+    api_key, provider, effort, billed = await _resolve_llm_run(user)
 
     if delta_cost > 0 and billed:
         if user["credits"] < delta_cost:

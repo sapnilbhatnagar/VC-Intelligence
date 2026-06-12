@@ -5,6 +5,7 @@
 export interface AnalyzeRequest {
   company: string;
   selected_stages: number[] | null;
+  api_key_id?: string | null;
 }
 
 export interface JobResponse {
@@ -134,6 +135,16 @@ export interface AuthLoginResponse {
   llm_provider?: LlmProvider | null;
   llm_effort?: LlmEffort | null;
   uses_platform_key?: boolean;
+}
+
+export interface UserApiKey {
+  id: string;
+  llm_provider: LlmProvider;
+  label: string | null;
+  api_key_last4: string | null;
+  uses_platform_key: boolean;
+  is_active: boolean;
+  created_at: string;
 }
 
 export interface ApiKeyStatus {

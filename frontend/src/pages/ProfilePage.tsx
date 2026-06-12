@@ -32,7 +32,11 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
-import { getMyAnalyses, updateProfile, saveApiKey, deleteApiKey } from '../api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getMyAnalyses, updateProfile,
+  listApiKeys, addApiKeyEntry, activateApiKey, deleteApiKeyEntry,
+} from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { HistoryItem } from '../types';
 import { LLM_PROVIDERS, EFFORT_LEVELS, providerLabel } from '../types';
@@ -114,29 +118,47 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const updateUserStore = useAuthStore((s) => s.updateUser);
 
-  // API key + provider + effort state
+  // Multi-key manager state
+  const queryClient = useQueryClient();
   const [keyInput, setKeyInput] = useState('');
+  const [keyLabel, setKeyLabel] = useState('');
   const [keyProvider, setKeyProvider] = useState(user?.llm_provider ?? 'anthropic');
-  const [keyEffort, setKeyEffort] = useState(user?.llm_effort ?? 'medium');
   const [keySaving, setKeySaving] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
   const isAdmin = user?.role === 'admin';
-  const hasOwnKey = !!user?.has_api_key;
   const usesPlatformKey = !!user?.uses_platform_key;
 
-  const handleSaveKey = async () => {
+  const { data: apiKeys = [] } = useQuery({
+    queryKey: ['api-keys'],
+    queryFn: listApiKeys,
+    enabled: !isAdmin,
+    staleTime: 15_000,
+  });
+
+  const syncActiveMeta = (keys: import('../types').UserApiKey[]) => {
+    const active = keys.find((k) => k.is_active);
+    updateUserStore({
+      has_api_key: keys.length > 0,
+      api_key_last4: active?.api_key_last4 ?? null,
+      llm_provider: active?.llm_provider ?? user?.llm_provider,
+      uses_platform_key: active?.uses_platform_key ?? false,
+    });
+  };
+
+  const refreshKeys = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    const keys = await listApiKeys();
+    syncActiveMeta(keys);
+  };
+
+  const handleAddKey = async () => {
     setKeySaving(true);
     setKeyError(null);
     try {
-      const res = await saveApiKey(keyInput.trim(), keyProvider, keyEffort);
-      updateUserStore({
-        has_api_key: res.has_api_key,
-        api_key_last4: res.api_key_last4,
-        llm_provider: res.llm_provider,
-        llm_effort: res.llm_effort,
-        uses_platform_key: res.uses_platform_key,
-      });
+      await addApiKeyEntry(keyInput.trim(), keyProvider, keyLabel.trim() || undefined);
       setKeyInput('');
+      setKeyLabel('');
+      await refreshKeys();
     } catch (err) {
       setKeyError(err instanceof Error ? err.message : 'Could not save the key.');
     } finally {
@@ -144,20 +166,33 @@ export default function ProfilePage() {
     }
   };
 
-  const handleRemoveKey = async () => {
-    setKeySaving(true);
+  const handleActivateKey = async (keyId: string) => {
     setKeyError(null);
     try {
-      const res = await deleteApiKey();
-      updateUserStore({
-        has_api_key: res.has_api_key,
-        api_key_last4: res.api_key_last4,
-        uses_platform_key: res.uses_platform_key,
-      });
+      await activateApiKey(keyId);
+      await refreshKeys();
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : 'Could not switch the key.');
+    }
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    setKeyError(null);
+    try {
+      await deleteApiKeyEntry(keyId);
+      await refreshKeys();
     } catch (err) {
       setKeyError(err instanceof Error ? err.message : 'Could not remove the key.');
-    } finally {
-      setKeySaving(false);
+    }
+  };
+
+  const handleEffortChange = async (effort: string) => {
+    setKeyError(null);
+    try {
+      await updateProfile({ llm_effort: effort });
+      updateUserStore({ llm_effort: effort as 'low' | 'medium' | 'high' | 'max' });
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : 'Could not update the effort level.');
     }
   };
 
@@ -316,10 +351,19 @@ export default function ProfilePage() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <BoltIcon sx={{ fontSize: '0.875rem', color: 'primary.main' }} />
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                      {user?.role === 'admin' ? 'Unlimited' : (user?.credits ?? 0)}
-                    </Box>
-                    {user?.role === 'admin' ? ' credits (admin)' : ' credits'}
+                    {/* Credits only matter on platform-key runs */}
+                    {isAdmin || !usesPlatformKey ? (
+                      <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                        Unlimited runs
+                      </Box>
+                    ) : (
+                      <>
+                        <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                          {user?.credits ?? 0}
+                        </Box>
+                        {' credits'}
+                      </>
+                    )}
                   </Typography>
                 </Box>
                 {joinDate && (
@@ -356,23 +400,22 @@ export default function ProfilePage() {
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-              {/* Credits tile */}
+              {/* Credits apply only to platform-key (passphrase) runs. */}
+              {usesPlatformKey && (
               <Box
                 sx={{
                   flex: 1,
                   p: 2.5,
                   borderRadius: '18px',
-                  border: hasOwnKey ? '1px solid' : '1.5px solid',
-                  borderColor: hasOwnKey ? 'divider' : 'primary.main',
-                  backgroundColor: hasOwnKey ? 'background.paper' : (t) => alpha(t.palette.primary.main, 0.04),
+                  border: '1.5px solid',
+                  borderColor: 'primary.main',
+                  backgroundColor: (t) => alpha(t.palette.primary.main, 0.04),
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <BoltIcon fontSize="small" sx={{ color: 'primary.main' }} />
                   <Typography sx={{ fontWeight: 700 }}>Credits</Typography>
-                  {!hasOwnKey && (
-                    <Chip label="Active" size="small" color="primary" sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }} />
-                  )}
+                  <Chip label="Platform key runs" size="small" color="primary" sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }} />
                 </Box>
                 <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
                   {user?.credits ?? 0}
@@ -384,56 +427,95 @@ export default function ProfilePage() {
                   Buy credits
                 </Button>
               </Box>
+              )}
 
-              {/* Own API key tile */}
+              {/* API keys manager */}
               <Box
                 sx={{
-                  flex: 1,
+                  flex: 2,
                   p: 2.5,
                   borderRadius: '18px',
-                  border: hasOwnKey ? '1.5px solid' : '1px solid',
-                  borderColor: hasOwnKey ? 'primary.main' : 'divider',
-                  backgroundColor: hasOwnKey ? (t) => alpha(t.palette.primary.main, 0.04) : 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'background.paper',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <VpnKeyOutlinedIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                  <Typography sx={{ fontWeight: 700 }}>Your API key</Typography>
-                  {hasOwnKey && (
-                    <Chip
-                      label={usesPlatformKey ? 'Platform key · credits apply' : 'Active · Unlimited'}
-                      size="small"
-                      color="primary"
-                      sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }}
-                    />
+                  <Typography sx={{ fontWeight: 700 }}>Your API keys</Typography>
+                  {apiKeys.length > 0 && (
+                    <Chip label={apiKeys.length} size="small" sx={{ ml: 'auto', height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
                   )}
                 </Box>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5 }}>
-                  Stored encrypted and never shown again. Runs are billed to your provider account.
+                  Stored encrypted, never shown again. Add one key per provider account and
+                  pick which one runs each analysis.
                 </Typography>
-                {hasOwnKey && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
-                    <Chip
-                      icon={<CheckIcon sx={{ fontSize: '0.8rem !important' }} />}
-                      label={
-                        usesPlatformKey
-                          ? `Platform key · ${providerLabel(user?.llm_provider)}`
-                          : `${providerLabel(user?.llm_provider)} ···· ${user?.api_key_last4 ?? ''}`
-                      }
-                      size="small"
-                      sx={{ fontWeight: 600 }}
-                    />
-                    <Chip
-                      label={`Effort: ${user?.llm_effort ?? 'medium'}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{ fontWeight: 600, textTransform: 'capitalize' }}
-                    />
-                    <Button variant="text" size="small" color="error" onClick={handleRemoveKey} disabled={keySaving}>
-                      Remove
-                    </Button>
+
+                {/* Stored keys */}
+                {apiKeys.length > 0 && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                    {apiKeys.map((k) => (
+                      <Box
+                        key={k.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          p: 1.25,
+                          borderRadius: '10px',
+                          border: '1px solid',
+                          borderColor: k.is_active ? 'primary.main' : 'divider',
+                          backgroundColor: k.is_active ? (t) => alpha(t.palette.primary.main, 0.04) : 'transparent',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <Box sx={{ flex: 1, minWidth: 140 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 650 }}>
+                            {k.label || providerLabel(k.llm_provider)}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+                            {k.uses_platform_key
+                              ? `Platform key · ${providerLabel(k.llm_provider)} · credits apply`
+                              : `${providerLabel(k.llm_provider)} ····${k.api_key_last4} · unlimited`}
+                          </Typography>
+                        </Box>
+                        {k.is_active ? (
+                          <Chip label="Default" size="small" color="primary" sx={{ height: 20, fontSize: '0.62rem', fontWeight: 700 }} />
+                        ) : (
+                          <Button size="small" variant="text" onClick={() => handleActivateKey(k.id)} sx={{ fontSize: '0.72rem', py: 0.25 }}>
+                            Make default
+                          </Button>
+                        )}
+                        <Button size="small" variant="text" color="error" onClick={() => handleDeleteKey(k.id)} sx={{ fontSize: '0.72rem', py: 0.25, minWidth: 0 }}>
+                          Remove
+                        </Button>
+                      </Box>
+                    ))}
                   </Box>
                 )}
+
+                {/* Effort level */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                  <TextField
+                    select
+                    size="small"
+                    label="Analysis effort"
+                    value={user?.llm_effort ?? 'medium'}
+                    onChange={(e) => handleEffortChange(e.target.value)}
+                    sx={{ minWidth: 150 }}
+                    inputProps={{ 'aria-label': 'Analysis effort' }}
+                  >
+                    {EFFORT_LEVELS.map((lvl) => (
+                      <MenuItem key={lvl.id} value={lvl.id}>{lvl.label}</MenuItem>
+                    ))}
+                  </TextField>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {EFFORT_LEVELS.find((lvl) => lvl.id === (user?.llm_effort ?? 'medium'))?.description}
+                  </Typography>
+                </Box>
+
+                {/* Add a key */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <TextField
@@ -450,18 +532,14 @@ export default function ProfilePage() {
                       ))}
                     </TextField>
                     <TextField
-                      select
                       size="small"
-                      label="Effort"
-                      value={keyEffort}
-                      onChange={(e) => setKeyEffort(e.target.value as typeof keyEffort)}
-                      sx={{ minWidth: 110 }}
-                      inputProps={{ 'aria-label': 'Analysis effort' }}
-                    >
-                      {EFFORT_LEVELS.map((lvl) => (
-                        <MenuItem key={lvl.id} value={lvl.id}>{lvl.label}</MenuItem>
-                      ))}
-                    </TextField>
+                      label="Label (optional)"
+                      placeholder="e.g. NVIDIA free tier"
+                      value={keyLabel}
+                      onChange={(e) => setKeyLabel(e.target.value)}
+                      sx={{ flex: 1, minWidth: 150 }}
+                      inputProps={{ 'aria-label': 'Key label' }}
+                    />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <TextField
@@ -473,8 +551,8 @@ export default function ProfilePage() {
                       sx={{ flex: 1, minWidth: 180 }}
                       inputProps={{ 'aria-label': 'API key' }}
                     />
-                    <Button variant="contained" size="small" onClick={handleSaveKey} disabled={keySaving || keyInput.trim().length < 8}>
-                      {hasOwnKey ? 'Update' : 'Save'}
+                    <Button variant="contained" size="small" onClick={handleAddKey} disabled={keySaving || keyInput.trim().length < 8}>
+                      Add key
                     </Button>
                   </Box>
                 </Box>

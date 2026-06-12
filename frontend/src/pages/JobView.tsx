@@ -888,35 +888,10 @@ export default function JobView() {
       >
         {activeTab === 0 && (
           <>
-            {/* Pipeline Stepper */}
-            <Box
-              sx={{
-                mb: 3,
-                p: 2.5,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: (t) => alpha(t.palette.text.primary, 0.015),
-              }}
-            >
-              <Typography
-                variant="overline"
-                sx={{
-                  color: 'text.disabled',
-                  display: 'block',
-                  mb: 2,
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                Analysis Pipeline
-              </Typography>
+            {/* Pipeline mission-control panel (self-contained dark surface) */}
+            <Box sx={{ mb: 3 }}>
               {statusLoading ? (
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {[...Array(8)].map((_, i) => (
-                    <Skeleton key={i} variant="rounded" width={112} height={90} sx={{ borderRadius: 2 }} />
-                  ))}
-                </Box>
+                <Skeleton variant="rounded" height={220} sx={{ borderRadius: '18px' }} />
               ) : (
                 <PipelineStepper
                   statusData={statusData ?? null}

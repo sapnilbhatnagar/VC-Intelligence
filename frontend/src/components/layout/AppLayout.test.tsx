@@ -44,10 +44,39 @@ describe('AppLayout (left-rail shell)', () => {
     expect(screen.getByText('page content')).toBeInTheDocument();
   });
 
-  it('shows the credit balance for a signed-in user', () => {
+  it('shows the credit balance only for platform-key users', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'u1',
+        email: 'jane@fund.com',
+        name: 'Jane',
+        role: 'user',
+        credits: 12,
+        has_api_key: true,
+        uses_platform_key: true,
+      },
+    });
     renderShell();
     expect(screen.getAllByText(/12/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/credits/i).length).toBeGreaterThan(0);
+  });
+
+  it('hides credits entirely for users running on their own key', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'u1',
+        email: 'jane@fund.com',
+        name: 'Jane',
+        role: 'user',
+        credits: 12,
+        has_api_key: true,
+        api_key_last4: '1234',
+        uses_platform_key: false,
+      },
+    });
+    renderShell();
+    expect(screen.queryByText(/credits left/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/unlimited runs/i)).toBeInTheDocument();
   });
 
   it('prompts a user without an API key to add one from the rail', () => {

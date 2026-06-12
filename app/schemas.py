@@ -28,6 +28,10 @@ class AnalyzeRequest(BaseModel):
         ),
         examples=[[1, 2, 6], [1, 2, 3, 4, 5, 6]],
     )
+    api_key_id: Optional[str] = Field(
+        None,
+        description="Which of the caller's stored API keys runs this analysis. Default: the active key.",
+    )
 
 
 class CompleteRemainingRequest(BaseModel):
@@ -110,6 +114,11 @@ class SetApiKeyRequest(BaseModel):
     api_key: str = Field(..., min_length=8)
     llm_provider: Optional[str] = Field(None, pattern=_PROVIDER_PATTERN)
     llm_effort: Optional[str] = Field(None, pattern=_EFFORT_PATTERN)
+
+class AddApiKeyRequest(BaseModel):
+    api_key: str = Field(..., min_length=8)
+    llm_provider: str = Field(..., pattern=_PROVIDER_PATTERN)
+    label: Optional[str] = Field(None, max_length=60)
 
 class AssignCreditsRequest(BaseModel):
     credits: int = Field(..., ge=0)

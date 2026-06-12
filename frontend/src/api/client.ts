@@ -12,6 +12,7 @@ import type {
   AdminAnalysis,
   CreditTransaction,
   ApiKeyStatus,
+  UserApiKey,
 } from '../types';
 
 // ============================================================
@@ -221,7 +222,7 @@ export async function getMe(): Promise<AuthUser> {
 
 /** Update the current user's display name and/or username */
 export async function updateProfile(
-  updates: { name?: string; username?: string }
+  updates: { name?: string; username?: string; llm_effort?: string }
 ): Promise<AuthUser> {
   const { data } = await apiClient.patch<AuthUser>('/auth/me/profile', updates);
   return data;
@@ -242,6 +243,37 @@ export async function addCredits(
 export async function getMyAnalyses(): Promise<HistoryItem[]> {
   const { data } = await apiClient.get<HistoryItem[]>('/auth/me/analyses');
   return data;
+}
+
+/** List the user's stored API keys (masked). */
+export async function listApiKeys(): Promise<UserApiKey[]> {
+  const { data } = await apiClient.get<UserApiKey[]>('/auth/me/api-keys');
+  return data;
+}
+
+/** Add another API key for a provider. */
+export async function addApiKeyEntry(
+  apiKey: string,
+  provider: string,
+  label?: string,
+): Promise<UserApiKey> {
+  const { data } = await apiClient.post<UserApiKey>('/auth/me/api-keys', {
+    api_key: apiKey,
+    llm_provider: provider,
+    ...(label ? { label } : {}),
+  });
+  return data;
+}
+
+/** Make one stored key the default for future runs. */
+export async function activateApiKey(keyId: string): Promise<UserApiKey> {
+  const { data } = await apiClient.put<UserApiKey>(`/auth/me/api-keys/${keyId}/activate`);
+  return data;
+}
+
+/** Delete one stored key. */
+export async function deleteApiKeyEntry(keyId: string): Promise<void> {
+  await apiClient.delete(`/auth/me/api-keys/${keyId}`);
 }
 
 /** Save the user's API key, optionally switching provider and effort level. */

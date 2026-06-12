@@ -116,12 +116,47 @@ async def init_db():
         except Exception:
             pass
 
-        # LLM provider + effort level chosen by the user
-        for col in ("llm_provider", "llm_effort"):
+        # LLM provider + effort level chosen by the user, and the pointer to
+        # their currently active API key.
+        for col in ("llm_provider", "llm_effort", "active_api_key_id"):
             try:
                 await db.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
             except Exception:
                 pass
+
+        # Multiple API keys per user (one per provider account they hold).
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_api_keys (
+                id           TEXT PRIMARY KEY,
+                user_id      TEXT NOT NULL REFERENCES users(id),
+                llm_provider TEXT NOT NULL,
+                key_enc      TEXT NOT NULL,
+                label        TEXT,
+                created_at   TEXT NOT NULL
+            )
+        """)
+
+        # One-time migration: move single-key accounts (legacy
+        # anthropic_api_key_enc column) into user_api_keys.
+        import uuid as _uuid
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT id, anthropic_api_key_enc, llm_provider FROM users "
+            "WHERE anthropic_api_key_enc IS NOT NULL"
+        )
+        for row in await cursor.fetchall():
+            key_id = _uuid.uuid4().hex
+            await db.execute(
+                """INSERT INTO user_api_keys (id, user_id, llm_provider, key_enc, label, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (key_id, row["id"], row["llm_provider"] or "anthropic",
+                 row["anthropic_api_key_enc"], None,
+                 datetime.now(timezone.utc).isoformat()),
+            )
+            await db.execute(
+                "UPDATE users SET active_api_key_id = ?, anthropic_api_key_enc = NULL WHERE id = ?",
+                (key_id, row["id"]),
+            )
 
         # Credit transactions table
         await db.execute("""
@@ -261,7 +296,7 @@ async def add_credits(user_id: str, amount: int):
 async def update_user(user_id: str, updates: dict):
     """Update arbitrary user fields (email, role, password_hash, username, name)."""
     allowed = {"email", "role", "password_hash", "credits", "username", "name",
-               "anthropic_api_key_enc", "llm_provider", "llm_effort"}
+               "anthropic_api_key_enc", "llm_provider", "llm_effort", "active_api_key_id"}
     cols = {k: v for k, v in updates.items() if k in allowed}
     if not cols:
         return
@@ -284,6 +319,47 @@ async def list_users() -> list:
         )
         rows = await cursor.fetchall()
         return [dict(r) for r in rows]
+
+
+# ============================================================
+# User API keys (multiple per user)
+# ============================================================
+
+async def add_user_api_key(user_id: str, llm_provider: str, key_enc: str, label: str | None = None) -> str:
+    import uuid as _uuid
+    key_id = _uuid.uuid4().hex
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute(
+            """INSERT INTO user_api_keys (id, user_id, llm_provider, key_enc, label, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (key_id, user_id, llm_provider, key_enc, label, datetime.now(timezone.utc).isoformat()),
+        )
+        await db.commit()
+    return key_id
+
+
+async def list_user_api_keys(user_id: str) -> list:
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT * FROM user_api_keys WHERE user_id = ? ORDER BY created_at ASC",
+            (user_id,),
+        )
+        return [dict(r) for r in await cursor.fetchall()]
+
+
+async def get_user_api_key(key_id: str) -> dict | None:
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("SELECT * FROM user_api_keys WHERE id = ?", (key_id,))
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+
+async def delete_user_api_key(key_id: str):
+    async with aiosqlite.connect(DATABASE_PATH) as db:
+        await db.execute("DELETE FROM user_api_keys WHERE id = ?", (key_id,))
+        await db.commit()
 
 
 # ============================================================
