@@ -16,7 +16,10 @@ FRONTEND_DIR = Path(__file__).parent.parent / "frontend" / "dist"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup — the database may live on a mounted persistent disk
+    # (e.g. /var/data on Render); create its directory if needed.
+    db_dir = os.path.dirname(os.path.abspath(settings.database_path))
+    os.makedirs(db_dir, exist_ok=True)
     await init_db()
     await ensure_admin_user()
     await recover_orphaned_jobs()

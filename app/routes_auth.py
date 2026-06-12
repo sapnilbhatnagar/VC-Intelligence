@@ -51,6 +51,8 @@ async def register(req: UserRegisterRequest):
     if api_key:
         await update_user(user_id, {"anthropic_api_key_enc": encrypt_secret(api_key)})
     await log_credit_transaction(user_id, 5, "signup_bonus", "Welcome credits on registration")
+    # Registration signs the user in, so it counts as their first sign-in.
+    await update_last_login(user_id)
     return TokenResponse(
         access_token=create_access_token(user_id, req.email, "user"),
         user_id=user_id, email=req.email, username=req.username,

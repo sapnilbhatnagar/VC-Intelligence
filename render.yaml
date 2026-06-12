@@ -5,10 +5,21 @@ services:
   - type: web
     name: vc-intelligence-api
     runtime: python
-    plan: free
+    # Persistent disks require at least the Starter plan. Without the disk,
+    # the SQLite database lives on an ephemeral filesystem and every deploy
+    # or restart wipes user accounts and analysis history.
+    plan: starter
     buildCommand: pip install -r requirements-backend.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    disk:
+      name: vc-intelligence-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
+      - key: DATABASE_PATH
+        value: /var/data/vc_due_diligence.db
+      - key: OUTPUTS_DIR
+        value: /var/data/outputs
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: TAVILY_API_KEY

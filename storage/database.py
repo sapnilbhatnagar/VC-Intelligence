@@ -393,6 +393,7 @@ async def get_admin_stats() -> dict:
         today = datetime.now(timezone.utc).date().isoformat()
         analyses_today = (await (await db.execute("SELECT COUNT(*) FROM analyses WHERE created_at LIKE ?", (f"{today}%",))).fetchone())[0]
         new_users_today = (await (await db.execute("SELECT COUNT(*) FROM users WHERE created_at LIKE ? AND role='user'", (f"{today}%",))).fetchone())[0]
+        logins_today = (await (await db.execute("SELECT COUNT(*) FROM users WHERE last_login_at LIKE ? AND role='user'", (f"{today}%",))).fetchone())[0]
         return {
             "total_users": total_users,
             "total_analyses": total_analyses,
@@ -404,6 +405,7 @@ async def get_admin_stats() -> dict:
             "users_low_credits": low_credits,
             "analyses_today": analyses_today,
             "new_users_today": new_users_today,
+            "logins_today": logins_today,
         }
 
 

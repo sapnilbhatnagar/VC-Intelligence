@@ -120,6 +120,7 @@ export interface AdminStats {
   users_low_credits: number;
   analyses_today: number;
   new_users_today: number;
+  logins_today?: number;
 }
 
 export interface AdminUser {

@@ -301,6 +301,11 @@ function OverviewTab({
     .sort((a, b) => new Date(b.last_login_at!).getTime() - new Date(a.last_login_at!).getTime())
     .slice(0, 8);
 
+  const recentRegistrations = [...users]
+    .filter(u => u.role === 'user')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 8);
+
   const lowCreditUsers = users.filter(u => u.role === 'user' && u.credits <= 2).slice(0, 8);
 
   return (
@@ -364,9 +369,27 @@ function OverviewTab({
         </Grid>
       </Grid>
 
-      {/* Pipeline status row */}
+      {/* Activity row */}
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
+          <StatCard
+            label="Sign-ins Today"
+            value={stats?.logins_today ?? 0}
+            icon={<People fontSize="small" />}
+            color={TOKENS.brand}
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={2.4}>
+          <StatCard
+            label="Analyses Today"
+            value={stats?.analyses_today ?? 0}
+            icon={<TrendingUp fontSize="small" />}
+            color={TOKENS.brand}
+            loading={statsLoading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             label="Running Now"
             value={stats?.running_analyses ?? 0}
@@ -375,7 +398,7 @@ function OverviewTab({
             loading={statsLoading}
           />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             label="Paused"
             value={stats?.paused_analyses ?? 0}
@@ -384,21 +407,12 @@ function OverviewTab({
             loading={statsLoading}
           />
         </Grid>
-        <Grid item xs={6} sm={3}>
+        <Grid item xs={6} sm={2.4}>
           <StatCard
             label="Failed"
             value={stats?.failed_analyses ?? 0}
             icon={<Error fontSize="small" />}
             color={TOKENS.error}
-            loading={statsLoading}
-          />
-        </Grid>
-        <Grid item xs={6} sm={3}>
-          <StatCard
-            label="Analyses Today"
-            value={stats?.analyses_today ?? 0}
-            icon={<TrendingUp fontSize="small" />}
-            color={TOKENS.brand}
             loading={statsLoading}
           />
         </Grid>
@@ -458,6 +472,68 @@ function OverviewTab({
                               size="small"
                               color={u.credits <= 2 ? 'error' : 'default'}
                             />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Recent Registrations */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ pb: '16px !important' }}>
+              <Typography variant="subtitle1" fontWeight={700} mb={2}>
+                Recent Registrations
+              </Typography>
+              {usersLoading ? (
+                [1, 2, 3].map(i => <Skeleton key={i} height={40} sx={{ mb: 1 }} />)
+              ) : recentRegistrations.length === 0 ? (
+                <Typography color="text.secondary" variant="body2">
+                  No registered users yet.
+                </Typography>
+              ) : (
+                <TableContainer>
+                  <Table size="small" aria-label="Recent registrations">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          User
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Registered
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                          Last Seen
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentRegistrations.map(u => (
+                        <TableRow key={u.id} hover>
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body2" fontWeight={500}>{u.email}</Typography>
+                              {u.name && (
+                                <Typography variant="caption" color="text.secondary">{u.name}</Typography>
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Tooltip title={fmtDate(u.created_at)}>
+                              <Typography variant="body2" color="text.secondary">
+                                {timeAgo(u.created_at)}
+                              </Typography>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {timeAgo(u.last_login_at)}
+                            </Typography>
                           </TableCell>
                         </TableRow>
                       ))}
