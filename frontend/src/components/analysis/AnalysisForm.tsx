@@ -67,7 +67,7 @@ function ModeCard({ mode, selected, onClick }: ModeCardProps) {
         border: selected ? '1.5px solid' : '1px solid',
         borderColor: selected ? 'primary.main' : 'divider',
         backgroundColor: selected ? (t) => alpha(t.palette.primary.main, 0.05) : 'background.paper',
-        boxShadow: selected ? '0 8px 22px rgba(14,14,82,0.16)' : '0 1px 2px rgba(19,33,27,0.05)',
+        boxShadow: selected ? '0 8px 22px rgba(29,78,216,0.16)' : '0 1px 2px rgba(22,27,34,0.05)',
         transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
         '&:hover': {
           borderColor: selected ? 'primary.main' : (t) => alpha(t.palette.text.primary, 0.22),

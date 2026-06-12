@@ -2,72 +2,74 @@ import { createTheme, alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 
 // ============================================================
-// VC Intelligence — single light theme.
+// VC Intelligence — "institutional daylight" design system.
 //
-// Mint canvas, white rounded Apple-style tiles, a deep navy
-// (#0E0E52) primary for actions + futuristic dark feature cards,
-// and green (#1C7C54) for completed / positive data. Color stays
-// purposeful: navy marks action + active state; the BUY / HOLD /
-// PASS verdicts keep their own data scale.
+// One light theme for a due-diligence desk: cool-gray canvas,
+// white tiles with hairline borders and soft diffuse shadows
+// (Apple-style structure), one deep cobalt accent for actions
+// and active state, and a disciplined green/amber/red data
+// vocabulary reserved for verdicts and risk (Google-style color
+// discipline). Typography: Hanken Grotesk for UI and display,
+// JetBrains Mono for figures.
 //
 // Token values are verified for WCAG AA contrast (see theme.test.ts).
 // ============================================================
 
 export const SANS =
-  "'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-export const MONO = "'Geist Mono', 'JetBrains Mono', ui-monospace, 'SF Mono', monospace";
+  "'Hanken Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+export const MONO = "'JetBrains Mono', ui-monospace, 'SF Mono', monospace";
 
 // ── Design tokens ────────────────────────────────────────────
 export const TOKENS = {
-  // Deep navy — primary actions, active state, brand mark, dark feature cards.
-  brand: '#0E0E52',
-  brandHover: '#1B1B73',
-  brandPressed: '#090936',
-  brandText: '#0E0E52', // navy reads near-black on light: very high contrast
-  onBrand: '#FFFFFF', // white text on a navy fill
-  brandSoft: 'rgba(14,14,82,0.08)', // tint for selected rows / soft chips
-  brandSoftBorder: 'rgba(14,14,82,0.22)',
+  // Deep cobalt — primary actions, active state, links, focus.
+  brand: '#1D4ED8',
+  brandHover: '#2563EB',
+  brandPressed: '#1740B3',
+  brandText: '#1D4ED8', // AA on white (6.4:1)
+  onBrand: '#FFFFFF',
+  brandSoft: 'rgba(29,78,216,0.08)', // tint for selected rows / soft chips
+  brandSoftBorder: 'rgba(29,78,216,0.24)',
 
-  // Mint-tinted neutral surfaces.
-  canvas: '#E8F7EE', // app background (mint)
-  canvasSubtle: '#DEF1E6',
+  // Cool neutral surfaces.
+  canvas: '#F4F6F8', // app background
+  canvasSubtle: '#EDF0F4',
   surface: '#FFFFFF', // tiles, cards
-  surfaceAlt: '#F2FBF6', // second neutral layer: sidebars, toolbars
-  surfaceHover: '#EAF6EF',
-  border: '#D2E9DB', // mint-tinted hairline
-  borderStrong: '#BBDCC8',
+  surfaceAlt: '#F9FAFB', // second neutral layer: rail, toolbars
+  surfaceHover: '#F1F4F7',
+  border: '#E5E8ED', // hairline
+  borderStrong: '#D3D9E0', // inputs, stronger dividers
 
   // Ink.
-  textPrimary: '#13211B', // near-black, faint green
-  textSecondary: '#566B60',
-  textDisabled: '#8AA197',
+  textPrimary: '#161B22',
+  textSecondary: '#57606C',
+  textDisabled: '#8B95A1',
 
-  // Semantic data vocabulary.
-  success: '#1C7C54', // green (completed / positive)
-  warning: '#B7791F',
-  error: '#C0413E',
-  info: '#0E0E52', // navy (neutral/brand data)
+  // Semantic data vocabulary (verdicts, risk, status — not the brand).
+  success: '#188038',
+  warning: '#A05E00',
+  error: '#C5221F',
+  info: '#1D4ED8',
 
   radius: 14,
 } as const;
 
-// ── Recommendation chips: accessible bg + text pairs (≥4.5:1) ──
+// ── Recommendation chips: accessible bg + text pairs (>= 4.5:1) ──
 export const RECOMMENDATION_COLORS: Record<string, { bg: string; text: string }> = {
-  'STRONG BUY': { bg: '#13603F', text: '#FFFFFF' },
-  BUY: { bg: '#1C7C54', text: '#FFFFFF' },
-  HOLD: { bg: '#B7791F', text: '#1C1A17' },
-  PASS: { bg: '#C0413E', text: '#FFFFFF' },
-  'STRONG PASS': { bg: '#8C2F2C', text: '#FFFFFF' },
+  'STRONG BUY': { bg: '#0D5C36', text: '#FFFFFF' },
+  BUY: { bg: '#188038', text: '#FFFFFF' },
+  HOLD: { bg: '#B7791F', text: '#15191E' },
+  PASS: { bg: '#C5221F', text: '#FFFFFF' },
+  'STRONG PASS': { bg: '#8C1D18', text: '#FFFFFF' },
 };
 
 // ── Financial scenario chart series ──────────────────────────
 export const CHART_COLORS = {
-  bear: '#C0413E', // red
-  base: '#0E0E52', // navy — ties to the brand, distinct from bear/bull
-  bull: '#1C7C54', // green
-  grid: 'rgba(19,33,27,0.08)', // light-theme gridlines
-  axis: '#8AA197',
-  band: 'rgba(14,14,82,0.08)', // navy-tinted confidence band
+  bear: '#C5221F', // red
+  base: '#1D4ED8', // cobalt — ties to the brand, distinct from bear/bull
+  bull: '#188038', // green
+  grid: 'rgba(22,27,34,0.08)',
+  axis: '#8B95A1',
+  band: 'rgba(29,78,216,0.08)', // cobalt-tinted confidence band
 } as const;
 
 // ── Risk score (1–10) → semantic color + label ───────────────
@@ -87,7 +89,7 @@ export const SEVERITY_COLORS: Record<string, string> = {
   Low: TOKENS.success,
   Medium: TOKENS.warning,
   High: TOKENS.error,
-  Critical: '#8C2F2C',
+  Critical: '#8C1D18',
 };
 
 // ============================================================
@@ -97,10 +99,10 @@ export function createAppTheme(): Theme {
   const C = TOKENS;
 
   // Apple-style soft shadows: low-spread, layered, cool-ink tint.
-  const s1 = '0 1px 2px rgba(19,33,27,0.04), 0 1px 3px rgba(19,33,27,0.05)';
-  const s2 = '0 2px 6px rgba(19,33,27,0.05), 0 6px 16px rgba(19,33,27,0.06)';
-  const s3 = '0 10px 30px rgba(19,33,27,0.08), 0 2px 8px rgba(19,33,27,0.05)';
-  const s4 = '0 20px 56px rgba(14,14,52,0.14), 0 6px 16px rgba(19,33,27,0.07)';
+  const s1 = '0 1px 2px rgba(22,27,34,0.04), 0 1px 3px rgba(22,27,34,0.05)';
+  const s2 = '0 2px 6px rgba(22,27,34,0.05), 0 6px 16px rgba(22,27,34,0.06)';
+  const s3 = '0 10px 30px rgba(22,27,34,0.08), 0 2px 8px rgba(22,27,34,0.05)';
+  const s4 = '0 20px 56px rgba(22,27,34,0.14), 0 6px 16px rgba(22,27,34,0.07)';
   const shadows = [
     'none', s1, s1, s2, s2, s2, s3, s3, s3, s3,
     s3, s3, s4, s4, s4, s4, s4, s4, s4, s4,
@@ -114,7 +116,7 @@ export function createAppTheme(): Theme {
       secondary: { main: C.success, contrastText: '#FFFFFF' },
       info: { main: C.info, contrastText: '#FFFFFF' },
       success: { main: C.success, contrastText: '#FFFFFF' },
-      warning: { main: C.warning, contrastText: '#1C1A17' },
+      warning: { main: C.warning, contrastText: '#FFFFFF' },
       error: { main: C.error, contrastText: '#FFFFFF' },
       background: { default: C.canvas, paper: C.surface },
       text: { primary: C.textPrimary, secondary: C.textSecondary, disabled: C.textDisabled },
@@ -126,24 +128,24 @@ export function createAppTheme(): Theme {
       fontWeightLight: 400,
       fontWeightRegular: 450,
       fontWeightMedium: 550,
-      fontWeightBold: 650,
-      h1: { fontSize: '1.875rem', fontWeight: 700, letterSpacing: '-0.022em', lineHeight: 1.12, color: C.textPrimary },
-      h2: { fontSize: '1.5rem', fontWeight: 680, letterSpacing: '-0.02em', lineHeight: 1.18, color: C.textPrimary },
-      h3: { fontSize: '1.25rem', fontWeight: 660, letterSpacing: '-0.015em', lineHeight: 1.22 },
-      h4: { fontSize: '1.0625rem', fontWeight: 640, letterSpacing: '-0.01em' },
-      h5: { fontSize: '0.9375rem', fontWeight: 600 },
-      h6: { fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.02em', color: C.textSecondary },
+      fontWeightBold: 700,
+      h1: { fontSize: '1.875rem', fontWeight: 750, letterSpacing: '-0.022em', lineHeight: 1.12, color: C.textPrimary },
+      h2: { fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.18, color: C.textPrimary },
+      h3: { fontSize: '1.25rem', fontWeight: 680, letterSpacing: '-0.015em', lineHeight: 1.22 },
+      h4: { fontSize: '1.0625rem', fontWeight: 660, letterSpacing: '-0.01em' },
+      h5: { fontSize: '0.9375rem', fontWeight: 620 },
+      h6: { fontSize: '0.8125rem', fontWeight: 620, letterSpacing: '0.02em', color: C.textSecondary },
       body1: { fontSize: '0.9375rem', lineHeight: 1.6 },
       body2: { fontSize: '0.8125rem', lineHeight: 1.55, color: C.textSecondary },
       caption: { fontSize: '0.75rem', color: C.textSecondary, letterSpacing: '0.005em' },
       overline: {
         fontSize: '0.6875rem',
-        fontWeight: 600,
+        fontWeight: 650,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
         color: C.textSecondary,
       },
-      button: { fontWeight: 600, letterSpacing: '0.005em', textTransform: 'none' },
+      button: { fontWeight: 620, letterSpacing: '0.005em', textTransform: 'none' },
     },
 
     shape: { borderRadius: C.radius },
@@ -162,7 +164,7 @@ export function createAppTheme(): Theme {
             border: '2px solid transparent',
             backgroundClip: 'padding-box',
           },
-          '*::-webkit-scrollbar-thumb:hover': { background: '#A8CFB8' },
+          '*::-webkit-scrollbar-thumb:hover': { background: '#BCC5CF' },
         },
       },
 
@@ -170,10 +172,10 @@ export function createAppTheme(): Theme {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 11,
+            borderRadius: 10,
             padding: '8px 18px',
             fontSize: '0.875rem',
-            fontWeight: 600,
+            fontWeight: 620,
             transition: 'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
           },
           containedPrimary: {
@@ -182,13 +184,13 @@ export function createAppTheme(): Theme {
             boxShadow: 'none',
             '&:hover': {
               backgroundColor: C.brandHover,
-              boxShadow: '0 6px 18px rgba(14,14,82,0.28)',
+              boxShadow: '0 6px 18px rgba(29,78,216,0.28)',
               transform: 'translateY(-1px)',
             },
             '&:active': { backgroundColor: C.brandPressed, transform: 'translateY(0)' },
           },
           containedSuccess: {
-            '&:hover': { boxShadow: '0 6px 18px rgba(28,124,84,0.28)', transform: 'translateY(-1px)' },
+            '&:hover': { boxShadow: '0 6px 18px rgba(24,128,56,0.28)', transform: 'translateY(-1px)' },
           },
           outlined: {
             borderColor: C.borderStrong,
@@ -206,7 +208,7 @@ export function createAppTheme(): Theme {
             backgroundColor: C.surface,
             backgroundImage: 'none',
             border: `1px solid ${C.border}`,
-            borderRadius: 18,
+            borderRadius: 16,
             boxShadow: s1,
             transition: 'border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
           },
@@ -226,9 +228,9 @@ export function createAppTheme(): Theme {
         styleOverrides: {
           root: {
             backgroundColor: C.surface,
-            borderRadius: 11,
+            borderRadius: 10,
             '& fieldset': { borderColor: C.borderStrong },
-            '&:hover fieldset': { borderColor: '#A8CFB8' },
+            '&:hover fieldset': { borderColor: '#AEB8C4' },
             '&.Mui-focused fieldset': { borderColor: C.brand, borderWidth: 1.5 },
           },
         },
@@ -236,7 +238,7 @@ export function createAppTheme(): Theme {
 
       MuiChip: {
         styleOverrides: {
-          root: { fontWeight: 600, fontSize: '0.72rem', letterSpacing: '0.01em', borderRadius: 8 },
+          root: { fontWeight: 620, fontSize: '0.72rem', letterSpacing: '0.01em', borderRadius: 8 },
           outlined: { borderColor: C.borderStrong },
         },
       },
@@ -251,7 +253,7 @@ export function createAppTheme(): Theme {
         defaultProps: { elevation: 0, color: 'inherit' },
         styleOverrides: {
           root: {
-            backgroundColor: alpha(C.surface, 0.82),
+            backgroundColor: alpha(C.surface, 0.85),
             backgroundImage: 'none',
             color: C.textPrimary,
             borderBottom: `1px solid ${C.border}`,
@@ -273,7 +275,7 @@ export function createAppTheme(): Theme {
       MuiTab: {
         styleOverrides: {
           root: {
-            fontWeight: 600,
+            fontWeight: 620,
             fontSize: '0.8125rem',
             letterSpacing: '0.005em',
             textTransform: 'none',
@@ -290,15 +292,15 @@ export function createAppTheme(): Theme {
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            borderRadius: 11,
+            borderRadius: 10,
             margin: '2px 8px',
             padding: '9px 12px',
             transition: 'background-color 0.15s ease, color 0.15s ease',
             '&.Mui-selected': {
               backgroundColor: C.brandSoft,
               color: C.brandText,
-              fontWeight: 600,
-              '&:hover': { backgroundColor: 'rgba(14,14,82,0.14)' },
+              fontWeight: 620,
+              '&:hover': { backgroundColor: 'rgba(29,78,216,0.14)' },
               '& .MuiListItemIcon-root': { color: C.brandText },
             },
             '&:hover': { backgroundColor: alpha(C.textPrimary, 0.04) },
@@ -325,10 +327,10 @@ export function createAppTheme(): Theme {
       MuiAlert: {
         styleOverrides: {
           root: { borderRadius: 12, border: '1px solid', fontSize: '0.8125rem' },
-          standardError: { borderColor: alpha(C.error, 0.3), backgroundColor: alpha(C.error, 0.07), color: '#7C2A28' },
-          standardSuccess: { borderColor: alpha(C.success, 0.3), backgroundColor: alpha(C.success, 0.08), color: '#13543A' },
-          standardWarning: { borderColor: alpha(C.warning, 0.3), backgroundColor: alpha(C.warning, 0.08), color: '#7A5210' },
-          standardInfo: { borderColor: alpha(C.info, 0.3), backgroundColor: alpha(C.info, 0.08), color: C.brand },
+          standardError: { borderColor: alpha(C.error, 0.3), backgroundColor: alpha(C.error, 0.06), color: '#7E1714' },
+          standardSuccess: { borderColor: alpha(C.success, 0.3), backgroundColor: alpha(C.success, 0.07), color: '#0D5C36' },
+          standardWarning: { borderColor: alpha(C.warning, 0.3), backgroundColor: alpha(C.warning, 0.08), color: '#6E4100' },
+          standardInfo: { borderColor: alpha(C.info, 0.3), backgroundColor: alpha(C.info, 0.07), color: C.brandPressed },
         },
       },
 
@@ -337,16 +339,26 @@ export function createAppTheme(): Theme {
           root: {
             borderColor: C.borderStrong,
             color: C.textSecondary,
-            fontWeight: 600,
+            fontWeight: 620,
             fontSize: '0.75rem',
             textTransform: 'none',
             '&.Mui-selected': {
               backgroundColor: C.brandSoft,
               color: C.brandText,
               borderColor: C.brandSoftBorder,
-              '&:hover': { backgroundColor: 'rgba(14,14,82,0.14)' },
+              '&:hover': { backgroundColor: 'rgba(29,78,216,0.14)' },
             },
             '&:hover': { backgroundColor: alpha(C.textPrimary, 0.04) },
+          },
+        },
+      },
+
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 18,
+            border: `1px solid ${C.border}`,
+            boxShadow: s4,
           },
         },
       },

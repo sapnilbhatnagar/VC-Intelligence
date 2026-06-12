@@ -43,7 +43,7 @@ function fmtDate(iso: string | null | undefined): string {
 
 const STATUS_COLORS: Record<string, string> = {
   completed: TOKENS.success, running: TOKENS.info, paused: TOKENS.warning,
-  failed: TOKENS.error, pending: '#9A9388',
+  failed: TOKENS.error, pending: '#8B95A1',
 };
 
 const REC_COLORS: Record<string, string> = {
@@ -816,8 +816,8 @@ function AnalysesTab({
                       label={a.status}
                       size="small"
                       sx={{
-                        bgcolor: `${STATUS_COLORS[a.status] || '#6B7280'}20`,
-                        color: STATUS_COLORS[a.status] || '#6B7280',
+                        bgcolor: `${STATUS_COLORS[a.status] || '#8B95A1'}20`,
+                        color: STATUS_COLORS[a.status] || '#8B95A1',
                         fontWeight: 600,
                       }}
                     />
@@ -828,8 +828,8 @@ function AnalysesTab({
                         label={a.recommendation}
                         size="small"
                         sx={{
-                          bgcolor: `${REC_COLORS[a.recommendation] || '#6B7280'}20`,
-                          color: REC_COLORS[a.recommendation] || '#6B7280',
+                          bgcolor: `${REC_COLORS[a.recommendation] || '#8B95A1'}20`,
+                          color: REC_COLORS[a.recommendation] || '#8B95A1',
                           fontWeight: 600,
                           fontSize: '0.65rem',
                         }}
@@ -980,8 +980,8 @@ function CreditActivityTab({
                       label={tx.type.replace(/_/g, ' ')}
                       size="small"
                       sx={{
-                        bgcolor: `${TX_COLORS[tx.type] || '#6B7280'}20`,
-                        color: TX_COLORS[tx.type] || '#6B7280',
+                        bgcolor: `${TX_COLORS[tx.type] || '#8B95A1'}20`,
+                        color: TX_COLORS[tx.type] || '#8B95A1',
                         fontWeight: 600,
                         textTransform: 'capitalize',
                       }}

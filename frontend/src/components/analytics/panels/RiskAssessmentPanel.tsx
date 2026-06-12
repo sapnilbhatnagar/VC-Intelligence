@@ -259,7 +259,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
                       px: 0.75,
                       py: 0.25,
                       borderRadius: 0.75,
-                      backgroundColor: active ? alpha(bandColor, 0.15) : alpha('#1C1A17', 0.04),
+                      backgroundColor: active ? alpha(bandColor, 0.15) : alpha('#161B22', 0.04),
                       border: '1px solid',
                       borderColor: active ? bandColor : 'transparent',
                     }}
@@ -447,7 +447,7 @@ function RiskAssessmentPanel({ text, riskScore }: RiskAssessmentPanelProps) {
                 borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
-                backgroundColor: alpha('#1C1A17', 0.02),
+                backgroundColor: alpha('#161B22', 0.02),
                 maxHeight: 400,
                 overflow: 'auto',
               }}

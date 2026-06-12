@@ -8,9 +8,14 @@ import {
   riskColor,
 } from './theme';
 
-// Colors the product has deliberately retired: emerald + electric blue.
-// Used across these tests to guarantee the new identity replaced the old one.
-const BANNED = ['#10B981', '#0E7C5A', '#06120D', '#5B9DF9', '#2BE0A0', '#0FBF85', '#ECFDF5'];
+// Brand colors the product has retired across its past identities:
+// emerald/electric-blue, warm orange paper, and navy/mint. The new
+// "institutional daylight" system must contain none of them.
+const BANNED = [
+  '#10B981', '#0E7C5A', '#06120D', '#5B9DF9', '#2BE0A0', '#0FBF85', '#ECFDF5', // emerald + electric blue
+  '#FA7000', '#FF8A2E', '#B5530E', '#F7F6F2', // orange paper era
+  '#0E0E52', '#1B1B73', '#E8F7EE', '#D2E9DB', '#1C7C54', // navy / mint era
+];
 
 function relativeLuminance(hex: string): number {
   const m = hex.replace('#', '');
@@ -37,18 +42,26 @@ describe('design system: single light theme', () => {
     expect(createAppTheme().palette.mode).toBe('light');
   });
 
-  it('uses the #0E0E52 navy as the primary accent', () => {
-    expect(theme.palette.primary.main.toUpperCase()).toBe('#0E0E52');
+  it('uses the cobalt #1D4ED8 as the primary accent', () => {
+    expect(theme.palette.primary.main.toUpperCase()).toBe('#1D4ED8');
   });
 
-  it('renders on a light mint canvas, not a dark background', () => {
-    // Light backgrounds have high luminance; the old dark theme was ~0.01.
-    expect(relativeLuminance(theme.palette.background.default)).toBeGreaterThan(0.8);
+  it('keeps white text on the primary action AA-readable (>= 4.5:1)', () => {
+    expect(contrast('#FFFFFF', theme.palette.primary.main)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('renders on a light cool-gray canvas with white tiles', () => {
+    expect(relativeLuminance(theme.palette.background.default)).toBeGreaterThan(0.85);
     expect(theme.palette.background.paper.toUpperCase()).toBe('#FFFFFF');
+  });
+
+  it('keeps body ink AA-readable on canvas and tiles', () => {
+    expect(contrast(TOKENS.textPrimary, TOKENS.canvas)).toBeGreaterThanOrEqual(7);
+    expect(contrast(TOKENS.textSecondary, TOKENS.surface)).toBeGreaterThanOrEqual(4.5);
   });
 });
 
-describe('design system: retired the emerald + blue identity', () => {
+describe('design system: retired identities stay retired', () => {
   it('contains none of the banned brand colors in its tokens', () => {
     const serialized = JSON.stringify(TOKENS).toUpperCase();
     for (const c of BANNED) expect(serialized).not.toContain(c.toUpperCase());
@@ -59,11 +72,11 @@ describe('design system: retired the emerald + blue identity', () => {
     for (const c of BANNED) expect(serialized).not.toContain(c.toUpperCase());
   });
 
-  it('never uses electric blue for financial chart series', () => {
+  it('keeps banned colors out of the chart vocabulary', () => {
     const series = [CHART_COLORS.bear, CHART_COLORS.base, CHART_COLORS.bull].map((c) =>
       c.toUpperCase(),
     );
-    expect(series).not.toContain('#5B9DF9');
+    for (const c of BANNED) expect(series).not.toContain(c.toUpperCase());
   });
 });
 
@@ -91,5 +104,11 @@ describe('design system: risk score color scale', () => {
     expect(riskColor(2)).toBe(theme.palette.success.main);
     expect(riskColor(5)).toBe(theme.palette.warning.main);
     expect(riskColor(9)).toBe(theme.palette.error.main);
+  });
+
+  it('risk colors stay AA-readable as data text on white tiles', () => {
+    expect(contrast(riskColor(2), '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(riskColor(5), '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(riskColor(9), '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
   });
 });
