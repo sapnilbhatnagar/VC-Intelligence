@@ -136,13 +136,16 @@ export async function completeRemaining(
 // ============================================================
 
 /** Register a new account — returns tokens + user info.
- *  An optional Claude API key enables unlimited, self-billed runs from day one. */
+ *  Provider + API key are mandatory: every analysis runs on the user's own
+ *  provider account (or the platform's, via the admin passphrase). */
 export async function register(
   email: string,
   password: string,
-  username?: string,
-  name?: string,
-  apiKey?: string,
+  username: string | undefined,
+  name: string | undefined,
+  apiKey: string,
+  provider: string,
+  effort: string,
 ): Promise<AuthLoginResponse> {
   const { data } = await apiClient.post<AuthLoginResponse>(
     '/auth/register',
@@ -151,7 +154,9 @@ export async function register(
       password,
       ...(username ? { username } : {}),
       ...(name ? { name } : {}),
-      ...(apiKey ? { api_key: apiKey } : {}),
+      api_key: apiKey,
+      llm_provider: provider,
+      llm_effort: effort,
     },
     { timeout: AUTH_TIMEOUT },
   );
@@ -211,9 +216,17 @@ export async function getMyAnalyses(): Promise<HistoryItem[]> {
   return data;
 }
 
-/** Save the user's own Claude API key (enables unlimited, self-billed runs) */
-export async function saveApiKey(apiKey: string): Promise<ApiKeyStatus> {
-  const { data } = await apiClient.put<ApiKeyStatus>('/auth/me/api-key', { api_key: apiKey });
+/** Save the user's API key, optionally switching provider and effort level. */
+export async function saveApiKey(
+  apiKey: string,
+  provider?: string,
+  effort?: string,
+): Promise<ApiKeyStatus> {
+  const { data } = await apiClient.put<ApiKeyStatus>('/auth/me/api-key', {
+    api_key: apiKey,
+    ...(provider ? { llm_provider: provider } : {}),
+    ...(effort ? { llm_effort: effort } : {}),
+  });
   return data;
 }
 

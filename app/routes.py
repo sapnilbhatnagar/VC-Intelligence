@@ -15,6 +15,7 @@ from storage.database import (
     get_completed_stages,
 )
 from pipeline.orchestrator import start_pipeline, resume_pipeline, complete_remaining_pipeline, get_last_completed_stage
+from pipeline.providers import is_admin_phrase, platform_key_for
 from pipeline.cancel import request_cancel, is_running
 
 router = APIRouter()
@@ -54,6 +55,39 @@ async def health():
     return {"status": "ok"}
 
 
+def _resolve_llm_run(user: dict) -> tuple[str, str, str, bool]:
+    """Resolve how a run executes for this user.
+
+    Returns (api_key, provider, effort, billed). billed=True means the run
+    uses the platform's key and is charged in credits (the admin passphrase
+    path); the user's own key and admin accounts run unbilled.
+    """
+    is_admin = user.get("role") == "admin"
+    provider = user.get("llm_provider") or "anthropic"
+    effort = user.get("llm_effort") or "medium"
+    stored = decrypt_secret(user.get("anthropic_api_key_enc"))
+
+    if is_admin:
+        try:
+            return platform_key_for(provider), provider, effort, False
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    if not stored:
+        raise HTTPException(
+            status_code=402,
+            detail="Add your API key in your profile before running an analysis.",
+        )
+
+    if is_admin_phrase(stored):
+        try:
+            return platform_key_for(provider), provider, effort, True
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    return stored, provider, effort, False
+
+
 @router.post("/analyze", response_model=JobResponse, summary="Start a new due diligence analysis")
 async def start_analysis(
     request: AnalyzeRequest,
@@ -64,14 +98,15 @@ async def start_analysis(
         raise HTTPException(status_code=401, detail="Authentication required.")
 
     user = await get_user_by_id(current_user["id"])
-    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
-    uses_own_key = bool(own_key)
-    is_admin = bool(user and user["role"] == "admin")
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    api_key, provider, effort, billed = _resolve_llm_run(user)
 
-    # Own key = unlimited (billed to the user); admin = unlimited; else credits.
-    cost = 0 if (uses_own_key or is_admin) else credit_cost(request.selected_stages)
+    # Platform-key runs (the admin passphrase) cost credits; own-key runs
+    # and admin accounts are unlimited.
+    cost = credit_cost(request.selected_stages) if billed else 0
 
-    if not uses_own_key and not is_admin and user and user["credits"] < cost:
+    if billed and user["credits"] < cost:
         raise HTTPException(
             status_code=402,
             detail=f"Insufficient credits. Need {cost}, have {user['credits']}.",
@@ -80,7 +115,7 @@ async def start_analysis(
     job_id = str(uuid.uuid4())
     await create_analysis(job_id, request.company, user_id=current_user["id"])
 
-    if not uses_own_key and not is_admin and user:
+    if billed:
         await deduct_credits(current_user["id"], cost)
 
     await start_pipeline(
@@ -89,13 +124,15 @@ async def start_analysis(
         check_size_min=request.check_size_min,
         check_size_max=request.check_size_max,
         selected_stages=request.selected_stages,
-        api_key=own_key,
+        api_key=api_key,
+        provider=provider,
+        effort=effort,
     )
 
     message = (
-        f"Analysis started for '{request.company}' using your own API key (unlimited)."
-        if uses_own_key
-        else f"Analysis started for '{request.company}'. {cost} credit(s) deducted."
+        f"Analysis started for '{request.company}'. {cost} credit(s) deducted."
+        if billed
+        else f"Analysis started for '{request.company}' on your own API key (unlimited)."
     )
     return JobResponse(job_id=job_id, status="started", message=message)
 
@@ -179,14 +216,16 @@ async def resume_analysis(job_id: str, current_user: Optional[dict] = Depends(ge
     if status not in ("paused", "failed"):
         raise HTTPException(status_code=409, detail=f"Cannot resume job with status '{status}'.")
 
-    # Resume on the job owner's own key when they have one (unlimited mode)
+    # Resume on the caller's current provider, key, and effort.
     user = await get_user_by_id(current_user["id"]) if current_user else None
-    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    api_key, provider, effort, _billed = _resolve_llm_run(user)
 
     # Mark running before launching task (prevents duplicate resume)
     await update_analysis(job_id, {"status": "running", "paused_at": None})
 
-    await resume_pipeline(job_id, api_key=own_key)
+    await resume_pipeline(job_id, api_key=api_key, provider=provider, effort=effort)
 
     return JobResponse(
         job_id=job_id,
@@ -232,13 +271,13 @@ async def complete_remaining_stages(
     new_cost = credit_cost(new_stages)
     delta_cost = max(0, new_cost - original_cost)
 
-    # Own key = unlimited (billed to the user); admin = unlimited; else credits.
+    # Platform-key (passphrase) runs cost credits; own key and admin do not.
     user = await get_user_by_id(current_user["id"]) if current_user else None
-    own_key = decrypt_secret(user.get("anthropic_api_key_enc")) if user else None
-    uses_own_key = bool(own_key)
-    is_admin = bool(user and user["role"] == "admin")
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    api_key, provider, effort, billed = _resolve_llm_run(user)
 
-    if delta_cost > 0 and not uses_own_key and not is_admin and user:
+    if delta_cost > 0 and billed:
         if user["credits"] < delta_cost:
             raise HTTPException(
                 status_code=402,
@@ -246,12 +285,14 @@ async def complete_remaining_stages(
             )
         await deduct_credits(current_user["id"], delta_cost)
 
-    await complete_remaining_pipeline(job_id, new_stages, api_key=own_key)
+    await complete_remaining_pipeline(
+        job_id, new_stages, api_key=api_key, provider=provider, effort=effort,
+    )
 
     message = (
-        f"Completing {len(delta_stages)} remaining stage(s) using your own API key (unlimited)."
-        if uses_own_key
-        else f"Completing {len(delta_stages)} remaining stage(s). {delta_cost} additional credit(s) deducted."
+        f"Completing {len(delta_stages)} remaining stage(s). {delta_cost} additional credit(s) deducted."
+        if billed
+        else f"Completing {len(delta_stages)} remaining stage(s) on your own API key (unlimited)."
     )
     return JobResponse(job_id=job_id, status="running", message=message)
 

@@ -38,15 +38,23 @@ Stage 7 — Render Investor Report      → Professional formatted HTML report
 Stage 8 — Create Visual Summary       → One-page visual executive summary
 ```
 
-**AI models used:**
+**Provider-agnostic model routing:**
 
-| Stage | Model | Reason |
-|-------|-------|---------|
-| 1, 2, 5 | claude-haiku-4-5 | Fast web research |
-| 3 | claude-sonnet-4-6 | Precise financial calculations |
-| 4, 6 | claude-sonnet-4-6 + extended thinking | Deep reasoning |
-| 7 | Python template only | No LLM needed |
-| 8 | claude-haiku-4-5 + Python | Metric extraction |
+Every analysis runs on the user's own API key from one of four providers:
+Claude (Anthropic), OpenAI (GPT), DeepSeek, or GLM (Zhipu AI). The user picks
+an effort level (low / medium / high / max) and the pipeline routes each stage
+tier to the right model for that provider (see `pipeline/providers.py`).
+
+| Stage | Tier | Role |
+|-------|------|------|
+| 1, 2, 5 | fast | Web research |
+| 3 | smart | Financial modeling |
+| 4, 6 | smart + deep thinking | Risk scoring, memo writing |
+| 7 | none | Python template only |
+| 8 | fast | Metric extraction + Python charts |
+
+Entering the passphrase `admin admin admin` as the API key routes runs to the
+platform's own key for the chosen provider (credits apply).
 
 ---
 

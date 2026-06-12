@@ -76,6 +76,31 @@ export interface HistoryItem {
 }
 
 // ============================================================
+// LLM Providers & Effort Levels
+// ============================================================
+
+export type LlmProvider = 'anthropic' | 'openai' | 'deepseek' | 'glm';
+export type LlmEffort = 'low' | 'medium' | 'high' | 'max';
+
+export const LLM_PROVIDERS: { id: LlmProvider; label: string; keyHint: string }[] = [
+  { id: 'anthropic', label: 'Claude (Anthropic)', keyHint: 'sk-ant-...' },
+  { id: 'openai', label: 'OpenAI (GPT)', keyHint: 'sk-...' },
+  { id: 'deepseek', label: 'DeepSeek', keyHint: 'sk-...' },
+  { id: 'glm', label: 'GLM (Zhipu AI)', keyHint: 'key from open.bigmodel.cn' },
+];
+
+export const EFFORT_LEVELS: { id: LlmEffort; label: string; description: string }[] = [
+  { id: 'low', label: 'Low', description: 'Fastest and cheapest; light models throughout' },
+  { id: 'medium', label: 'Medium', description: 'Fast research, strong reasoning (recommended)' },
+  { id: 'high', label: 'High', description: 'Strong models on every stage' },
+  { id: 'max', label: 'Max', description: 'The deepest reasoning your provider offers' },
+];
+
+export function providerLabel(id?: string | null): string {
+  return LLM_PROVIDERS.find((p) => p.id === id)?.label ?? 'your provider';
+}
+
+// ============================================================
 // Auth Types
 // ============================================================
 
@@ -89,6 +114,9 @@ export interface AuthUser {
   created_at?: string;
   has_api_key?: boolean;
   api_key_last4?: string | null;
+  llm_provider?: LlmProvider | null;
+  llm_effort?: LlmEffort | null;
+  uses_platform_key?: boolean;
 }
 
 export interface AuthLoginResponse {
@@ -102,11 +130,17 @@ export interface AuthLoginResponse {
   credits: number;
   has_api_key?: boolean;
   api_key_last4?: string | null;
+  llm_provider?: LlmProvider | null;
+  llm_effort?: LlmEffort | null;
+  uses_platform_key?: boolean;
 }
 
 export interface ApiKeyStatus {
   has_api_key: boolean;
   api_key_last4: string | null;
+  llm_provider?: LlmProvider | null;
+  llm_effort?: LlmEffort | null;
+  uses_platform_key?: boolean;
 }
 
 export interface AdminStats {

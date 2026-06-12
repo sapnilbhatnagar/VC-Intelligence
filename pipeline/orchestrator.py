@@ -13,6 +13,7 @@ import logging
 from datetime import datetime, timezone
 
 from pipeline.state import PipelineState
+from pipeline.providers import resolve_models
 from pipeline.cancel import register_job, unregister_job
 from pipeline.agents.stage1_company_researcher import CompanyResearcherAgent
 from pipeline.agents.stage2_market_analyst import MarketAnalystAgent
@@ -81,6 +82,8 @@ async def start_pipeline(
     check_size_max: float | None = None,
     selected_stages: list[int] | None = None,
     api_key: str | None = None,
+    provider: str = "anthropic",
+    effort: str = "medium",
 ):
     """
     Create and launch the pipeline as an asyncio.Task.
@@ -110,10 +113,15 @@ async def start_pipeline(
             "check_size_min": check_size_min,
             "check_size_max": check_size_max,
             "selected_stages": stages_to_run,
+            "llm_provider": provider,
+            "llm_effort": effort,
         })
 
         try:
-            await _execute_stages(job_id, state, stages_to_run, start_from=1, api_key=api_key)
+            await _execute_stages(
+                job_id, state, stages_to_run, start_from=1,
+                api_key=api_key, provider=provider, effort=effort,
+            )
         finally:
             unregister_job(job_id)
 
@@ -121,12 +129,20 @@ async def start_pipeline(
     register_job(job_id, task)
 
 
-async def resume_pipeline(job_id: str, api_key: str | None = None):
+async def resume_pipeline(
+    job_id: str,
+    api_key: str | None = None,
+    provider: str | None = None,
+    effort: str | None = None,
+):
     """
     Resume a paused or failed pipeline from the last completed stage.
+    Provider and effort default to what the run started with.
     """
     analysis = await get_analysis(job_id)
     state = _reconstruct_state(analysis)
+    provider = provider or analysis.get("llm_provider") or "anthropic"
+    effort = effort or analysis.get("llm_effort") or "medium"
 
     last_completed = get_last_completed_stage(analysis)
     start_from = last_completed + 1
@@ -152,7 +168,10 @@ async def resume_pipeline(job_id: str, api_key: str | None = None):
 
     async def _run():
         try:
-            await _execute_stages(job_id, state, stages_to_run, start_from=start_from, api_key=api_key)
+            await _execute_stages(
+                job_id, state, stages_to_run, start_from=start_from,
+                api_key=api_key, provider=provider, effort=effort,
+            )
         finally:
             unregister_job(job_id)
 
@@ -160,13 +179,21 @@ async def resume_pipeline(job_id: str, api_key: str | None = None):
     register_job(job_id, task)
 
 
-async def complete_remaining_pipeline(job_id: str, new_stages: list[int], api_key: str | None = None):
+async def complete_remaining_pipeline(
+    job_id: str,
+    new_stages: list[int],
+    api_key: str | None = None,
+    provider: str | None = None,
+    effort: str | None = None,
+):
     """
     Run only the stages that haven't been completed yet.
     Reuses existing outputs from previously completed stages.
     """
     analysis = await get_analysis(job_id)
     state = _reconstruct_state(analysis)
+    provider = provider or analysis.get("llm_provider") or "anthropic"
+    effort = effort or analysis.get("llm_effort") or "medium"
 
     already_done = get_completed_stages(analysis)
     stages_to_run = sorted(set(new_stages) - already_done)
@@ -193,7 +220,10 @@ async def complete_remaining_pipeline(job_id: str, new_stages: list[int], api_ke
     async def _run():
         try:
             # Pass only the delta stages so already-completed ones are not re-run
-            await _execute_stages(job_id, state, stages_to_run, start_from=min(stages_to_run), api_key=api_key)
+            await _execute_stages(
+                job_id, state, stages_to_run, start_from=min(stages_to_run),
+                api_key=api_key, provider=provider, effort=effort,
+            )
         finally:
             unregister_job(job_id)
 
@@ -201,16 +231,20 @@ async def complete_remaining_pipeline(job_id: str, new_stages: list[int], api_ke
     register_job(job_id, task)
 
 
-async def _execute_stages(job_id, state, stages_to_run, start_from=1, api_key=None):
+async def _execute_stages(
+    job_id, state, stages_to_run, start_from=1,
+    api_key=None, provider="anthropic", effort="medium",
+):
     """
     Shared execution loop. Runs selected stages from start_from onward.
     Catches asyncio.CancelledError for immediate mid-stage cancellation.
 
-    api_key: optional per-run Claude key (the user's own key). When None, agents
-    fall back to the server's ANTHROPIC_API_KEY. It is intentionally passed as a
-    parameter (never stored on PipelineState) so it is not serialised into the DB.
+    api_key: the key the run is billed to. It is intentionally passed as a
+    parameter (never stored on PipelineState) so it is not serialised into
+    the DB. provider + effort resolve each agent tier to a concrete model.
     """
     total_selected = len(stages_to_run)
+    models = resolve_models(provider, effort)
 
     for stage_num, (stage_name, AgentClass) in enumerate(PIPELINE, start=1):
         if stage_num < start_from:
@@ -234,7 +268,11 @@ async def _execute_stages(job_id, state, stages_to_run, start_from=1, api_key=No
         })
 
         try:
-            agent = AgentClass(api_key=api_key)
+            agent = AgentClass(
+                api_key=api_key,
+                provider=provider,
+                model=getattr(models, AgentClass.tier),
+            )
             state = await agent.run(state)
 
         except asyncio.CancelledError:

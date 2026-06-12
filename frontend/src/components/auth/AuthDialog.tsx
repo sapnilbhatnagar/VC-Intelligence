@@ -27,8 +27,10 @@ import KeyIcon from '@mui/icons-material/Key';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import MenuItem from '@mui/material/MenuItem';
 import { loginApi, register } from '../../api/client';
 import { MONO } from '../../theme';
+import { LLM_PROVIDERS, EFFORT_LEVELS } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import BrandMark from '../brand/BrandMark';
 import type { AuthUser } from '../../types';
@@ -70,6 +72,8 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
   const [regUsername, setRegUsername] = useState('');
   const [regName, setRegName] = useState('');
   const [regApiKey, setRegApiKey] = useState('');
+  const [regProvider, setRegProvider] = useState('anthropic');
+  const [regEffort, setRegEffort] = useState('medium');
 
   // Shared
   const [password, setPassword] = useState('');
@@ -98,6 +102,7 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
   const identifierError = touched && !isRegister && identifier.trim().length === 0;
   const emailError = touched && isRegister && !/\S+@\S+\.\S+/.test(regEmail);
   const passwordError = touched && password.length < 6;
+  const apiKeyError = touched && isRegister && regApiKey.trim().length === 0;
 
   const handleBlur = useCallback(() => {
     if (!switchingTabRef.current) setTouched(true);
@@ -138,6 +143,9 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
       credits: res.credits,
       has_api_key: res.has_api_key,
       api_key_last4: res.api_key_last4,
+      llm_provider: res.llm_provider,
+      llm_effort: res.llm_effort,
+      uses_platform_key: res.uses_platform_key,
     };
     setAuth(res.access_token, user);
     navigate('/', { replace: true });
@@ -148,7 +156,7 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
     setTouched(true);
 
     if (isRegister) {
-      if (emailError || passwordError || !regEmail || !password) return;
+      if (emailError || passwordError || !regEmail || !password || !regApiKey.trim()) return;
     } else {
       if (identifierError || passwordError || !identifier.trim() || !password) return;
     }
@@ -165,7 +173,9 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
             pwd,
             regUsername.trim() || undefined,
             regName.trim() || undefined,
-            regApiKey.trim() || undefined,
+            regApiKey.trim(),
+            regProvider,
+            regEffort,
           )
         : await loginApi(identifier.trim(), pwd);
       finishAuth(res);
@@ -194,7 +204,7 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
               {isRegister ? 'Create your account' : 'Sign in to VC Intelligence'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {isRegister ? '5 free credits included. No card required.' : 'Your deal desk is waiting.'}
+              {isRegister ? 'Analyses run on your own model provider key.' : 'Your deal desk is waiting.'}
             </Typography>
           </Box>
           <IconButton size="small" onClick={onClose} disabled={loading} aria-label="Close sign-in window">
@@ -347,14 +357,36 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
                   inputProps={{ 'aria-label': 'Username (optional)' }}
                 />
                 <TextField
-                  label="Claude API key (optional)"
+                  select
+                  label="API provider"
+                  value={regProvider}
+                  onChange={(e) => setRegProvider(e.target.value)}
+                  fullWidth
+                  required
+                  helperText="The model provider whose API your analyses run on"
+                  inputProps={{ 'aria-label': 'API provider' }}
+                  SelectProps={{ SelectDisplayProps: { 'aria-label': 'API provider' } }}
+                >
+                  {LLM_PROVIDERS.map((prov) => (
+                    <MenuItem key={prov.id} value={prov.id}>{prov.label}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  label="API key"
                   type="text"
                   value={regApiKey}
                   onChange={(e) => setRegApiKey(e.target.value)}
+                  onBlur={handleBlur}
+                  error={apiKeyError}
+                  required
                   fullWidth
-                  placeholder="sk-ant-..."
+                  placeholder={LLM_PROVIDERS.find((prov) => prov.id === regProvider)?.keyHint}
                   autoComplete="off"
-                  helperText="Your key makes every analysis unlimited, self-billed, and is stored encrypted. Skip this and add it later from the side navigation."
+                  helperText={
+                    apiKeyError
+                      ? 'API key is required: your analyses run on it'
+                      : 'Stored encrypted. Runs are billed to your provider account.'
+                  }
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -362,8 +394,27 @@ export default function AuthDialog({ open, mode, onClose }: AuthDialogProps) {
                       </InputAdornment>
                     ),
                   }}
-                  inputProps={{ 'aria-label': 'Claude API key (optional)', style: { fontFamily: MONO, fontSize: '0.85rem' } }}
+                  inputProps={{ 'aria-label': 'API key', style: { fontFamily: MONO, fontSize: '0.85rem' } }}
                 />
+                <TextField
+                  select
+                  label="Analysis effort"
+                  value={regEffort}
+                  onChange={(e) => setRegEffort(e.target.value)}
+                  fullWidth
+                  helperText="How much model capability each run uses; changeable later"
+                  inputProps={{ 'aria-label': 'Analysis effort' }}
+                  SelectProps={{ SelectDisplayProps: { 'aria-label': 'Analysis effort' } }}
+                >
+                  {EFFORT_LEVELS.map((lvl) => (
+                    <MenuItem key={lvl.id} value={lvl.id}>
+                      {lvl.label}
+                      <Typography component="span" variant="caption" sx={{ color: 'text.secondary', ml: 1 }}>
+                        {lvl.description}
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                </TextField>
               </>
             )}
 

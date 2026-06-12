@@ -1,6 +1,5 @@
 """Stage 4 — Risk Assessor (Sonnet + extended thinking, no tools)."""
 
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 
@@ -100,7 +99,7 @@ Be brutally honest. Finding risks is your job. Optimism is not.\
 
 class RiskAssessorAgent(BaseAgent):
     name = "RiskAssessor"
-    model = settings.model_smart
+    tier = "smart"
     use_tools = False
     use_extended_thinking = True
     thinking_budget = 10_000
@@ -116,7 +115,7 @@ class RiskAssessorAgent(BaseAgent):
             f"systematically before writing your final assessment."
         )
 
-        text, tokens = await self.call_claude(SYSTEM_PROMPT, user_message)
+        text, tokens = await self.call_llm(SYSTEM_PROMPT, user_message)
         state.risk_assessment = text
         state.record_tokens(self.name, tokens)
         return state

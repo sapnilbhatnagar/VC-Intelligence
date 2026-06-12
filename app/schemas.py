@@ -59,12 +59,18 @@ class StatusResponse(BaseModel):
 
 # ── Auth schemas ──────────────────────────────────────────────────────────────
 
+_PROVIDER_PATTERN = "^(anthropic|openai|deepseek|glm)$"
+_EFFORT_PATTERN = "^(low|medium|high|max)$"
+
 class UserRegisterRequest(BaseModel):
     email: str
     password: str = Field(..., min_length=6)
     username: Optional[str] = None  # Optional display username
     name: Optional[str] = None      # Optional full name
-    api_key: Optional[str] = None   # Optional Claude API key for self-billed runs
+    # The analysis runs on the user's own provider account. Mandatory.
+    llm_provider: str = Field(..., pattern=_PROVIDER_PATTERN)
+    api_key: str = Field(..., min_length=8)
+    llm_effort: str = Field("medium", pattern=_EFFORT_PATTERN)
 
 class UserLoginRequest(BaseModel):
     identifier: str  # Can be email OR username
@@ -81,6 +87,9 @@ class TokenResponse(BaseModel):
     credits: int
     has_api_key: bool = False
     api_key_last4: Optional[str] = None
+    llm_provider: Optional[str] = None
+    llm_effort: Optional[str] = None
+    uses_platform_key: bool = False
 
 class UserResponse(BaseModel):
     id: str
@@ -93,9 +102,14 @@ class UserResponse(BaseModel):
     last_login_at: Optional[str] = None
     has_api_key: bool = False
     api_key_last4: Optional[str] = None
+    llm_provider: Optional[str] = None
+    llm_effort: Optional[str] = None
+    uses_platform_key: bool = False
 
 class SetApiKeyRequest(BaseModel):
-    api_key: str = Field(..., min_length=20)
+    api_key: str = Field(..., min_length=8)
+    llm_provider: Optional[str] = Field(None, pattern=_PROVIDER_PATTERN)
+    llm_effort: Optional[str] = Field(None, pattern=_EFFORT_PATTERN)
 
 class AssignCreditsRequest(BaseModel):
     credits: int = Field(..., ge=0)

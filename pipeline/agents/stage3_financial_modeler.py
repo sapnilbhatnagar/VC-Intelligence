@@ -2,7 +2,6 @@
 
 import re
 import json
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 from tools.chart_generator import generate_revenue_chart
@@ -77,7 +76,7 @@ The JSON will be used to generate a professional revenue chart. Be precise with 
 
 class FinancialModelerAgent(BaseAgent):
     name = "FinancialModeler"
-    model = settings.model_smart
+    tier = "smart"
     use_tools = False
     max_output_tokens = 5_000
 
@@ -93,7 +92,7 @@ class FinancialModelerAgent(BaseAgent):
             f"Remember to include the ```json block at the end with the projection data."
         )
 
-        text, tokens = await self.call_claude(SYSTEM_PROMPT, user_message)
+        text, tokens = await self.call_llm(SYSTEM_PROMPT, user_message)
         state.financial_model_text = text
         state.record_tokens(self.name, tokens)
 

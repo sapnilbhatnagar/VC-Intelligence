@@ -18,7 +18,7 @@ def test_registration_is_visible_as_a_sign_in(client):
     """Registering counts as the first sign-in, so a brand-new user appears
     in the admin activity views with both timestamps set."""
     email = f"user_{uuid.uuid4().hex[:10]}@test.local"
-    r = client.post(f"{API}/auth/register", json={"email": email, "password": "password123"})
+    r = client.post(f"{API}/auth/register", json={"email": email, "password": "password123", "llm_provider": "anthropic", "api_key": "sk-ant-test-key-abcdefgh1234"})
     assert r.status_code == 200, r.text
 
     users = client.get(f"{API}/admin/users", headers=auth_header(_admin_token(client))).json()
@@ -29,7 +29,7 @@ def test_registration_is_visible_as_a_sign_in(client):
 
 def test_login_updates_last_seen(client):
     email = f"user_{uuid.uuid4().hex[:10]}@test.local"
-    client.post(f"{API}/auth/register", json={"email": email, "password": "password123"})
+    client.post(f"{API}/auth/register", json={"email": email, "password": "password123", "llm_provider": "anthropic", "api_key": "sk-ant-test-key-abcdefgh1234"})
     r = client.post(f"{API}/auth/login", json={"identifier": email, "password": "password123"})
     assert r.status_code == 200
 
@@ -40,7 +40,7 @@ def test_login_updates_last_seen(client):
 
 def test_stats_count_todays_sign_ins(client):
     email = f"user_{uuid.uuid4().hex[:10]}@test.local"
-    client.post(f"{API}/auth/register", json={"email": email, "password": "password123"})
+    client.post(f"{API}/auth/register", json={"email": email, "password": "password123", "llm_provider": "anthropic", "api_key": "sk-ant-test-key-abcdefgh1234"})
 
     stats = client.get(f"{API}/admin/stats", headers=auth_header(_admin_token(client))).json()
     assert stats["logins_today"] >= 1

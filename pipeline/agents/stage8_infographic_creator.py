@@ -2,7 +2,6 @@
 
 import re
 import json
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 from tools.infographic_html_generator import generate_html_infographic
@@ -16,7 +15,7 @@ If a field is unavailable, use null.
 
 class InfographicCreatorAgent(BaseAgent):
     name = "InfographicCreator"
-    model = settings.model_fast
+    tier = "fast"
     use_tools = False
     max_output_tokens = 800
 
@@ -68,7 +67,7 @@ class InfographicCreatorAgent(BaseAgent):
         )
 
         try:
-            text, tokens = await self.call_claude(EXTRACTION_SYSTEM, user_message)
+            text, tokens = await self.call_llm(EXTRACTION_SYSTEM, user_message)
             state.record_tokens(self.name, tokens)
             # Clean and parse
             clean = text.strip().lstrip("```json").lstrip("```").rstrip("```").strip()

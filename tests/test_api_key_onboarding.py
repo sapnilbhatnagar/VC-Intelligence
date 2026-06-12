@@ -1,57 +1,81 @@
-"""Own-API-key onboarding: registering with a Claude API key, and the
-unlimited (self-billed) analysis path that key enables."""
+"""Provider-agnostic onboarding: every account registers with a provider and
+an API key (or the admin passphrase), and runs are billed accordingly."""
 
 import uuid
 
 from tests.conftest import API, auth_header
 
+VALID_KEYS = {
+    "anthropic": "sk-ant-test-key-abcdefgh1234",
+    "openai": "sk-proj-test-key-abcdefgh1234",
+    "deepseek": "sk-test-key-abcdefgh1234567",
+    "glm": "a1b2c3d4e5f6g7h8.i9j0k1l2",
+}
 
-def _register(client, payload_extra: dict | None = None):
+
+def _register(client, provider="anthropic", api_key=None, effort="medium", **extra):
     email = f"user_{uuid.uuid4().hex[:10]}@test.local"
-    payload = {"email": email, "password": "password123", **(payload_extra or {})}
+    payload = {
+        "email": email,
+        "password": "password123",
+        "llm_provider": provider,
+        "llm_effort": effort,
+        "api_key": api_key if api_key is not None else VALID_KEYS[provider],
+        **extra,
+    }
     return client.post(f"{API}/auth/register", json=payload)
 
 
-def test_register_without_key_has_no_api_key(client):
-    r = _register(client)
+def test_register_requires_an_api_key_and_provider(client):
+    email = f"user_{uuid.uuid4().hex[:10]}@test.local"
+    r = client.post(f"{API}/auth/register", json={"email": email, "password": "password123"})
+    assert r.status_code == 422  # api_key and llm_provider are mandatory
+
+
+def test_register_stores_provider_key_and_effort(client):
+    r = _register(client, provider="openai", effort="high")
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["has_api_key"] is False
+    assert body["llm_provider"] == "openai"
+    assert body["llm_effort"] == "high"
+    assert body["has_api_key"] is True
+    assert body["api_key_last4"] == VALID_KEYS["openai"][-4:]
+    assert body["uses_platform_key"] is False
+
+    me = client.get(f"{API}/auth/me", headers=auth_header(body["access_token"])).json()
+    assert me["llm_provider"] == "openai"
+    assert me["llm_effort"] == "high"
+
+
+def test_every_provider_can_register(client):
+    for provider in VALID_KEYS:
+        r = _register(client, provider=provider)
+        assert r.status_code == 200, f"{provider}: {r.text}"
+        assert r.json()["llm_provider"] == provider
+
+
+def test_register_rejects_key_that_does_not_match_provider(client):
+    # An Anthropic key pasted under the OpenAI provider is a paste mistake.
+    r = _register(client, provider="openai", api_key=VALID_KEYS["anthropic"])
+    assert r.status_code == 400
+
+
+def test_register_rejects_invalid_effort(client):
+    r = _register(client, effort="ultra")
+    assert r.status_code == 422
+
+
+def test_admin_phrase_routes_to_platform_key(client):
+    r = _register(client, provider="anthropic", api_key="admin, admin, admin")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["uses_platform_key"] is True
+    assert body["has_api_key"] is True
     assert body["api_key_last4"] is None
 
 
-def test_register_with_key_stores_it_encrypted(client):
-    key = "sk-ant-test-key-abcdefgh1234"
-    r = _register(client, {"api_key": key})
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["has_api_key"] is True
-    assert body["api_key_last4"] == key[-4:]
-
-    # /auth/me reflects the stored key without ever exposing it.
-    me = client.get(f"{API}/auth/me", headers=auth_header(body["access_token"]))
-    assert me.status_code == 200
-    me_body = me.json()
-    assert me_body["has_api_key"] is True
-    assert me_body["api_key_last4"] == key[-4:]
-    assert key not in me.text  # full key never leaves the server
-
-
-def test_register_rejects_malformed_key(client):
-    r = _register(client, {"api_key": "not-a-real-claude-key-123456"})
-    assert r.status_code == 400
-    assert "sk-ant-" in r.json()["detail"]
-
-
-def test_register_ignores_blank_key(client):
-    r = _register(client, {"api_key": "   "})
-    assert r.status_code == 200, r.text
-    assert r.json()["has_api_key"] is False
-
-
-def test_own_key_analysis_does_not_consume_credits(client):
-    key = "sk-ant-test-key-abcdefgh1234"
-    r = _register(client, {"api_key": key})
+def test_own_key_analysis_is_unlimited(client):
+    r = _register(client, provider="deepseek")
     token = r.json()["access_token"]
 
     start = client.post(
@@ -65,8 +89,8 @@ def test_own_key_analysis_does_not_consume_credits(client):
     assert me.json()["credits"] == 5  # signup credits untouched
 
 
-def test_credit_user_is_charged_for_analysis(client):
-    r = _register(client)
+def test_admin_phrase_analysis_consumes_credits(client):
+    r = _register(client, provider="anthropic", api_key="admin admin admin")
     token = r.json()["access_token"]
 
     start = client.post(
@@ -78,3 +102,17 @@ def test_credit_user_is_charged_for_analysis(client):
 
     me = client.get(f"{API}/auth/me", headers=auth_header(token))
     assert me.json()["credits"] == 0  # full run costs the 5 signup credits
+
+
+def test_admin_phrase_fails_when_platform_has_no_key_for_provider(client):
+    # The hermetic test env has no OpenAI platform key configured.
+    r = _register(client, provider="openai", api_key="admin admin admin")
+    token = r.json()["access_token"]
+
+    start = client.post(
+        f"{API}/analyze",
+        json={"company": "Northbeam Robotics", "selected_stages": None},
+        headers=auth_header(token),
+    )
+    assert start.status_code == 400
+    assert "no" in start.json()["detail"].lower()

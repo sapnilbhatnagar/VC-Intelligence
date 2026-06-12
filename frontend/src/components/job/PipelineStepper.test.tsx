@@ -42,9 +42,9 @@ describe('PipelineStepper (agent rail)', () => {
     expect(screen.getByLabelText(/stage 8: visual summary — queued/i)).toBeInTheDocument();
   });
 
-  it('shows which engine is working the active stage and the progress', () => {
+  it('shows which engine tier is working the active stage and the progress', () => {
     renderRail(RUNNING);
-    expect(screen.getByText(/sonnet \+ extended thinking/i)).toBeInTheDocument();
+    expect(screen.getByText(/reasoning model \+ deep thinking/i)).toBeInTheDocument();
     expect(screen.getByText('43.8%')).toBeInTheDocument();
   });
 

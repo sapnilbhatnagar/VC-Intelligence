@@ -1,7 +1,6 @@
 """Stage 6 — Investor Memo Writer (Sonnet + extended thinking, no tools)."""
 
 import re
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 
@@ -158,7 +157,7 @@ _SCORE_PATTERN = re.compile(
 
 class MemoWriterAgent(BaseAgent):
     name = "MemoWriter"
-    model = settings.model_smart
+    tier = "smart"
     use_tools = False
     use_extended_thinking = True
     thinking_budget = 12_000
@@ -184,7 +183,7 @@ class MemoWriterAgent(BaseAgent):
             f"The memo must be IC-ready: balanced, data-driven, and actionable."
         )
 
-        text, tokens = await self.call_claude(SYSTEM_PROMPT, user_message)
+        text, tokens = await self.call_llm(SYSTEM_PROMPT, user_message)
         text = _post_process_memo(text)
         state.investor_memo = text
         state.record_tokens(self.name, tokens)

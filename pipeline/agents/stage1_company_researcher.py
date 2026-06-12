@@ -1,6 +1,5 @@
 """Stage 1 — Company Researcher (Haiku + Tavily web search)."""
 
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 
@@ -34,7 +33,7 @@ OUTPUT FORMAT — structure your findings clearly under these headings:
 ## Traction & Growth
 ## Recent Developments (last 12 months)
 ## Data Quality Note
-(Distinguish: ✅ Confirmed | 📊 Estimated | ❓ Unknown)
+(Distinguish: [CONFIRMED] | [ESTIMATED] | [UNKNOWN])
 
 Be thorough. For early-stage companies, limited data is normal — note what's available.\
 """
@@ -42,7 +41,7 @@ Be thorough. For early-stage companies, limited data is normal — note what's a
 
 class CompanyResearcherAgent(BaseAgent):
     name = "CompanyResearcher"
-    model = settings.model_fast
+    tier = "fast"
     use_tools = True
     max_output_tokens = 6_000
 
@@ -64,7 +63,7 @@ class CompanyResearcherAgent(BaseAgent):
             f"the company, founders, funding, product, and recent news."
         )
 
-        text, tokens = await self.call_claude(SYSTEM_PROMPT, user_message)
+        text, tokens = await self.call_llm(SYSTEM_PROMPT, user_message)
         state.company_info = text
         state.record_tokens(self.name, tokens)
         return state

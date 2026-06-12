@@ -28,14 +28,14 @@ interface StageEntry {
 }
 
 const STAGES: StageEntry[] = [
-  { n: '01', name: 'Company research', engine: 'Haiku + web search', outcome: 'Founders, product, funding history, traction signals' },
-  { n: '02', name: 'Market analysis', engine: 'Haiku + web search', outcome: 'TAM and SAM with sources, competitors, timing' },
-  { n: '03', name: 'Financial model', engine: 'Sonnet', outcome: 'Five-year bear, base, and bull revenue scenarios' },
-  { n: '04', name: 'Risk assessment', engine: 'Sonnet + extended thinking', outcome: 'Five risk categories, scored 1 to 10, deal-killers named' },
-  { n: '05', name: 'Comparable deals', engine: 'Haiku + web search', outcome: 'Recent rounds, acquisitions, entry multiples' },
-  { n: '06', name: 'Investor memo', engine: 'Sonnet + extended thinking', outcome: 'Verdict, thesis, suggested terms, next steps' },
+  { n: '01', name: 'Company research', engine: 'Fast model + web search', outcome: 'Founders, product, funding history, traction signals' },
+  { n: '02', name: 'Market analysis', engine: 'Fast model + web search', outcome: 'TAM and SAM with sources, competitors, timing' },
+  { n: '03', name: 'Financial model', engine: 'Reasoning model', outcome: 'Five-year bear, base, and bull revenue scenarios' },
+  { n: '04', name: 'Risk assessment', engine: 'Reasoning model + deep thinking', outcome: 'Five risk categories, scored 1 to 10, deal-killers named' },
+  { n: '05', name: 'Comparable deals', engine: 'Fast model + web search', outcome: 'Recent rounds, acquisitions, entry multiples' },
+  { n: '06', name: 'Investor memo', engine: 'Reasoning model + deep thinking', outcome: 'Verdict, thesis, suggested terms, next steps' },
   { n: '07', name: 'Investor report', engine: 'Template engine', outcome: 'Formatted, printable investment document' },
-  { n: '08', name: 'Visual summary', engine: 'Haiku + chart engine', outcome: 'One-page executive infographic' },
+  { n: '08', name: 'Visual summary', engine: 'Fast model + chart engine', outcome: 'One-page executive infographic' },
 ];
 
 // ============================================================
@@ -325,7 +325,7 @@ export default function LandingPage() {
               </Button>
             </Box>
             <Typography variant="caption" sx={{ display: 'block', mt: 2, color: 'text.disabled' }}>
-              5 free credits on sign-up. No card required.
+              Bring your own model API key: Claude, OpenAI, DeepSeek, or GLM.
             </Typography>
           </Box>
 
@@ -352,9 +352,10 @@ export default function LandingPage() {
                 Eight agents, in sequence. Each hands its findings to the next.
               </Typography>
               <Typography sx={{ color: INK_DIM, lineHeight: 1.65, fontSize: '0.95rem', maxWidth: '46ch' }}>
-                Fast research agents gather the record. Reasoning agents with
-                extended thinking model the financials, score the risk, and write
-                the memo. You watch every stage run, pause it, or resume it.
+                Fast research agents gather the record; reasoning agents model the
+                financials, score the risk, and write the memo. Bring a key from
+                Claude, OpenAI, DeepSeek, or GLM and pick the effort level; the
+                pipeline routes each stage to the right model.
               </Typography>
               <Box sx={{ mt: 3.5, display: 'flex', gap: 3 }}>
                 <Box>
@@ -554,9 +555,9 @@ export default function LandingPage() {
             </Typography>
             <Box component="dl" sx={{ m: 0, display: 'flex', flexDirection: 'column', maxWidth: 560 }}>
               {[
-                ['Quick screen', '1 credit', 'research, market, memo'],
-                ['Full analysis', '5 credits', 'all eight stages, all three documents'],
-                ['Your own API key', 'unlimited', 'self-billed runs, key encrypted at rest'],
+                ['Your own API key', 'unlimited', 'Claude, OpenAI, DeepSeek, or GLM; encrypted at rest'],
+                ['Effort levels', 'low to max', 'route each run to lighter or deeper models'],
+                ['Platform key runs', 'credits', 'quick screen 1, full analysis 5'],
               ].map(([term, price, note]) => (
                 <Box key={term} sx={{ display: 'flex', alignItems: 'baseline', gap: 2, py: 1.25, borderBottom: `1px solid ${TOKENS.border}` }}>
                   <Typography component="dt" sx={{ fontWeight: 650, fontSize: '0.9rem', minWidth: 132 }}>{term}</Typography>

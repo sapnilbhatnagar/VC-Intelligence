@@ -21,14 +21,14 @@ interface StageMeta {
 }
 
 const STAGE_META: StageMeta[] = [
-  { short: 'Company research', engine: 'Haiku + web search' },
-  { short: 'Market analysis', engine: 'Haiku + web search' },
-  { short: 'Financial model', engine: 'Sonnet' },
-  { short: 'Risk assessment', engine: 'Sonnet + extended thinking' },
-  { short: 'Comparable deals', engine: 'Haiku + web search' },
-  { short: 'Investor memo', engine: 'Sonnet + extended thinking' },
+  { short: 'Company research', engine: 'Fast model + web search' },
+  { short: 'Market analysis', engine: 'Fast model + web search' },
+  { short: 'Financial model', engine: 'Reasoning model' },
+  { short: 'Risk assessment', engine: 'Reasoning model + deep thinking' },
+  { short: 'Comparable deals', engine: 'Fast model + web search' },
+  { short: 'Investor memo', engine: 'Reasoning model + deep thinking' },
   { short: 'Investor report', engine: 'Template engine' },
-  { short: 'Visual summary', engine: 'Haiku + chart engine' },
+  { short: 'Visual summary', engine: 'Fast model + chart engine' },
 ];
 
 type StageStatus = 'queued' | 'active' | 'completed' | 'failed' | 'paused' | 'skipped';

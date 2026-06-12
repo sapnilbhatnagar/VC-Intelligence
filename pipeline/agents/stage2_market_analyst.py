@@ -1,6 +1,5 @@
 """Stage 2 — Market Analyst (Haiku + Tavily web search)."""
 
-from app.config import settings
 from pipeline.agents.base import BaseAgent
 from pipeline.state import PipelineState
 
@@ -59,7 +58,7 @@ OUTPUT FORMAT:
 
 class MarketAnalystAgent(BaseAgent):
     name = "MarketAnalyst"
-    model = settings.model_fast
+    tier = "fast"
     use_tools = True
     max_output_tokens = 6_000
 
@@ -71,7 +70,7 @@ class MarketAnalystAgent(BaseAgent):
             f"Run at least 4 searches."
         )
 
-        text, tokens = await self.call_claude(SYSTEM_PROMPT, user_message)
+        text, tokens = await self.call_llm(SYSTEM_PROMPT, user_message)
         state.market_analysis = text
         state.record_tokens(self.name, tokens)
         return state

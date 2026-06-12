@@ -108,11 +108,20 @@ async def init_db():
         except Exception:
             pass
 
-        # Add encrypted Claude API key column to users (own-key / unlimited mode)
+        # Add encrypted API key column to users (own-key / unlimited mode).
+        # The column name predates provider-agnostic support; it stores the
+        # encrypted key for whichever provider the user chose.
         try:
             await db.execute("ALTER TABLE users ADD COLUMN anthropic_api_key_enc TEXT")
         except Exception:
             pass
+
+        # LLM provider + effort level chosen by the user
+        for col in ("llm_provider", "llm_effort"):
+            try:
+                await db.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
+            except Exception:
+                pass
 
         # Credit transactions table
         await db.execute("""
@@ -251,7 +260,8 @@ async def add_credits(user_id: str, amount: int):
 
 async def update_user(user_id: str, updates: dict):
     """Update arbitrary user fields (email, role, password_hash, username, name)."""
-    allowed = {"email", "role", "password_hash", "credits", "username", "name", "anthropic_api_key_enc"}
+    allowed = {"email", "role", "password_hash", "credits", "username", "name",
+               "anthropic_api_key_enc", "llm_provider", "llm_effort"}
     cols = {k: v for k, v in updates.items() if k in allowed}
     if not cols:
         return
@@ -268,7 +278,9 @@ async def list_users() -> list:
     async with aiosqlite.connect(DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
-            """SELECT id, email, username, name, role, credits, created_at, last_login_at FROM users ORDER BY created_at DESC"""
+            """SELECT id, email, username, name, role, credits, created_at, last_login_at,
+                      llm_provider, llm_effort
+               FROM users ORDER BY created_at DESC"""
         )
         rows = await cursor.fetchall()
         return [dict(r) for r in rows]

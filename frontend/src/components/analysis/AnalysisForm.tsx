@@ -142,7 +142,10 @@ export default function AnalysisForm() {
 
   const user = useAuthStore((s) => s.user);
   const isLoggedIn = useAuthStore((s) => s.token !== null);
-  const unlimited = !!user?.has_api_key || user?.role === 'admin';
+  // Platform-key (passphrase) runs still bill credits; only a real own key
+  // or an admin account runs unlimited.
+  const unlimited =
+    (!!user?.has_api_key && !user?.uses_platform_key) || user?.role === 'admin';
 
   // Form state
   const [company, setCompany] = useState('');

@@ -22,6 +22,7 @@ import {
   IconButton,
   Alert,
 } from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
 import PersonIcon from '@mui/icons-material/Person';
 import BoltIcon from '@mui/icons-material/Bolt';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -34,6 +35,7 @@ import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import { getMyAnalyses, updateProfile, saveApiKey, deleteApiKey } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { HistoryItem } from '../types';
+import { LLM_PROVIDERS, EFFORT_LEVELS, providerLabel } from '../types';
 import { RECOMMENDATION_COLORS } from '../theme';
 
 // ============================================================
@@ -112,19 +114,28 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const updateUserStore = useAuthStore((s) => s.updateUser);
 
-  // Own Claude API key state
+  // API key + provider + effort state
   const [keyInput, setKeyInput] = useState('');
+  const [keyProvider, setKeyProvider] = useState(user?.llm_provider ?? 'anthropic');
+  const [keyEffort, setKeyEffort] = useState(user?.llm_effort ?? 'medium');
   const [keySaving, setKeySaving] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
   const isAdmin = user?.role === 'admin';
   const hasOwnKey = !!user?.has_api_key;
+  const usesPlatformKey = !!user?.uses_platform_key;
 
   const handleSaveKey = async () => {
     setKeySaving(true);
     setKeyError(null);
     try {
-      const res = await saveApiKey(keyInput.trim());
-      updateUserStore({ has_api_key: res.has_api_key, api_key_last4: res.api_key_last4 });
+      const res = await saveApiKey(keyInput.trim(), keyProvider, keyEffort);
+      updateUserStore({
+        has_api_key: res.has_api_key,
+        api_key_last4: res.api_key_last4,
+        llm_provider: res.llm_provider,
+        llm_effort: res.llm_effort,
+        uses_platform_key: res.uses_platform_key,
+      });
       setKeyInput('');
     } catch (err) {
       setKeyError(err instanceof Error ? err.message : 'Could not save the key.');
@@ -138,7 +149,11 @@ export default function ProfilePage() {
     setKeyError(null);
     try {
       const res = await deleteApiKey();
-      updateUserStore({ has_api_key: res.has_api_key, api_key_last4: res.api_key_last4 });
+      updateUserStore({
+        has_api_key: res.has_api_key,
+        api_key_last4: res.api_key_last4,
+        uses_platform_key: res.uses_platform_key,
+      });
     } catch (err) {
       setKeyError(err instanceof Error ? err.message : 'Could not remove the key.');
     } finally {
@@ -329,7 +344,8 @@ export default function ProfilePage() {
             Plan &amp; billing
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            Run on credits, or add your own Claude API key for unlimited analysis billed to your Anthropic account.
+            Analyses run on your own provider key (Claude, OpenAI, DeepSeek, or GLM).
+            Switch the provider, key, or analysis effort at any time.
           </Typography>
           <Divider sx={{ my: 2 }} />
 
@@ -382,42 +398,86 @@ export default function ProfilePage() {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <VpnKeyOutlinedIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                  <Typography sx={{ fontWeight: 700 }}>Your Claude API key</Typography>
+                  <Typography sx={{ fontWeight: 700 }}>Your API key</Typography>
                   {hasOwnKey && (
-                    <Chip label="Active · Unlimited" size="small" color="primary" sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }} />
+                    <Chip
+                      label={usesPlatformKey ? 'Platform key · credits apply' : 'Active · Unlimited'}
+                      size="small"
+                      color="primary"
+                      sx={{ ml: 'auto', height: 20, fontSize: '0.6rem', fontWeight: 700 }}
+                    />
                   )}
                 </Box>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1.5 }}>
-                  Unlimited analyses, billed to your Anthropic account. No credits used. Stored encrypted and never shown again.
+                  Stored encrypted and never shown again. Runs are billed to your provider account.
                 </Typography>
-                {hasOwnKey ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                {hasOwnKey && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
                     <Chip
                       icon={<CheckIcon sx={{ fontSize: '0.8rem !important' }} />}
-                      label={`Key saved ···· ${user?.api_key_last4 ?? ''}`}
+                      label={
+                        usesPlatformKey
+                          ? `Platform key · ${providerLabel(user?.llm_provider)}`
+                          : `${providerLabel(user?.llm_provider)} ···· ${user?.api_key_last4 ?? ''}`
+                      }
                       size="small"
                       sx={{ fontWeight: 600 }}
+                    />
+                    <Chip
+                      label={`Effort: ${user?.llm_effort ?? 'medium'}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 600, textTransform: 'capitalize' }}
                     />
                     <Button variant="text" size="small" color="error" onClick={handleRemoveKey} disabled={keySaving}>
                       Remove
                     </Button>
                   </Box>
-                ) : (
+                )}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <TextField
+                      select
+                      size="small"
+                      label="Provider"
+                      value={keyProvider}
+                      onChange={(e) => setKeyProvider(e.target.value as typeof keyProvider)}
+                      sx={{ minWidth: 168 }}
+                      inputProps={{ 'aria-label': 'API provider' }}
+                    >
+                      {LLM_PROVIDERS.map((prov) => (
+                        <MenuItem key={prov.id} value={prov.id}>{prov.label}</MenuItem>
+                      ))}
+                    </TextField>
+                    <TextField
+                      select
+                      size="small"
+                      label="Effort"
+                      value={keyEffort}
+                      onChange={(e) => setKeyEffort(e.target.value as typeof keyEffort)}
+                      sx={{ minWidth: 110 }}
+                      inputProps={{ 'aria-label': 'Analysis effort' }}
+                    >
+                      {EFFORT_LEVELS.map((lvl) => (
+                        <MenuItem key={lvl.id} value={lvl.id}>{lvl.label}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <TextField
                       type="password"
                       size="small"
-                      placeholder="sk-ant-..."
+                      placeholder={LLM_PROVIDERS.find((prov) => prov.id === keyProvider)?.keyHint}
                       value={keyInput}
                       onChange={(e) => { setKeyInput(e.target.value); setKeyError(null); }}
                       sx={{ flex: 1, minWidth: 180 }}
-                      inputProps={{ 'aria-label': 'Claude API key' }}
+                      inputProps={{ 'aria-label': 'API key' }}
                     />
-                    <Button variant="contained" size="small" onClick={handleSaveKey} disabled={keySaving || keyInput.trim().length < 20}>
-                      Save
+                    <Button variant="contained" size="small" onClick={handleSaveKey} disabled={keySaving || keyInput.trim().length < 8}>
+                      {hasOwnKey ? 'Update' : 'Save'}
                     </Button>
                   </Box>
-                )}
+                </Box>
                 {keyError && (
                   <Typography variant="caption" sx={{ color: 'error.main', display: 'block', mt: 1 }}>
                     {keyError}

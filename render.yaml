@@ -20,7 +20,15 @@ services:
         value: /var/data/vc_due_diligence.db
       - key: OUTPUTS_DIR
         value: /var/data/outputs
+      # Platform keys: used for admin runs and for users who enter the admin
+      # passphrase. Configure the providers you want to back with your keys.
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GLM_API_KEY
         sync: false
       - key: TAVILY_API_KEY
         sync: false

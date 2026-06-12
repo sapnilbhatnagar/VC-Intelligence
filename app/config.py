@@ -5,8 +5,12 @@ from pydantic import Field
 
 
 class Settings(BaseSettings):
-    # API Keys
+    # API Keys — the platform's own keys, used for admin runs and for users
+    # who enter the admin passphrase (credit-billed runs).
     anthropic_api_key: str = Field(..., env="ANTHROPIC_API_KEY")
+    openai_api_key: str = Field("", env="OPENAI_API_KEY")
+    deepseek_api_key: str = Field("", env="DEEPSEEK_API_KEY")
+    glm_api_key: str = Field("", env="GLM_API_KEY")
     tavily_api_key: str = Field(..., env="TAVILY_API_KEY")
 
     # Model selection

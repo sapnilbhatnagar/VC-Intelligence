@@ -34,3 +34,4 @@ google-auth>=2.0.0
 
 # Encryption at rest for user-supplied API keys (Fernet)
 cryptography>=42.0.0
+openai>=1.60

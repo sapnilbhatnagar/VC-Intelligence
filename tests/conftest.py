@@ -54,7 +54,12 @@ def auth_header(token: str) -> dict:
 def register(client, password: str = "password123") -> dict:
     """Register a fresh user with a unique email. Returns the token payload."""
     email = f"user_{uuid.uuid4().hex[:10]}@test.local"
-    r = client.post(f"{API}/auth/register", json={"email": email, "password": password})
+    r = client.post(f"{API}/auth/register", json={
+        "email": email,
+        "password": password,
+        "llm_provider": "anthropic",
+        "api_key": "sk-ant-test-key-abcdefgh1234",
+    })
     assert r.status_code == 200, r.text
     return r.json()
 

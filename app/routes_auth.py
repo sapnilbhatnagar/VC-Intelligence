@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from app.auth import hash_password, verify_password, create_access_token, require_auth
 from app.crypto import encrypt_secret, decrypt_secret
+from pipeline.providers import PROVIDERS, is_admin_phrase, validate_key_format
 from app.schemas import (
     UserRegisterRequest, UserLoginRequest, TokenResponse,
     UserResponse, AddCreditsRequest, ChangePasswordRequest, GoogleAuthRequest,
@@ -19,17 +20,25 @@ from app.config import settings
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _api_key_meta(user: dict) -> tuple[bool, str | None]:
-    """(has_api_key, last4) for a user, without ever exposing the full key."""
+def _api_key_meta(user: dict) -> tuple[bool, str | None, bool]:
+    """(has_api_key, last4, uses_platform_key) without ever exposing the key."""
     dec = decrypt_secret(user.get("anthropic_api_key_enc"))
-    return (bool(dec), dec[-4:] if dec else None)
+    if not dec:
+        return (False, None, False)
+    if is_admin_phrase(dec):
+        return (True, None, True)
+    return (True, dec[-4:], False)
 
 
-def _validate_api_key_format(key: str) -> None:
-    if not key.startswith("sk-ant-"):
+def _validate_api_key_format(provider: str, key: str) -> None:
+    """Reject obvious paste mistakes. The admin passphrase always passes."""
+    if is_admin_phrase(key):
+        return
+    if not validate_key_format(provider, key):
+        meta = PROVIDERS[provider]
         raise HTTPException(
             status_code=400,
-            detail="That does not look like a Claude API key (it should start with 'sk-ant-').",
+            detail=f"That does not look like a {meta.label} API key ({meta.key_hint}).",
         )
 
 
@@ -39,17 +48,20 @@ async def register(req: UserRegisterRequest):
         raise HTTPException(status_code=409, detail="Email already registered.")
     if req.username and await get_user_by_username(req.username):
         raise HTTPException(status_code=409, detail="Username already taken.")
-    # Validate the optional onboarding API key before creating anything.
-    api_key = (req.api_key or "").strip()
-    if api_key:
-        _validate_api_key_format(api_key)
+    # Validate the mandatory onboarding API key before creating anything.
+    api_key = req.api_key.strip()
+    _validate_api_key_format(req.llm_provider, api_key)
+    uses_platform = is_admin_phrase(api_key)
     user_id = str(uuid.uuid4())
     await create_user(
         user_id, req.email, hash_password(req.password),
         role="user", credits=5, username=req.username, name=req.name,
     )
-    if api_key:
-        await update_user(user_id, {"anthropic_api_key_enc": encrypt_secret(api_key)})
+    await update_user(user_id, {
+        "anthropic_api_key_enc": encrypt_secret(api_key),
+        "llm_provider": req.llm_provider,
+        "llm_effort": req.llm_effort,
+    })
     await log_credit_transaction(user_id, 5, "signup_bonus", "Welcome credits on registration")
     # Registration signs the user in, so it counts as their first sign-in.
     await update_last_login(user_id)
@@ -57,7 +69,10 @@ async def register(req: UserRegisterRequest):
         access_token=create_access_token(user_id, req.email, "user"),
         user_id=user_id, email=req.email, username=req.username,
         name=req.name, role="user", credits=5,
-        has_api_key=bool(api_key), api_key_last4=api_key[-4:] if api_key else None,
+        has_api_key=True,
+        api_key_last4=None if uses_platform else api_key[-4:],
+        llm_provider=req.llm_provider, llm_effort=req.llm_effort,
+        uses_platform_key=uses_platform,
     )
 
 
@@ -71,13 +86,15 @@ async def login(req: UserLoginRequest):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
-    has_key, last4 = _api_key_meta(user)
+    has_key, last4, uses_platform = _api_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
         has_api_key=has_key, api_key_last4=last4,
+        llm_provider=user.get("llm_provider"), llm_effort=user.get("llm_effort"),
+        uses_platform_key=uses_platform,
     )
 
 
@@ -86,7 +103,7 @@ async def get_me(current_user: dict = Depends(require_auth)):
     user = await get_user_by_id(current_user["id"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
-    has_key, last4 = _api_key_meta(user)
+    has_key, last4, uses_platform = _api_key_meta(user)
     return UserResponse(
         id=user["id"],
         email=user["email"],
@@ -97,6 +114,9 @@ async def get_me(current_user: dict = Depends(require_auth)):
         created_at=user["created_at"],
         has_api_key=has_key,
         api_key_last4=last4,
+        llm_provider=user.get("llm_provider"),
+        llm_effort=user.get("llm_effort"),
+        uses_platform_key=uses_platform,
     )
 
 
@@ -107,18 +127,33 @@ async def my_analyses(current_user: dict = Depends(require_auth)):
 
 @router.put("/me/api-key")
 async def set_api_key(req: SetApiKeyRequest, current_user: dict = Depends(require_auth)):
-    """Store the user's own Claude API key (encrypted) for unlimited, self-billed runs."""
+    """Store the user's API key (encrypted), and optionally switch provider/effort."""
+    user = await get_user_by_id(current_user["id"])
+    provider = req.llm_provider or (user.get("llm_provider") if user else None) or "anthropic"
     key = req.api_key.strip()
-    _validate_api_key_format(key)
-    await update_user(current_user["id"], {"anthropic_api_key_enc": encrypt_secret(key)})
-    return {"has_api_key": True, "api_key_last4": key[-4:]}
+    _validate_api_key_format(provider, key)
+    updates: dict = {
+        "anthropic_api_key_enc": encrypt_secret(key),
+        "llm_provider": provider,
+    }
+    if req.llm_effort:
+        updates["llm_effort"] = req.llm_effort
+    await update_user(current_user["id"], updates)
+    uses_platform = is_admin_phrase(key)
+    return {
+        "has_api_key": True,
+        "api_key_last4": None if uses_platform else key[-4:],
+        "llm_provider": provider,
+        "llm_effort": req.llm_effort or (user.get("llm_effort") if user else None) or "medium",
+        "uses_platform_key": uses_platform,
+    }
 
 
 @router.delete("/me/api-key")
 async def clear_api_key(current_user: dict = Depends(require_auth)):
     """Remove the user's stored API key (revert to credit-based runs)."""
     await update_user(current_user["id"], {"anthropic_api_key_enc": None})
-    return {"has_api_key": False, "api_key_last4": None}
+    return {"has_api_key": False, "api_key_last4": None, "uses_platform_key": False}
 
 
 @router.post("/me/add-credits")
@@ -190,11 +225,13 @@ async def google_auth(req: GoogleAuthRequest):
 
     token = create_access_token(user["id"], user["email"], user["role"])
     await update_last_login(user["id"])
-    has_key, last4 = _api_key_meta(user)
+    has_key, last4, uses_platform = _api_key_meta(user)
     return TokenResponse(
         access_token=token,
         user_id=user["id"], email=user["email"],
         username=user.get("username"), name=user.get("name"),
         role=user["role"], credits=user["credits"],
         has_api_key=has_key, api_key_last4=last4,
+        llm_provider=user.get("llm_provider"), llm_effort=user.get("llm_effort"),
+        uses_platform_key=uses_platform,
     )
